@@ -10,14 +10,7 @@ const app = express();
 const PORT = process.env.PORT || 8080;
 
 
-app.use(cors({
-  // origin: ["http://localhost:3000", "https://ezybill-psi.vercel.app"]
-  origin: "http://localhost:3000"
-}))
-
-
-// app.use(cors())
-
+app.use(cors())
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true }))
 // app.use(morgan('tiny'))
@@ -74,6 +67,10 @@ app.use('/api/v1/account/', accountRoute);
 app.use("/api/v1/other-transaction/", otherTrancationRoute);
 app.use("/api/v1/partycategory/", partyCategoryRoute);
 
+
+app.get("/", ()=>{
+  res.send("Hello world")
+})
 
 
 
