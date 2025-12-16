@@ -68,8 +68,10 @@ app.use("/api/v1/other-transaction/", otherTrancationRoute);
 app.use("/api/v1/partycategory/", partyCategoryRoute);
 
 
-app.get("/", ()=>{
-  res.send("Hello world")
+app.get("/", (req, res)=>{
+  res.status(200).json({
+    msg: "Hello world"
+  })
 })
 
 
