@@ -153,14 +153,19 @@ const get = async (req, res) => {
     }
     else {
       if (totalPayment) {
-        data = await paymentInModel.find({ isDel: false, isTrash: false });
-        let totalAmount = 0;
+        data = await paymentInModel.find({ isDel: false, isTrash: false, companyId: getUser.activeCompany });
 
-        data.forEach((d, _) => {
-          totalAmount += parseInt(d.amount)
-        })
+        // let totalAmount = 0;
+        // data.forEach((d, _) => {
+        //   totalAmount += parseInt(d.amount)
+        // })
 
-        return res.status(200).json({ totalAmount });
+        const total = data.reduce((acc, i) => {
+          acc += parseInt(i.amount);
+          return acc;
+        }, 0)
+
+        return res.status(200).json({ totalAmount: total });
 
       }
 
@@ -285,7 +290,6 @@ const filter = async (req, res) => {
 
 
   if (fromDate && toDate) {
-    console.log(`fromDate ${fromDate} \n toDate ${toDate}`)
     query["paymentInDate"] = {
       $gte: new Date(fromDate),
       $lte: new Date(toDate)
@@ -302,7 +306,8 @@ const filter = async (req, res) => {
 
 
   let totalData = await paymentInModel.find({ ...query, isDel: false }).countDocuments();
-  let allData = await paymentInModel.find({ ...query, isDel: false }).skip(skip).limit(limit).sort({ _id: -1 }).populate('party');
+  let allData = await paymentInModel.find({ ...query, isDel: false })
+    .skip(skip).limit(limit).sort({ _id: -1 }).populate('party');
 
 
   if (party && gst) {

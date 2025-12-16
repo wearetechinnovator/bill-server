@@ -12,8 +12,6 @@ const add = async (req, res) => {
     discountPercentage, additionalCharge, note, terms, update, id, billStatus, finalAmount
   } = req.body;
 
-
-
   // Update only bill status :::::::::::::::;
   if (update && id && billStatus && Object.keys(req.body).length === 4) {
     console.log('Updating bill status only...');
@@ -219,7 +217,6 @@ const remove = async (req, res) => {
 };
 
 
-
 // Resoter from trash
 const restore = async (req, res) => {
   const { ids } = req.body;
@@ -246,7 +243,6 @@ const restore = async (req, res) => {
     return res.status(500).json({ err: "Something went wrong", restore: false });
   }
 }
-
 
 
 
@@ -318,5 +314,9 @@ const filter = async (req, res) => {
 
 
 module.exports = {
-  add, get, remove, restore, filter
+  add,
+  get,
+  remove,
+  restore,
+  filter
 }

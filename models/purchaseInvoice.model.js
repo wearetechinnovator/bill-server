@@ -39,7 +39,6 @@ const itemSchema = new mongoose.Schema({
   amount: {
     type: String
   },
-  batchId: String,
   expireDate: Date
 }, { _id: false });
 

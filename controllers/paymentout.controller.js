@@ -126,14 +126,19 @@ const get = async (req, res) => {
     }
     else {
       if (totalPayment) {
-        data = await paymentOutModel.find({ isDel: false, isTrash: false });
-        let totalAmount = 0;
+        data = await paymentOutModel.find({ isDel: false, isTrash: false, companyId: getUser.activeCompany });
+        
+        // let totalAmount = 0;
+        // data.forEach((d, _) => {
+        //   totalAmount += parseInt(d.amount)
+        // })
 
-        data.forEach((d, _) => {
-          totalAmount += parseInt(d.amount)
-        })
+        const total = data.reduce((acc, i) => {
+          acc += parseInt(i.amount);
+          return acc;
+        }, 0)
 
-        return res.status(200).json({ totalAmount });
+        return res.status(200).json({ totalAmount: total });
 
       }
 

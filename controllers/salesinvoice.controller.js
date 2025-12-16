@@ -5,6 +5,8 @@ const paymentinModel = require("../models/paymentin.model");
 const companyModel = require("../models/company.model");
 const Log = require('../helper/insertLog');
 const { addLadger } = require('./ladger.controller');
+const salesinvoiceModel = require('../models/salesinvoice.model');
+const { default: mongoose } = require('mongoose');
 
 
 
@@ -15,7 +17,6 @@ const add = async (req, res) => {
     discountAmount, discountPercentage, additionalCharge, note, terms, update, id, paymentStatus,
     paymentAccount, finalAmount, paymentAmount
   } = req.body;
-
 
 
   if ([token, party, salesInvoiceNumber, invoiceDate, items]
@@ -113,7 +114,6 @@ const add = async (req, res) => {
   }
 
 };
-
 
 
 // Get Controller;
@@ -253,7 +253,6 @@ const remove = async (req, res) => {
 };
 
 
-
 // Resoter from trash
 const restore = async (req, res) => {
   const { ids } = req.body;
@@ -349,7 +348,55 @@ const filter = async (req, res) => {
 }
 
 
+const summaryReport = async (req, res) => {
+  const { token } = req.body;
+
+  if (!token) {
+    return res.status(500).json({ 'err': 'Invalid user', get: false });
+  }
+
+  try {
+    const getInfo = await getId(token);
+    const getUser = await userModel.findOne({ _id: getInfo._id });
+
+    const data = await salesinvoiceModel.aggregate([
+      {
+        $match: {
+          userId: new mongoose.Types.ObjectId(getInfo._id),
+          companyId: new mongoose.Types.ObjectId(getUser.activeCompany),
+        }
+      },
+      { $unwind: "$items" },
+      {
+        $group: {
+          _id: "$_id",
+          totalAmount: { $sum: { $toDouble: "$items.amount" } },
+          totalTax: { $sum: { $toDouble: "$items.taxAmount" } }
+        }
+      },
+      {
+        $addFields: {
+          totalTaxable: { $subtract: ["$totalAmount", "$totalTax"] }
+        }
+      }
+    ]);
+
+    res.send(data);
+
+  } catch (error) {
+    console.log(error)
+    return res.status(500).json({ err: "Something went wrong" });
+  }
+}
+
+
+
 module.exports = {
-  add, get, remove, restore, filter
+  add,
+  get,
+  remove,
+  restore,
+  filter,
+  summaryReport
 }
 

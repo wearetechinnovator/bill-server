@@ -29,5 +29,4 @@ const verifiToken = (req, res) => {
   }
 }
 
-
 module.exports = { auth, verifiToken };
