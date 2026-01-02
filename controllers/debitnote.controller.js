@@ -2,13 +2,14 @@ const { getId } = require('../helper/getIdFromToken');
 const debitNoteModel = require('../models/debitnote.model');
 const userModel = require('../models/user.model');
 const Log = require("../helper/insertLog");
+const purchaseInvoiceModel = require('../models/purchaseInvoice.model');
 
 
 
 // Create and Save a new Quotation;
 const add = async (req, res) => {
   const {
-    token, party, debitNoteNumber, debitNoteDate, items, discountType,
+    token, party, debitNoteNumber, debitNoteDate, items, discountType, purchaseInvoice,
     discountAmount, discountPercentage, additionalCharge, note, terms, update, id, finalAmount
   } = req.body;
 
@@ -35,7 +36,7 @@ const add = async (req, res) => {
     if (update && id) {
       const update = await debitNoteModel.updateOne({ _id: id }, {
         $set: {
-          party, debitNoteNumber, debitNoteDate, items,
+          party, debitNoteNumber, debitNoteDate, items, purchaseInvoice,
           discountType, discountAmount, discountPercentage, additionalCharge, note, terms
         }
       })
@@ -50,7 +51,7 @@ const add = async (req, res) => {
 
     const insert = await debitNoteModel.create({
       userId: getUserData._id, companyId: getUserData.activeCompany,
-      party, debitNoteNumber, debitNoteDate, items,
+      party, debitNoteNumber, debitNoteDate, purchaseInvoice, items,
       discountType, discountAmount, discountPercentage, additionalCharge, note, terms
     });
 
@@ -271,8 +272,42 @@ const filter = async (req, res) => {
 }
 
 
+//Get Purchase bill by party ID
+const getPurchase = async (req, res) => {
+  const { token, partyId } = req.body;
+
+  if (!token || !partyId) {
+    return res.status(500).json({ 'err': 'token and party id is requires' });
+  }
+
+  try {
+    const getInfo = await getId(token);
+    const getUser = await userModel.findOne({ _id: getInfo._id });
+
+
+    const bill = await purchaseInvoiceModel.find({
+      companyId: getUser.activeCompany,
+      party: partyId,
+      isDel: false
+    });
+
+    if (!bill || bill.length === 0) {
+      return res.status(404).json({ err: 'No inoice generate for this party' })
+    }
+
+    return res.status(200).json({ data: bill });
+
+  } catch (error) {
+    console.log(error)
+    return res.status(500).json({ 'err': 'Something went wrong' });
+  }
+
+}
+
+
 
 module.exports = {
-  add, get, remove, restore, filter
+  add, get, remove, restore, filter,
+  getPurchase
 }
 

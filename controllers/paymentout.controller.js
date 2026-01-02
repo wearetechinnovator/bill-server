@@ -1,3 +1,4 @@
+const { default: mongoose } = require("mongoose");
 const { getId } = require("../helper/getIdFromToken");
 const paymentOutModel = require("../models/paymentout.model");
 const purchaseInvoiceModel = require("../models/purchaseInvoice.model");
@@ -298,7 +299,118 @@ const filter = async (req, res) => {
 }
 
 
+const getMonthWisePaymentOut = async (req, res) => {
+  const { token } = req.body;
+
+  if (!token) {
+    return res.status(500).json({ 'err': 'Invalid user' });
+  }
+
+  try {
+    const getInfo = await getId(token);
+    const getUserData = await userModel.findOne({ _id: getInfo._id });
+
+    const currentYear = new Date().getFullYear();
+
+    const result = await paymentOutModel.aggregate([
+      {
+        $match: {
+          isTrash: false,
+          isDel: false,
+          userId: new mongoose.Types.ObjectId(String(getInfo._id)),
+          companyId: new mongoose.Types.ObjectId(getUserData.activeCompany),
+          paymentOutDate: {
+            $gte: new Date(`${currentYear}-01-01T00:00:00.000Z`),
+            $lte: new Date(`${currentYear}-12-31T23:59:59.999Z`)
+          }
+        }
+      },
+      {
+        $group: {
+          _id: { month: { $month: "$paymentOutDate" } },
+          totalAmount: { $sum: { $toDouble: "$amount" } }
+        }
+      },
+      {
+        // Convert grouped format -> { month, totalAmount }
+        $project: {
+          _id: 0,
+          month: "$_id.month",
+          totalAmount: 1
+        }
+      },
+      {
+        // Create array [1..12]
+        $facet: {
+          data: [{ $sort: { month: 1 } }],
+          months: [
+            {
+              $project: {
+                months: { $range: [1, 13] }  // 1 to 12
+              }
+            }
+          ]
+        }
+      },
+      {
+        // Merge all months with actual data
+        $project: {
+          months: { $arrayElemAt: ["$months.months", 0] },
+          data: 1
+        }
+      },
+      {
+        $project: {
+          final: {
+            $map: {
+              input: "$months",
+              as: "m",
+              in: {
+                month: "$$m",
+                totalAmount: {
+                  $let: {
+                    vars: {
+                      match: {
+                        $arrayElemAt: [
+                          {
+                            $filter: {
+                              input: "$data",
+                              as: "d",
+                              cond: { $eq: ["$$d.month", "$$m"] }
+                            }
+                          },
+                          0
+                        ]
+                      }
+                    },
+                    in: { $ifNull: ["$$match.totalAmount", 0] }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        $unwind: "$final"
+      },
+      {
+        $replaceRoot: { newRoot: "$final" }
+      },
+      { $sort: { month: 1 } }
+    ]);
+
+    return res.json(result);
+
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+
 
 module.exports = {
-  add, get, remove, restore, filter
+  add, get, remove, restore, filter,
+  getMonthWisePaymentOut
 }

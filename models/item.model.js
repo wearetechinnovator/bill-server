@@ -15,12 +15,18 @@ const itemSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  type: {
+  type: String, // item Type
+  hsn: String,
+  tax: String,
+  salePrice: String,
+  saleTaxType: {
     type: String,
+    enum: ["0", "1"] //0=`Without Tax` | 1=`With Tax`
   },
-  salePrice: {
+  purchasePrice: String,
+  purchaseTaxType: {
     type: String,
-    required: true
+    enum: ["0", "1"] //0=`Without Tax` | 1=`With Tax`
   },
   category: {
     type: mongoose.Schema.Types.ObjectId,

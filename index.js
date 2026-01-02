@@ -68,10 +68,8 @@ app.use("/api/v1/other-transaction/", otherTrancationRoute);
 app.use("/api/v1/partycategory/", partyCategoryRoute);
 
 
-app.get("/", (req, res)=>{
-  res.status(200).json({
-    msg: "Hello world"
-  })
+app.get("/", (req, res) => {
+  res.send({msg:"Hello world"})
 })
 
 
@@ -81,7 +79,7 @@ mongoose.connect(process.env.MONGO_URI).then(() => {
   console.log("[*] Database run")
 
   app.listen(PORT || 8080, () => {
-    console.log("[*] Server run", PORT )
+    console.log("[*] Server run", PORT)
   })
 
 }).catch(err => {

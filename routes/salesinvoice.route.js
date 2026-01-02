@@ -1,4 +1,7 @@
-const { add, get, remove, restore, filter, summaryReport } = require("../controllers/salesinvoice.controller");
+const {
+  add, get, remove,
+  restore, filter, summaryReport, getTotalCollect
+} = require("../controllers/salesinvoice.controller");
 const router = require("express").Router();
 
 
@@ -18,7 +21,6 @@ router
   .route("/restore")
   .post(restore)
 
-
 router
   .route("/filter")
   .post(filter);
@@ -28,5 +30,10 @@ router
   .post(summaryReport);
 
 
-module.exports = router;
+router
+  .route("/get-total-collect")
+  .post(getTotalCollect);
 
+
+
+module.exports = router;

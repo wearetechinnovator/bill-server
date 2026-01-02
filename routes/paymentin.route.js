@@ -1,4 +1,4 @@
-const { add, get, remove, restore, filter } = require("../controllers/paymentin.controller");
+const { add, get, remove, restore, filter, getMonthWisePaymentIn } = require("../controllers/paymentin.controller");
 const router = require("express").Router();
 
 router
@@ -21,5 +21,10 @@ router
 router
   .route("/filter")
   .post(filter);
+
+router
+  .route("/month-wise")
+  .post(getMonthWisePaymentIn);
+
 
 module.exports = router;

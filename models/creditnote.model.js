@@ -48,6 +48,10 @@ const creditNoteSchema = new mongoose.Schema({
     type: Date,
     required: true
   },
+  salesInvoice: {
+    type: String,
+    required: true
+  },
   items: {
     type: [itemSchema],
     required: true

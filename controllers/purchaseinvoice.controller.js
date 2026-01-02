@@ -4,6 +4,7 @@ const userModel = require('../models/user.model');
 const itemModel = require('../models/item.model');
 const paymentoutModel = require('../models/paymentout.model');
 const Log = require('../helper/insertLog');
+const { default: mongoose } = require('mongoose');
 
 
 
@@ -137,7 +138,6 @@ const get = async (req, res) => {
 
     }
     else if (invoice) {
-      console.log("request--->", invoice, party)
       getData = await purchaseInvoiceModel.find({
         companyId: getUser.activeCompany,
         party: party || null,
@@ -157,7 +157,6 @@ const get = async (req, res) => {
       return res.status(500).json({ 'err': 'No Invoice availble', get: false });
     }
 
-    console.log(getData)
     return res.status(200).json({ data: getData, totalData: totalData });
 
   } catch (error) {
@@ -263,7 +262,6 @@ const filter = async (req, res) => {
 
 
   if (fromDate && toDate) {
-    console.log(`fromDate ${fromDate} \n toDate ${toDate}`)
     query["invoiceDate"] = {
       $gte: new Date(fromDate),
       $lte: new Date(toDate)
@@ -302,8 +300,50 @@ const filter = async (req, res) => {
 }
 
 
+/**
+ * Get Total Pay.
+ * Used Module: [Dashboard]
+ */
+const getTotalPay = async (req, res) => {
+  const { token } = req.body;
+
+  if (!token) {
+    return res.status(500).json({ 'err': 'Invalid user' });
+  }
+
+  try {
+    const getInfo = await getId(token);
+    if (!getInfo) return res.status(401).json({ err: 'invalid token' });
+    const getUser = await userModel.findOne({ _id: getInfo._id, isDel: false });
+
+    const data = await purchaseInvoiceModel.aggregate([
+      {
+        $match: {
+          userId: new mongoose.Types.ObjectId(String(getInfo._id)),
+          companyId: new mongoose.Types.ObjectId(getUser.activeCompany),
+          paymentStatus: { $ne: '0' },
+          isDel: false,
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          totalAmount: { $sum: { $toDouble: "$dueAmount" } },
+        }
+      }
+    ]);
+
+    return res.status(200).json(data);
+
+  } catch (error) {
+    console.log(error)
+    return res.status(500).json({ err: "Something went wrong" });
+  }
+}
+
 
 module.exports = {
-  add, get, remove, restore, filter
+  add, get, remove, restore, filter,
+  getTotalPay
 }
 

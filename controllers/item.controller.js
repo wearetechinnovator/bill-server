@@ -2,13 +2,20 @@ const { getId } = require("../helper/getIdFromToken");
 const itemModel = require("../models/item.model");
 const userModel = require("../models/user.model");
 const purchaseInvoiceModel = require("../models/purchaseInvoice.model");
+const purchaseReturModel = require("../models/purchasereturn.model");
+const salesinvoiceModel = require("../models/salesinvoice.model");
+const salesReturnModel = require("../models/salesreturn.model");
+
+
 
 
 // Add controller;
 const add = async (req, res) => {
-  const { token, title, type, salePrice, category, details, update, id, unit, stock } = req.body;
+  const { token, title, type, salePrice, category, details, update, id, unit, stock, hsn,
+    purchasePrice, purchaseTaxType, saleTaxType, tax
+  } = req.body;
 
-  if ([token, title, salePrice, ].some(field => !field || field === "")) {
+  if ([token, title, salePrice,].some(field => !field || field === "")) {
     return res.json({ err: 'require fields are empty', create: false });
   }
 
@@ -30,7 +37,8 @@ const add = async (req, res) => {
     if (update && id) {
       const update = await itemModel.updateOne({ _id: id }, {
         $set: {
-          title, type, salePrice, category: category || null, details, unit
+          title, type, salePrice, category: category || null, details, unit, hsn,
+          purchasePrice, purchaseTaxType, saleTaxType, tax
         }
       })
 
@@ -59,14 +67,18 @@ const add = async (req, res) => {
       })
     }
 
+
     const insert = await itemModel.create({
-      userId: getUserData._id, companyId: getUserData.activeCompany,
-      title, type, salePrice, category: category || null, details, unit, stock: openingStock, alert: stockAlert
+      userId: getUserData._id, companyId: getUserData.activeCompany, hsn,
+      purchasePrice, purchaseTaxType, saleTaxType,
+      title, type, salePrice, category: category || null, details, unit,
+      stock: openingStock, alert: stockAlert, tax,
     });
 
     if (!insert) {
       return res.status(500).json({ err: 'Item creation failed', create: false })
     }
+
 
     return res.status(200).json(insert);
 
@@ -120,7 +132,7 @@ const get = async (req, res) => {
         companyId: getUser.activeCompany,
         isDel: false
       }).skip(skip).limit(limit).populate('category').sort({ _id: -1 });
-    } 
+    }
     else if (search) {
       if (searchText.trim() !== "") {
         getData = await itemModel.find({
@@ -145,41 +157,165 @@ const get = async (req, res) => {
 
 
 
-    // inCress stock ==========================================================
-    // ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    // ========================= [Get stock] =========================
 
-    // for (let i of getData) { // ittrate all data;
-    //   let pTitle = i.title;
-    //   let getPurchasebill = await purchaseInvoiceModel.find({});
+    const results = []; // array of { itemId, title, stockObj, totalSmallest }
+
+    if (getData.length > 0) {
+      for (const item of getData) {
+
+        // ---------------------------------------
+        // 1) Build conversion map (unit -> conversion)
+        // ---------------------------------------
+        const unitMap = {};
+        item?.unit?.forEach(u => {
+          unitMap[u.unit] = Number(u.conversion);
+        });
+
+        // Defensive: No units
+        const conversions = Object.values(unitMap);
+        if (conversions.length === 0) {
+          results.push({ itemId: item._id, title: item.title, stock: {} });
+          continue;
+        }
+
+        // Smallest = highest conversion numeric
+        const maxConv = Math.max(...conversions);
+
+        // Convert each unit to smallest-unit multiplier
+        const unitSizeInSmallest = {};
+        for (const [u, conv] of Object.entries(unitMap)) {
+          unitSizeInSmallest[u] = maxConv / conv;
+        }
+
+        // ------------------------------------------------------
+        //                     PURCHASE TOTAL
+        // ------------------------------------------------------
+        let purchaseSmallest = 0;
+        const purchaseInv = await purchaseInvoiceModel.find({
+          "items.itemId": item._id.toString(),
+          isDel: false
+        });
+
+        purchaseInv.forEach(inv => {
+          (inv.items || []).forEach(pItem => {
+            if (String(pItem.itemId) !== String(item._id)) return;
+
+            const qty = Number(pItem.qun) || 0;
+            const usedUnit = pItem.selectedUnit;
+            const size = unitSizeInSmallest[usedUnit];
+            if (!size) return;
+
+            purchaseSmallest += qty * size;
+          });
+        });
+
+        // ------------------------------------------------------
+        //                PURCHASE RETURN (SUBTRACT)
+        // ------------------------------------------------------
+        let purchaseReturnSmallest = 0;
+        const purchaseReturnInv = await purchaseReturModel.find({
+          "items.itemId": item._id.toString(),
+          isDel: false
+        });
+
+        purchaseReturnInv.forEach(inv => {
+          (inv.items || []).forEach(pItem => {
+            if (String(pItem.itemId) !== String(item._id)) return;
+
+            const qty = Number(pItem.qun) || 0;
+            const usedUnit = pItem.selectedUnit;
+            const size = unitSizeInSmallest[usedUnit];
+            if (!size) return;
+
+            purchaseReturnSmallest += qty * size; // FIXED
+          });
+        });
+
+        // ------------------------------------------------------
+        //                  SALES TOTAL (SUBTRACT)
+        // ------------------------------------------------------
+        let salesSmallest = 0;
+        const salesInv = await salesinvoiceModel.find({
+          "items.itemId": item._id.toString(),
+          isDel: false
+        });
+
+        salesInv.forEach(inv => {
+          (inv.items || []).forEach(sItem => {
+            if (String(sItem.itemId) !== String(item._id)) return;
+
+            const qty = Number(sItem.qun) || 0;
+            const usedUnit = sItem.selectedUnit;
+            const size = unitSizeInSmallest[usedUnit];
+            if (!size) return;
+
+            salesSmallest += qty * size;
+          });
+        });
+
+        // ------------------------------------------------------
+        //                  SALES RETURN  (ADD)
+        // ------------------------------------------------------
+        let salesReturnSmallest = 0;
+        const salesReturnInv = await salesReturnModel.find({
+          "items.itemId": item._id.toString(),
+          isDel: false
+        });
+
+        salesReturnInv.forEach(inv => {
+          (inv.items || []).forEach(sItem => {
+            if (String(sItem.itemId) !== String(item._id)) return;
+
+            const qty = Number(sItem.qun) || 0;
+            const usedUnit = sItem.selectedUnit;
+            const size = unitSizeInSmallest[usedUnit];
+            if (!size) return;
+
+            salesReturnSmallest += qty * size; // FIXED
+          });
+        });
+
+        // ------------------------------------------------------
+        //                     FINAL STOCK
+        // ------------------------------------------------------
+        const totalSmallestUnits =
+          purchaseSmallest
+          - salesSmallest
+          - purchaseReturnSmallest
+          + salesReturnSmallest;
+
+        // ------------------------------------------------------
+        //              Convert smallest → units
+        // ------------------------------------------------------
+        const sortedUnits = Object.keys(unitSizeInSmallest)
+          .sort((a, b) => unitSizeInSmallest[b] - unitSizeInSmallest[a]);
+
+        let remaining = totalSmallestUnits;
+        const stockObj = {};
+
+        for (const u of sortedUnits) {
+          const size = unitSizeInSmallest[u];
+          const qty = Math.floor(remaining / size);
+          stockObj[u] = qty;
+          remaining -= qty * size;
+        }
+
+        // ------------------------------------------------------
+        //                    PUSH FINAL RESULT
+        // ------------------------------------------------------
+        results.push({
+          itemId: item._id,
+          title: item.title,
+          totalSmallestUnits,
+          stock: stockObj
+        });
+
+      } // end for loop
+    }
 
 
-    //   for (let p of getPurchasebill) { // ittrate purchase bill;
-    //     const item = p.items;
-
-    //     item.forEach((i, _) => { //ittrate bill items;
-
-
-    //       const unit = i.unit;
-
-    //       // identify current product
-    //       if (i.itemName.trim() === pTitle.trim()) {
-
-    //       } else {
-
-    //       }
-
-    //     })
-
-
-    //   }
-
-    // }
-
-
-
-
-
-    return res.status(200).json({ data: getData, totalData: totalData });
+    return res.status(200).json({ data: getData, totalData: totalData, stock: results });
 
   } catch (error) {
     console.log(error)

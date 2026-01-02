@@ -3,12 +3,13 @@ const creditNoteModel = require('../models/creditnote.model');
 const userModel = require('../models/user.model');
 const companyModel = require("../models/company.model");
 const Log = require("../helper/insertLog");
+const salesinvoiceModel = require('../models/salesinvoice.model');
 
 
 // Create and Save a new Quotation;
 const add = async (req, res) => {
   const {
-    token, party, creditNoteNumber, creditNoteDate, items, discountType,
+    token, party, creditNoteNumber, creditNoteDate, items, discountType, salesInvoice,
     discountAmount, discountPercentage, additionalCharge, note, terms, update, id, finalAmount
   } = req.body;
 
@@ -31,11 +32,12 @@ const add = async (req, res) => {
     }
 
 
+
     // update code.....
     if (update && id) {
       const update = await creditNoteModel.updateOne({ _id: id }, {
         $set: {
-          party, creditNoteNumber, creditNoteDate, items,
+          party, creditNoteNumber, creditNoteDate, items, salesInvoice,
           discountType, discountAmount, discountPercentage, additionalCharge, note, terms
         }
       })
@@ -59,7 +61,7 @@ const add = async (req, res) => {
 
     const insert = await creditNoteModel.create({
       userId: getUserData._id, companyId: getUserData.activeCompany,
-      party, creditNoteNumber, creditNoteDate, items,
+      party, creditNoteNumber, creditNoteDate, salesInvoice, items,
       discountType, discountAmount, discountPercentage, additionalCharge, note, terms
     });
 
@@ -256,8 +258,8 @@ const filter = async (req, res) => {
     }
   }
 
-  let totalData = await creditNoteModel.find({...query, isDel: false}).countDocuments();
-  let allData = await creditNoteModel.find({...query, isDel: false}).skip(skip).limit(limit).sort({ _id: -1 }).populate('party');
+  let totalData = await creditNoteModel.find({ ...query, isDel: false }).countDocuments();
+  let allData = await creditNoteModel.find({ ...query, isDel: false }).skip(skip).limit(limit).sort({ _id: -1 }).populate('party');
 
 
   if (party && gst) {
@@ -279,9 +281,42 @@ const filter = async (req, res) => {
 
 }
 
+//Get Sales bill by party ID
+const getSales = async (req, res) => {
+  const { token, partyId } = req.body;
+
+  if (!token || !partyId) {
+    return res.status(500).json({ 'err': 'token and party id is requires' });
+  }
+
+  try {
+    const getInfo = await getId(token);
+    const getUser = await userModel.findOne({ _id: getInfo._id });
+
+
+    const bill = await salesinvoiceModel.find({
+      companyId: getUser.activeCompany,
+      party: partyId,
+      isDel: false
+    });
+
+    if(!bill || bill.length === 0){
+      return res.status(404).json({err: 'No inoice generate for this party'})
+    }
+
+    return res.status(200).json({data: bill});
+
+  } catch (error) {
+    console.log(error)
+    return res.status(500).json({ 'err': 'Something went wrong' });
+  }
+
+}
+
 
 
 module.exports = {
-  add, get, remove, restore, filter
+  add, get, remove, restore, filter,
+  getSales
 }
 

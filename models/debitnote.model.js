@@ -48,6 +48,10 @@ const debitNoteSchema = new mongoose.Schema({
     type: Date,
     required: true
   },
+  purchaseInvoice: {
+    type: String,
+    required: true
+  },
   items: {
     type: [itemSchema],
     required: true
