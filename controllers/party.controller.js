@@ -71,7 +71,7 @@ const add = async (req, res) => {
 
 // Get Controller;
 const get = async (req, res) => {
-  const { token, trash, id, all, search, searchText } = req.body;
+  const { token, trash, id, all, search, searchText, partyType } = req.body;
   const { page, limit } = req.query;
   const skip = (parseInt(page) - 1) * parseInt(limit);
 
@@ -116,6 +116,10 @@ const get = async (req, res) => {
         getData = await partyModel.find({
           name: { $regex: searchText.trim(), $options: "i" },
           companyId: getUser.activeCompany,
+          $or: [
+            { type: partyType },
+            { type: "both" }
+          ],
           isDel: false,
           isTrash: false
         }).sort({ _id: -1 }).select("_id name");
