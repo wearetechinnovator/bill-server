@@ -41,6 +41,7 @@ const paymentOut = require("./routes/paymentout.route");
 const accountRoute = require("./routes/account.route");
 const otherTrancationRoute = require("./routes/transaction.route");
 const partyCategoryRoute = require("./routes/partycategory.route");
+const staffRoute = require("./routes/staff.route");
 
 
 
@@ -66,6 +67,7 @@ app.use('/api/v1/paymentout/', paymentOut);
 app.use('/api/v1/account/', accountRoute);
 app.use("/api/v1/other-transaction/", otherTrancationRoute);
 app.use("/api/v1/partycategory/", partyCategoryRoute);
+app.use("/api/v1/staff/", staffRoute);
 
 
 app.get("/", (req, res) => {
