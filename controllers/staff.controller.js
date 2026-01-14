@@ -8,7 +8,8 @@ const attendanceSettingModel = require("../models/attendanceSetting.model");
 const add = async (req, res) => {
   const {
     token, staffName, mobileNumber, dob, joiningDate, salaryPayOutType,
-    id, salary, salaryCycle, openingBalance, openingBalanceType, update
+    id, salary, salaryCycle, openingBalance, openingBalanceType, email,
+    update
 
   } = req.body;
 
@@ -33,7 +34,7 @@ const add = async (req, res) => {
       const update = await staffModel.updateOne({ _id: id }, {
         $set: {
           staffName, mobileNumber, dob, joiningDate, salaryPayOutType,
-          salary, salaryCycle, openingBalance, openingBalanceType
+          salary, salaryCycle, openingBalance, openingBalanceType, email
         }
       })
 
@@ -48,7 +49,7 @@ const add = async (req, res) => {
     const insert = await staffModel.create({
       userId: getUserData._id, companyId: getUserData.activeCompany,
       staffName, mobileNumber, dob, joiningDate, salaryPayOutType,
-      salary, salaryCycle, openingBalance, openingBalanceType
+      salary, salaryCycle, openingBalance, openingBalanceType, emails
     });
 
     if (!insert) {

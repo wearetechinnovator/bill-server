@@ -13,6 +13,7 @@ const staffSchema = new mongoose.Schema({
     },
     staffName: String,
     mobileNumber: String,
+    email: String,
     dob: Date,
     joiningDate: String,
     salaryPayOutType: String,
