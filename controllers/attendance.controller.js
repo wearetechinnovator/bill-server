@@ -7,7 +7,7 @@ const { default: mongoose } = require("mongoose");
 
 const addAttendance = async (req, res) => {
     const { attendanceData, token } = req.body;
-
+    
     if ([attendanceData, token].some((field) => !field || field === "") || attendanceData.length === 0) {
         return res.status(500).json({ err: "require fields are empty" });
     }
