@@ -10,7 +10,7 @@ const Log = require("../helper/insertLog");
 const add = async (req, res) => {
   const {
     token, party, proformaNumber, estimateDate, validDate, items, discountType, discountAmount,
-    discountPercentage, additionalCharge, note, terms, update, id, finalAmount
+    discountPercentage, additionalCharge, note, terms, update, id, finalAmount, accountId
   } = req.body;
 
   if ([token, party, proformaNumber, estimateDate, items]
@@ -34,7 +34,7 @@ const add = async (req, res) => {
     if (update && id) {
       const update = await proformaModel.updateOne({ _id: id }, {
         $set: {
-          party, proformaNumber, estimateDate, validDate, items,
+          party, proformaNumber, estimateDate, validDate, items, accountId,
           discountType, discountAmount, discountPercentage, additionalCharge, note, terms
         }
       })
@@ -58,7 +58,7 @@ const add = async (req, res) => {
 
     const insert = await proformaModel.create({
       userId: getUserData._id, companyId: getUserData.activeCompany,
-      party, proformaNumber, estimateDate, validDate, items,
+      party, proformaNumber, estimateDate, validDate, items, accountId: accountId || null,
       discountType, discountAmount, discountPercentage, additionalCharge, note, terms
     });
 
@@ -107,7 +107,7 @@ const get = async (req, res) => {
         _id: id,
         isTrash: false,
         isDel: false
-      }).populate("party");
+      }).populate("party").populate('accountId');
     }
     else if (trash) {
       getData = await proformaModel.find({

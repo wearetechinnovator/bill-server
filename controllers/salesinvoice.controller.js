@@ -15,7 +15,7 @@ const add = async (req, res) => {
   const {
     token, party, salesInvoiceNumber, invoiceDate, DueDate, items, discountType,
     discountAmount, discountPercentage, additionalCharge, note, terms, update, id, paymentStatus,
-    paymentAccount, finalAmount, paymentAmount
+    paymentAccount, finalAmount, paymentAmount, accountId
   } = req.body;
 
 
@@ -66,7 +66,7 @@ const add = async (req, res) => {
     if (update && id) {
       const update = await salesInvoiceModel.updateOne({ _id: id }, {
         $set: {
-          party, salesInvoiceNumber, invoiceDate, DueDate, items,
+          party, salesInvoiceNumber, invoiceDate, DueDate, items, accountId: accountId || null,
           discountType, discountAmount, discountPercentage, additionalCharge, note, terms,
           paymentStatus: payStatus, paymentAccount, dueAmount: (finalAmount - paymentAmount)
         }
@@ -92,7 +92,7 @@ const add = async (req, res) => {
 
     const insert = await salesInvoiceModel.create({
       userId: getUserData._id, companyId: getUserData.activeCompany,
-      party, salesInvoiceNumber, invoiceDate, DueDate, items,
+      party, salesInvoiceNumber, invoiceDate, DueDate, items, accountId,
       discountType, discountAmount, discountPercentage, additionalCharge, note, terms,
       paymentStatus: payStatus, paymentAccount, dueAmount: (finalAmount - paymentAmount)
     });
@@ -159,7 +159,7 @@ const get = async (req, res) => {
         _id: id,
         isTrash: false,
         isDel: false
-      }).populate("party");
+      }).populate("party").populate('accountId');
     }
     else if (trash) {
       getData = await salesInvoiceModel.find({

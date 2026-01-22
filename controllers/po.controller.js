@@ -13,7 +13,7 @@ const add = async (req, res) => {
     discountPercentage, additionalCharge, note, terms, update, id, finalAmount
   } = req.body;
 
-  if ([token, party, poNumber, poDate, validDate, items]
+  if ([token, party, poNumber, poDate, items]
     .some(field => !field || field === '')) {
     return res.status(400).json({ err: 'fill the blank server' });
   }

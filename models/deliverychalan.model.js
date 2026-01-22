@@ -40,40 +40,20 @@ const deliveryChalanSchema = new mongoose.Schema({
     ref: 'party',
     required: true
   },
-  chalanNumber: {
-    type: String,
-    required: true
+  accountId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'account',
   },
-  chalanDate: {
-    type: Date,
-    required: true
-  },
-  validDate: {
-    type: Date,
-    required: true
-  },
-  items: {
-    type: [itemSchema],
-    required: true
-  },
-  discountType: {
-    type: String,
-  },
-  discountAmount: {
-    type: String,
-  },
-  discountPercentage: {
-    type: String,
-  },
-  additionalCharge: {
-    type: [additionalChargeSchema],
-  },
-  note: {
-    type: String,
-  },
-  terms: {
-    type: String,
-  },
+  chalanNumber: String,
+  chalanDate: Date,
+  validDate: Date,
+  items: [itemSchema],
+  discountType: String,
+  discountAmount: String,
+  discountPercentage: String,
+  additionalCharge: [additionalChargeSchema],
+  note: String,
+  terms: String,
   isDel: {
     type: Boolean,
     default: false
@@ -84,5 +64,5 @@ const deliveryChalanSchema = new mongoose.Schema({
   }
 }, { timestamps: true });
 
-module.exports = mongoose.model("deliverychalan", deliveryChalanSchema);
 
+module.exports = mongoose.model("deliverychalan", deliveryChalanSchema);

@@ -40,50 +40,27 @@ const salesInvoiceSchema = new mongoose.Schema({
     ref: 'party',
     required: true
   },
-  salesInvoiceNumber: {
-    type: String,
-    required: true
+  accountId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'account',
   },
-  invoiceDate: {
-    type: Date,
-    required: true
-  },
-  DueDate: {
-    type: Date,
-  },
-  items: {
-    type: [itemSchema],
-    required: true
-  },
-  discountType: {
-    type: String,
-  },
-  discountAmount: {
-    type: String,
-  },
-  discountPercentage: {
-    type: String,
-  },
-  additionalCharge: {
-    type: [additionalChargeSchema],
-  },
+  salesInvoiceNumber: String,
+  invoiceDate: Date,
+  DueDate: Date,
+  items: [itemSchema],
+  discountType: String,
+  discountAmount: String,
+  discountPercentage: String,
+  additionalCharge: [additionalChargeSchema],
   paymentStatus: {
     type: String,
-    enumm: ['0', '1', '2'], // 0=notPaid | 1=paid | 2=partialPaid;
+    enumm: ['0', '1', '2'], // 0=`notPaid` | 1=`paid` | 2=`partialPaid`;
     default: '0'
   },
-  dueAmount: {
-    type: String
-  },
-  paymentAccount: {
-    type: String
-  },
-  note: {
-    type: String,
-  },
-  terms: {
-    type: String,
-  },
+  dueAmount: String,
+  paymentAccount: String,
+  note: String,
+  terms: String,
   isDel: {
     type: Boolean,
     default: false
@@ -93,5 +70,6 @@ const salesInvoiceSchema = new mongoose.Schema({
     default: false
   }
 }, { timestamps: true });
+
 
 module.exports = mongoose.model("salesinvoice", salesInvoiceSchema);

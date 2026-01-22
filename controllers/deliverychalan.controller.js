@@ -10,10 +10,10 @@ const Log = require("../helper/insertLog");
 const add = async (req, res) => {
   const {
     token, party, chalanNumber, chalanDate, validDate, items, discountType, discountAmount,
-    discountPercentage, additionalCharge, note, terms, update, id, finalAmount
+    discountPercentage, additionalCharge, note, terms, update, id, finalAmount, accountId
   } = req.body;
 
-  if ([token, party, chalanNumber, chalanDate, validDate, items]
+  if ([token, party, chalanNumber, chalanDate, items]
     .some(field => !field || field === '')) {
     return res.status(400).json({ err: 'fill the blank server' });
   }
@@ -34,7 +34,7 @@ const add = async (req, res) => {
     if (update && id) {
       const update = await deliverChalanModel.updateOne({ _id: id }, {
         $set: {
-          party, chalanNumber, chalanDate, validDate, items,
+          party, chalanNumber, chalanDate, validDate, items, accountId: accountId || null,
           discountType, discountAmount, discountPercentage, additionalCharge, note, terms
         }
       })
@@ -58,7 +58,7 @@ const add = async (req, res) => {
 
     const insert = await deliverChalanModel.create({
       userId: getUserData._id, companyId: getUserData.activeCompany,
-      party, chalanNumber, chalanDate, validDate, items,
+      party, chalanNumber, chalanDate, validDate, items, accountId,
       discountType, discountAmount, discountPercentage, additionalCharge, note, terms
     });
 
@@ -107,7 +107,7 @@ const get = async (req, res) => {
         _id: id,
         isTrash: false,
         isDel: false
-      }).populate("party");
+      }).populate("party").populate('accountId');
     }
     else if (trash) {
       getData = await deliverChalanModel.find({
@@ -142,6 +142,7 @@ const get = async (req, res) => {
   }
 
 }
+
 
 // Delete controller;
 const remove = async (req, res) => {
@@ -179,7 +180,6 @@ const remove = async (req, res) => {
     return res.status(500).json({ err: "Something went wrong", remove: false });
   }
 };
-
 
 
 // Resoter from trash

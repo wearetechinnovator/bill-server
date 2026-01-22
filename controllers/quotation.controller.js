@@ -9,12 +9,11 @@ const Log = require('../helper/insertLog');
 const add = async (req, res) => {
   const {
     token, party, quotationNumber, estimateDate, validDate, items, discountType, discountAmount,
-    discountPercentage, additionalCharge, note, terms, update, id, billStatus, finalAmount
+    discountPercentage, additionalCharge, note, terms, update, id, billStatus, finalAmount, accountId
   } = req.body;
 
   // Update only bill status :::::::::::::::;
   if (update && id && billStatus && Object.keys(req.body).length === 4) {
-    console.log('Updating bill status only...');
 
     const updateResult = await quotationModel.updateOne(
       { _id: id },
@@ -48,13 +47,13 @@ const add = async (req, res) => {
     }
 
 
-
     // update code.....
     if (update && id) {
       const update = await quotationModel.updateOne({ _id: id }, {
         $set: {
           party, quotationNumber, estimateDate, validDate, items, billStatus,
-          discountType, discountAmount, discountPercentage, additionalCharge, note, terms
+          discountType, discountAmount, discountPercentage, additionalCharge, note, terms,
+          accountId: accountId || null
         }
       })
 
@@ -79,7 +78,8 @@ const add = async (req, res) => {
     const insert = await quotationModel.create({
       userId: getUserData._id, companyId: getUserData.activeCompany,
       party, quotationNumber, estimateDate, validDate, items, billStatus,
-      discountType, discountAmount, discountPercentage, additionalCharge, note, terms
+      discountType, discountAmount, discountPercentage, additionalCharge, note, terms,
+      accountId
     });
 
     if (!insert) {
@@ -127,7 +127,7 @@ const get = async (req, res) => {
         _id: id,
         isTrash: false,
         isDel: false
-      }).populate("party");
+      }).populate("party").populate('accountId');
     }
     else if (trash) {
       getData = await quotationModel.find({

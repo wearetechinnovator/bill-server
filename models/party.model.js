@@ -11,51 +11,23 @@ const partySchema = new mongoose.Schema({
     ref: "Company",
     required: true
   },
-  name: {
-    type: String,
-    required: true
-  },
+  name: String,
   partyCategory: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "PartyCategory",
     defult: null
   },
-  type: {
-    type: String,
-    required: true
-  },
-  contactNumber: {
-    type: String,
-    required: true
-  },
-  email: {
-    type: String,
-  },
-  billingAddress: {
-    type: String,
-    required: true
-  },
-  pan: {
-    type: String,
-  },
-  gst: {
-    type: String,
-  },
-  billingCountry: {
-    type: String,
-  },
-  billingState: {
-    type: String,
-  },
-  shippingAddress: {
-    type: String,
-  },
-  shippingCountry: {
-    type: String,
-  },
-  shippingState: {
-    type: String,
-  },
+  type: String,
+  contactNumber: String,
+  email: String,
+  billingAddress: String,
+  pan: String,
+  gst: String,
+  billingCountry: String,
+  billingState: String,
+  shippingAddress: String,
+  shippingCountry: String,
+  shippingState: String,
   openingBalance: {
     type: String,
     default: 0
@@ -71,9 +43,7 @@ const partySchema = new mongoose.Schema({
   dob: {
     type: Date,
   },
-  details: {
-    type: String,
-  },
+  details: String,
   isDel: {
     type: Boolean,
     default: false

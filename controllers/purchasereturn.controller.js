@@ -8,7 +8,7 @@ const Log = require("../helper/insertLog");
 // Create and Save a new Quotation;
 const add = async (req, res) => {
   const {
-    token, party, purchaseReturnNumber, returnDate, items, discountType,
+    token, party, purchaseReturnNumber, returnDate, items, discountType, accountId,
     discountAmount, discountPercentage, additionalCharge, note, terms, update, id, finalAmount
   } = req.body;
 
@@ -35,7 +35,7 @@ const add = async (req, res) => {
     if (update && id) {
       const update = await purchaseReturnModel.updateOne({ _id: id }, {
         $set: {
-          party, purchaseReturnNumber, returnDate, items,
+          party, purchaseReturnNumber, returnDate, items, accountId: accountId || null,
           discountType, discountAmount, discountPercentage, additionalCharge, note, terms
         }
       })
@@ -50,7 +50,7 @@ const add = async (req, res) => {
 
     const insert = await purchaseReturnModel.create({
       userId: getUserData._id, companyId: getUserData.activeCompany,
-      party, purchaseReturnNumber, returnDate, items,
+      party, purchaseReturnNumber, returnDate, items, accountId,
       discountType, discountAmount, discountPercentage, additionalCharge, note, terms
     });
 
@@ -60,7 +60,7 @@ const add = async (req, res) => {
 
 
     // Insert party log
-    await Log.insertPartyLog(token, insert._id, party, "Delivery Chalan", finalAmount, '', purchasereturn);
+    await Log.insertPartyLog(token, insert._id, party, "Delivery Chalan", finalAmount, '', 'purchasereturn');
 
     return res.status(200).json(insert);
 
@@ -70,7 +70,6 @@ const add = async (req, res) => {
   }
 
 };
-
 
 
 // Get Controller;
@@ -99,7 +98,7 @@ const get = async (req, res) => {
         _id: id,
         isTrash: false,
         isDel: false
-      }).populate("party");
+      }).populate("party").populate('accountId');
     }
     else if (trash) {
       getData = await purchaseReturnModel.find({
@@ -174,7 +173,6 @@ const remove = async (req, res) => {
 };
 
 
-
 // Resoter from trash
 const restore = async (req, res) => {
   const { ids } = req.body;
@@ -201,7 +199,6 @@ const restore = async (req, res) => {
     return res.status(500).json({ err: "Something went wrong", restore: false });
   }
 }
-
 
 
 const filter = async (req, res) => {
@@ -269,7 +266,6 @@ const filter = async (req, res) => {
   return res.status(200).json({ data: allData, totalData: totalData });
 
 }
-
 
 
 module.exports = {

@@ -66,39 +66,20 @@ const proformaSchema = new mongoose.Schema({
     ref: 'party',
     required: true
   },
-  proformaNumber: {
-    type: String,
-    required: true
+  accountId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'account',
   },
-  estimateDate: {
-    type: Date,
-    required: true
-  },
-  validDate: {
-    type: Date,
-  },
-  items: {
-    type: [itemSchema],
-    required: true
-  },
-  discountType: {
-    type: String,
-  },
-  discountAmount: {
-    type: String,
-  },
-  discountPercentage: {
-    type: String,
-  },
-  additionalCharge: {
-    type: [additionalChargeSchema],
-  },
-  note: {
-    type: String,
-  },
-  terms: {
-    type: String,
-  },
+  proformaNumber: String,
+  estimateDate: Date,
+  validDate: Date,
+  items: [itemSchema],
+  discountType: String,
+  discountAmount: String,
+  discountPercentage: String,
+  additionalCharge: [additionalChargeSchema],
+  note: String,
+  terms: String,
   isDel: {
     type: Boolean,
     default: false

@@ -105,7 +105,7 @@ const get = async (req, res) => {
       getData = await accountModel.find({
         companyId: getUser.activeCompany,
         isDel: false
-      }).skip(skip).limit(limit)
+      })
     }
     else {
       getData = await accountModel.find({

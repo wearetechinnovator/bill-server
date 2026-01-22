@@ -11,33 +11,18 @@ const accountSchema = mongoose.Schema({
     ref: "Company",
     required: true,
   },
-  title: {
-    type: String,
-    required: true,
-  },
-  holderName: {
-    type: String,
-  },
-  accountNumber: {
-    type: String,
-  },
-  ifscCode: {
-    type: String,
-  },
-  bankName: {
-    type: String,
-  },
-  openingBalance: {
-    type: Number,
-  },
+  title: String,
+  holderName: String,
+  accountNumber: String,
+  ifscCode: String,
+  bankName: String,
+  openingBalance: Number,
   type: {
     type: String,
     enum: ['bank', 'cash', "cheque"],
     required: true,
   },
-  details: {
-    type: String,
-  },
+  details: String,
   isTrash: {
     type: Boolean,
     default: false,

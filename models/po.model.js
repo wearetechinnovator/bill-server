@@ -68,19 +68,15 @@ const purchaseOrder = new mongoose.Schema({
   },
   poNumber: {
     type: String,
-    requiredd: true
   },
   poDate: {
     type: Date,
-    requiredd: true
   },
   validDate: {
     type: Date,
-    requiredd: true
   },
   items: {
     type: [itemSchema],
-    requiredd: true
   },
   discountType: {
     type: String,

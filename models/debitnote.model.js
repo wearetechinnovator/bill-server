@@ -40,40 +40,20 @@ const debitNoteSchema = new mongoose.Schema({
     ref: 'party',
     required: true
   },
-  debitNoteNumber: {
-    type: String,
-    required: true
+  accountId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'account',
   },
-  debitNoteDate: {
-    type: Date,
-    required: true
-  },
-  purchaseInvoice: {
-    type: String,
-    required: true
-  },
-  items: {
-    type: [itemSchema],
-    required: true
-  },
-  discountType: {
-    type: String,
-  },
-  discountAmount: {
-    type: String,
-  },
-  discountPercentage: {
-    type: String,
-  },
-  additionalCharge: {
-    type: [additionalChargeSchema],
-  },
-  note: {
-    type: String,
-  },
-  terms: {
-    type: String,
-  },
+  debitNoteNumber: String,
+  debitNoteDate: Date,
+  purchaseInvoice: String,
+  items: [itemSchema],
+  discountType: String,
+  discountAmount: String,
+  discountPercentage: String,
+  additionalCharge: [additionalChargeSchema],
+  note: String,
+  terms: String,
   isDel: {
     type: Boolean,
     default: false

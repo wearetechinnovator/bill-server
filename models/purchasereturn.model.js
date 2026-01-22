@@ -66,36 +66,19 @@ const purchaseReturnSchema = new mongoose.Schema({
     ref: 'party',
     required: true
   },
-  purchaseReturnNumber: {
-    type: String,
-    required: true
+  accountId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'account',
   },
-  returnDate: {
-    type: Date,
-    required: true
-  },
-  items: {
-    type: [itemSchema],
-    required: true
-  },
-  discountType: {
-    type: String,
-  },
-  discountAmount: {
-    type: String,
-  },
-  discountPercentage: {
-    type: String,
-  },
-  additionalCharge: {
-    type: [additionalChargeSchema],
-  },
-  note: {
-    type: String,
-  },
-  terms: {
-    type: String,
-  },
+  purchaseReturnNumber: String,
+  returnDate: Date,
+  items: [itemSchema],
+  discountType: String,
+  discountAmount: String,
+  discountPercentage: String,
+  additionalCharge: [additionalChargeSchema],
+  note: String,
+  terms: String,
   isDel: {
     type: Boolean,
     default: false

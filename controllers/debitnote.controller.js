@@ -10,7 +10,8 @@ const purchaseInvoiceModel = require('../models/purchaseInvoice.model');
 const add = async (req, res) => {
   const {
     token, party, debitNoteNumber, debitNoteDate, items, discountType, purchaseInvoice,
-    discountAmount, discountPercentage, additionalCharge, note, terms, update, id, finalAmount
+    discountAmount, discountPercentage, additionalCharge, note, terms, update, id, finalAmount,
+    accountId
   } = req.body;
 
   if ([token, party, debitNoteNumber, debitNoteDate, items]
@@ -36,7 +37,7 @@ const add = async (req, res) => {
     if (update && id) {
       const update = await debitNoteModel.updateOne({ _id: id }, {
         $set: {
-          party, debitNoteNumber, debitNoteDate, items, purchaseInvoice,
+          party, debitNoteNumber, debitNoteDate, items, purchaseInvoice, accountId: accountId || null,
           discountType, discountAmount, discountPercentage, additionalCharge, note, terms
         }
       })
@@ -51,7 +52,7 @@ const add = async (req, res) => {
 
     const insert = await debitNoteModel.create({
       userId: getUserData._id, companyId: getUserData.activeCompany,
-      party, debitNoteNumber, debitNoteDate, purchaseInvoice, items,
+      party, debitNoteNumber, debitNoteDate, purchaseInvoice, items, accountId,
       discountType, discountAmount, discountPercentage, additionalCharge, note, terms
     });
 
@@ -61,7 +62,6 @@ const add = async (req, res) => {
 
     // Insert party log
     await Log.insertPartyLog(token, insert._id, party, "Debitnote", finalAmount, '', 'debitnote');
-
 
     return res.status(200).json(insert);
 
@@ -100,7 +100,7 @@ const get = async (req, res) => {
         _id: id,
         isTrash: false,
         isDel: false
-      }).populate("party");
+      }).populate("party").populate('accountId');
     }
     else if (trash) {
       getData = await debitNoteModel.find({
@@ -173,7 +173,6 @@ const remove = async (req, res) => {
     return res.status(500).json({ err: "Something went wrong", remove: false });
   }
 };
-
 
 
 // Resoter from trash

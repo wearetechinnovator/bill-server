@@ -49,7 +49,7 @@ const add = async (req, res) => {
     const insert = await staffModel.create({
       userId: getUserData._id, companyId: getUserData.activeCompany,
       staffName, mobileNumber, dob, joiningDate, salaryPayOutType,
-      salary, salaryCycle, openingBalance, openingBalanceType, emails
+      salary, salaryCycle, openingBalance, openingBalanceType, email
     });
 
     if (!insert) {
