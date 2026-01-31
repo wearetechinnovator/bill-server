@@ -1,4 +1,4 @@
-const { add, get, remove, restore, getLog } = require("../controllers/party.controller");
+const { add, get, remove, restore, getLog, getPartyBalance } = require("../controllers/party.controller");
 const { get: ladgerGet } = require("../controllers/ladger.controller")
 const router = require("express").Router();
 
@@ -9,6 +9,10 @@ router
 router
   .route("/get")
   .post(get);
+
+router
+  .route("/get-party-balance")
+  .post(getPartyBalance);
 
 router
   .route("/delete")

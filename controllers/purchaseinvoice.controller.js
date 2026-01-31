@@ -46,7 +46,7 @@ const add = async (req, res) => {
         $set: {
           party, purchaseInvoiceNumber, invoiceDate, validDate, items, originalInvoiceNumber,
           discountType, discountAmount, discountPercentage, additionalCharge, note, terms,
-          paymentStatus, paymentAccount
+          paymentStatus, paymentAccount, finalAmount
         }
       })
 
@@ -62,7 +62,7 @@ const add = async (req, res) => {
       userId: getUserData._id, companyId: getUserData.activeCompany,
       party, purchaseInvoiceNumber, originalInvoiceNumber, invoiceDate, validDate, items,
       discountType, discountAmount, discountPercentage, additionalCharge, note, terms,
-      paymentStatus, paymentAccount, dueAmount: finalAmount
+      paymentStatus, paymentAccount, dueAmount: finalAmount, finalAmount
     });
 
 

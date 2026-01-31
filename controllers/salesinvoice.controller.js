@@ -15,7 +15,7 @@ const add = async (req, res) => {
   const {
     token, party, salesInvoiceNumber, invoiceDate, DueDate, items, discountType,
     discountAmount, discountPercentage, additionalCharge, note, terms, update, id, paymentStatus,
-    paymentAccount, finalAmount, paymentAmount, accountId
+    paymentAccount, finalAmount, paymentAmount, accountId, autoRoundOff, roundOffAmount, roundOffType
   } = req.body;
 
 
@@ -68,7 +68,8 @@ const add = async (req, res) => {
         $set: {
           party, salesInvoiceNumber, invoiceDate, DueDate, items, accountId: accountId || null,
           discountType, discountAmount, discountPercentage, additionalCharge, note, terms,
-          paymentStatus: payStatus, paymentAccount, dueAmount: (finalAmount - paymentAmount)
+          paymentStatus: payStatus, paymentAccount, dueAmount: (finalAmount - paymentAmount),
+          finalAmount, autoRoundOff, roundOffAmount, roundOffType
         }
       })
 
@@ -94,9 +95,9 @@ const add = async (req, res) => {
       userId: getUserData._id, companyId: getUserData.activeCompany,
       party, salesInvoiceNumber, invoiceDate, DueDate, items, accountId,
       discountType, discountAmount, discountPercentage, additionalCharge, note, terms,
-      paymentStatus: payStatus, paymentAccount, dueAmount: (finalAmount - paymentAmount)
+      paymentStatus: payStatus, paymentAccount, dueAmount: (finalAmount - paymentAmount),
+      finalAmount, autoRoundOff, roundOffAmount, roundOffType
     });
-
 
 
     if (!insert) {
@@ -109,7 +110,6 @@ const add = async (req, res) => {
     return res.status(200).json(insert);
 
   } catch (err) {
-    console.log(err);
     return res.status(500).json({ err: 'Something went wrong' });
   }
 

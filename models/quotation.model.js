@@ -92,6 +92,12 @@ const quotationSchema = new mongoose.Schema({
     type: String,
     enum: ['active', 'convert', 'expire'],
     default: 'active'
+  },
+  autoRoundOff: Boolean,
+  roundOffAmount: Number,
+  roundOffType: {
+    type: String,
+    enum: ['0', '1'] // 1 =`add` | 0 =`reduce`
   }
 }, { timestamps: true });
 

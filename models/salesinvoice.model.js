@@ -57,7 +57,8 @@ const salesInvoiceSchema = new mongoose.Schema({
     enumm: ['0', '1', '2'], // 0=`notPaid` | 1=`paid` | 2=`partialPaid`;
     default: '0'
   },
-  dueAmount: String,
+  dueAmount: Number,
+  finalAmount: Number,
   paymentAccount: String,
   note: String,
   terms: String,
@@ -68,6 +69,12 @@ const salesInvoiceSchema = new mongoose.Schema({
   isTrash: {
     type: Boolean,
     default: false
+  },
+  autoRoundOff: Boolean,
+  roundOffAmount: Number,
+  roundOffType: {
+    type: String,
+    enum: ['0', '1'] // 1 =`add` | 0 =`reduce`
   }
 }, { timestamps: true });
 

@@ -9,7 +9,8 @@ const Log = require('../helper/insertLog');
 const add = async (req, res) => {
   const {
     token, party, quotationNumber, estimateDate, validDate, items, discountType, discountAmount,
-    discountPercentage, additionalCharge, note, terms, update, id, billStatus, finalAmount, accountId
+    discountPercentage, additionalCharge, note, terms, update, id, billStatus, finalAmount, accountId,
+    autoRoundOff, roundOffAmount, roundOffType
   } = req.body;
 
   // Update only bill status :::::::::::::::;
@@ -53,7 +54,7 @@ const add = async (req, res) => {
         $set: {
           party, quotationNumber, estimateDate, validDate, items, billStatus,
           discountType, discountAmount, discountPercentage, additionalCharge, note, terms,
-          accountId: accountId || null
+          accountId: accountId || null, autoRoundOff, roundOffAmount, roundOffType
         }
       })
 
@@ -79,7 +80,7 @@ const add = async (req, res) => {
       userId: getUserData._id, companyId: getUserData.activeCompany,
       party, quotationNumber, estimateDate, validDate, items, billStatus,
       discountType, discountAmount, discountPercentage, additionalCharge, note, terms,
-      accountId
+      accountId, autoRoundOff, roundOffAmount, roundOffType
     });
 
     if (!insert) {

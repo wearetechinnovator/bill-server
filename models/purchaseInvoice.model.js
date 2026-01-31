@@ -3,52 +3,24 @@ const mongoose = require("mongoose");
 
 const itemSchema = new mongoose.Schema({
   itemId: String,
-  itemName: {
-    type: String
-  },
-  description: {
-    type: String
-  },
-  hsn: {
-    type: String,
-  },
-  qun: {
-    type: String
-  },
-  selectedUnit: {
-    type: String
-  },
-  unit: {
-    type: Array
-  },
-  price: {
-    type: String
-  },
-  discountPerAmount: {
-    type: String
-  },
-  discountPerPercentage: {
-    type: String
-  },
-  tax: {
-    type: String
-  },
-  taxAmount: {
-    type: String
-  },
-  amount: {
-    type: String
-  },
+  itemName: String,
+  description: String,
+  hsn: String,
+  qun: String,
+  selectedUnit: String,
+  unit: Array,
+  price: String,
+  discountPerAmount: String,
+  discountPerPercentage: String,
+  tax: String,
+  taxAmount: String,
+  amount: String,
   expireDate: Date
 }, { _id: false });
 
 const additionalChargeSchema = new mongoose.Schema({
-  particular: {
-    type: String
-  },
-  amount: {
-    type: String
-  }
+  particular: String,
+  amount: String
 }, { _id: false });
 
 const purchaseInvoiceSchema = new mongoose.Schema({
@@ -67,55 +39,26 @@ const purchaseInvoiceSchema = new mongoose.Schema({
     ref: 'party',
     required: true
   },
-  purchaseInvoiceNumber: {
-    type: String,
-    required: true
-  },
-  originalInvoiceNumber: {
-    type: String,
-    required: true
-  },
-  invoiceDate: {
-    type: Date,
-    required: true
-  },
-  validDate: {
-    type: Date
-  },
-  items: {
-    type: [itemSchema],
-    required: true
-  },
-  discountType: {
-    type: String,
-  },
-  discountAmount: {
-    type: String,
-  },
-  discountPercentage: {
-    type: String,
-  },
-  additionalCharge: {
-    type: [additionalChargeSchema],
-  },
+  purchaseInvoiceNumber: String,
+  originalInvoiceNumber: String,
+  invoiceDate: Date,
+  validDate: Date,
+  items: [itemSchema],
+  discountType: String,
+  discountAmount: String,
+  discountPercentage: String,
+  additionalCharge: [additionalChargeSchema],
   paymentStatus: {
     type: String,
     required: true,
-    enum: ['0', '1'], //0=not paid, 1=paid
+    enum: ['0', '1'], //0=`Not paid`, 1=`Paid`
     default: '0'
   },
-  paymentAccount: {
-    type: String
-  },
-  dueAmount: {
-    type: String
-  },
-  note: {
-    type: String,
-  },
-  terms: {
-    type: String,
-  },
+  paymentAccount: String,
+  dueAmount: Number,
+  finalAmount: Number,
+  note: String,
+  terms: String,
   isDel: {
     type: Boolean,
     default: false
@@ -125,5 +68,6 @@ const purchaseInvoiceSchema = new mongoose.Schema({
     default: false
   }
 }, { timestamps: true });
+
 
 module.exports = mongoose.model("purchaseinvoice", purchaseInvoiceSchema);
