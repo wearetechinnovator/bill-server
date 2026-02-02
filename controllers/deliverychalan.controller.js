@@ -10,7 +10,8 @@ const Log = require("../helper/insertLog");
 const add = async (req, res) => {
   const {
     token, party, chalanNumber, chalanDate, validDate, items, discountType, discountAmount,
-    discountPercentage, additionalCharge, note, terms, update, id, finalAmount, accountId
+    discountPercentage, additionalCharge, note, terms, update, id, finalAmount, accountId, autoRoundOff,
+    roundOffAmount, roundOffType
   } = req.body;
 
   if ([token, party, chalanNumber, chalanDate, items]
@@ -35,7 +36,8 @@ const add = async (req, res) => {
       const update = await deliverChalanModel.updateOne({ _id: id }, {
         $set: {
           party, chalanNumber, chalanDate, validDate, items, accountId: accountId || null,
-          discountType, discountAmount, discountPercentage, additionalCharge, note, terms
+          discountType, discountAmount, discountPercentage, additionalCharge, note, terms,
+          autoRoundOff, roundOffAmount, roundOffType
         }
       })
 
@@ -57,24 +59,21 @@ const add = async (req, res) => {
     })
 
     const insert = await deliverChalanModel.create({
-      userId: getUserData._id, companyId: getUserData.activeCompany,
-      party, chalanNumber, chalanDate, validDate, items, accountId,
-      discountType, discountAmount, discountPercentage, additionalCharge, note, terms
+      userId: getUserData._id, companyId: getUserData.activeCompany, party, chalanNumber, chalanDate,
+      validDate, items, accountId, discountType, discountAmount, discountPercentage, additionalCharge,
+      note, terms, autoRoundOff, roundOffAmount, roundOffType
     });
 
     if (!insert) {
       return res.status(500).json({ err: 'Chalan creation failed' });
     }
 
-
     // Insert party log
     await Log.insertPartyLog(token, insert._id, party, "Delivery Chalan", finalAmount, '', 'deliverychalan');
 
-    
     return res.status(200).json(insert);
 
   } catch (err) {
-    console.log(err)
     return res.status(500).json({ err: 'Something went wrong' });
   }
 

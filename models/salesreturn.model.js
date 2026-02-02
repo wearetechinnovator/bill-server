@@ -8,9 +8,7 @@ const itemSchema = new mongoose.Schema({
   hsn: String,
   qun: String,
   selectedUnit: String,
-  unit: {
-    type: Array,
-  },
+  unit: Array,
   price: String,
   discountPerAmount: String,
   discountPerPercentage: String,
@@ -40,36 +38,15 @@ const salesReturnSchema = new mongoose.Schema({
     ref: 'party',
     required: true
   },
-  salesReturnNumber: {
-    type: String,
-    required: true
-  },
-  returnDate: {
-    type: Date,
-    required: true
-  },
-  items: {
-    type: [itemSchema],
-    required: true
-  },
-  discountType: {
-    type: String,
-  },
-  discountAmount: {
-    type: String,
-  },
-  discountPercentage: {
-    type: String,
-  },
-  additionalCharge: {
-    type: [additionalChargeSchema],
-  },
-  note: {
-    type: String,
-  },
-  terms: {
-    type: String,
-  },
+  salesReturnNumber: String,
+  returnDate: Date,
+  items: [itemSchema],
+  discountType: String,
+  discountAmount: String,
+  discountPercentage: String,
+  additionalCharge: [additionalChargeSchema],
+  note: String,
+  terms: String,
   isDel: {
     type: Boolean,
     default: false
@@ -77,7 +54,17 @@ const salesReturnSchema = new mongoose.Schema({
   isTrash: {
     type: Boolean,
     default: false
+  },
+  autoRoundOff: {
+    type: Boolean,
+    default: false
+  },
+  roundOffAmount: Number,
+  roundOffType: {
+    type: String,
+    enum: ['0', '1'] // 1 =`add` | 0 =`reduce`
   }
 }, { timestamps: true });
+
 
 module.exports = mongoose.model("salesreturn", salesReturnSchema);

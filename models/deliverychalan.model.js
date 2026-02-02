@@ -8,9 +8,7 @@ const itemSchema = new mongoose.Schema({
   hsn: String,
   qun: String,
   selectedUnit: String,
-  unit: {
-    type: Array
-  },
+  unit: Array,
   price: String,
   discountPerAmount: String,
   discountPerPercentage: String,
@@ -61,6 +59,15 @@ const deliveryChalanSchema = new mongoose.Schema({
   isTrash: {
     type: Boolean,
     default: false
+  },
+  autoRoundOff: {
+    type: Boolean,
+    default: false
+  },
+  roundOffAmount: Number,
+  roundOffType: {
+    type: String,
+    enum: ['0', '1'] // 1 =`add` | 0 =`reduce`
   }
 }, { timestamps: true });
 

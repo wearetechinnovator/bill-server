@@ -11,7 +11,7 @@ const add = async (req, res) => {
   const {
     token, party, debitNoteNumber, debitNoteDate, items, discountType, purchaseInvoice,
     discountAmount, discountPercentage, additionalCharge, note, terms, update, id, finalAmount,
-    accountId
+    accountId, autoRoundOff, roundOffAmount, roundOffType
   } = req.body;
 
   if ([token, party, debitNoteNumber, debitNoteDate, items]
@@ -38,7 +38,8 @@ const add = async (req, res) => {
       const update = await debitNoteModel.updateOne({ _id: id }, {
         $set: {
           party, debitNoteNumber, debitNoteDate, items, purchaseInvoice, accountId: accountId || null,
-          discountType, discountAmount, discountPercentage, additionalCharge, note, terms
+          discountType, discountAmount, discountPercentage, additionalCharge, note, terms,
+          autoRoundOff, roundOffAmount, roundOffType
         }
       })
 
@@ -53,7 +54,8 @@ const add = async (req, res) => {
     const insert = await debitNoteModel.create({
       userId: getUserData._id, companyId: getUserData.activeCompany,
       party, debitNoteNumber, debitNoteDate, purchaseInvoice, items, accountId,
-      discountType, discountAmount, discountPercentage, additionalCharge, note, terms
+      discountType, discountAmount, discountPercentage, additionalCharge, note, terms,
+      autoRoundOff, roundOffAmount, roundOffType
     });
 
     if (!insert) {
@@ -66,7 +68,6 @@ const add = async (req, res) => {
     return res.status(200).json(insert);
 
   } catch (err) {
-    console.log(err)
     return res.status(500).json({ err: 'Something went wrong' });
   }
 

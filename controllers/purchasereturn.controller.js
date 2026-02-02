@@ -9,7 +9,8 @@ const Log = require("../helper/insertLog");
 const add = async (req, res) => {
   const {
     token, party, purchaseReturnNumber, returnDate, items, discountType, accountId,
-    discountAmount, discountPercentage, additionalCharge, note, terms, update, id, finalAmount
+    discountAmount, discountPercentage, additionalCharge, note, terms, update, id, finalAmount,
+    autoRoundOff, roundOffAmount, roundOffType
   } = req.body;
 
   if ([token, party, purchaseReturnNumber, returnDate, items]
@@ -36,7 +37,8 @@ const add = async (req, res) => {
       const update = await purchaseReturnModel.updateOne({ _id: id }, {
         $set: {
           party, purchaseReturnNumber, returnDate, items, accountId: accountId || null,
-          discountType, discountAmount, discountPercentage, additionalCharge, note, terms
+          discountType, discountAmount, discountPercentage, additionalCharge, note, terms,
+          autoRoundOff, roundOffAmount, roundOffType
         }
       })
 
@@ -49,9 +51,9 @@ const add = async (req, res) => {
     } // Update close here;
 
     const insert = await purchaseReturnModel.create({
-      userId: getUserData._id, companyId: getUserData.activeCompany,
-      party, purchaseReturnNumber, returnDate, items, accountId,
-      discountType, discountAmount, discountPercentage, additionalCharge, note, terms
+      userId: getUserData._id, companyId: getUserData.activeCompany, party, purchaseReturnNumber,
+      returnDate, items, accountId, discountType, discountAmount, discountPercentage, additionalCharge,
+      note, terms, autoRoundOff, roundOffAmount, roundOffType
     });
 
     if (!insert) {
@@ -244,8 +246,8 @@ const filter = async (req, res) => {
     }
   }
 
-  let totalData = await purchaseReturnModel.find({...query, isDel: false}).countDocuments();
-  let allData = await purchaseReturnModel.find({...query, isDel: false}).skip(skip).limit(limit).sort({ _id: -1 }).populate('party');
+  let totalData = await purchaseReturnModel.find({ ...query, isDel: false }).countDocuments();
+  let allData = await purchaseReturnModel.find({ ...query, isDel: false }).skip(skip).limit(limit).sort({ _id: -1 }).populate('party');
 
 
   if (party && gst) {

@@ -61,6 +61,15 @@ const debitNoteSchema = new mongoose.Schema({
   isTrash: {
     type: Boolean,
     default: false
+  },
+  autoRoundOff: {
+    type: Boolean,
+    default: false
+  },
+  roundOffAmount: Number,
+  roundOffType: {
+    type: String,
+    enum: ['0', '1'] // 1 =`add` | 0 =`reduce`
   }
 }, { timestamps: true });
 

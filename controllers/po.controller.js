@@ -10,7 +10,8 @@ const Log = require("../helper/insertLog");
 const add = async (req, res) => {
   const {
     token, party, poNumber, poDate, validDate, items, discountType, discountAmount,
-    discountPercentage, additionalCharge, note, terms, update, id, finalAmount
+    discountPercentage, additionalCharge, note, terms, update, id, finalAmount, 
+    autoRoundOff, roundOffAmount, roundOffType
   } = req.body;
 
   if ([token, party, poNumber, poDate, items]
@@ -34,8 +35,8 @@ const add = async (req, res) => {
     if (update && id) {
       const update = await poModel.updateOne({ _id: id }, {
         $set: {
-          party, poNumber, poDate, validDate, items,
-          discountType, discountAmount, discountPercentage, additionalCharge, note, terms
+          party, poNumber, poDate, validDate, items, discountType, discountAmount, discountPercentage, 
+          additionalCharge, note, terms, autoRoundOff, roundOffAmount, roundOffType
         }
       })
 
@@ -58,9 +59,9 @@ const add = async (req, res) => {
 
 
     const insert = await poModel.create({
-      userId: getUserData._id, companyId: getUserData.activeCompany,
-      party, poNumber, poDate, validDate, items,
-      discountType, discountAmount, discountPercentage, additionalCharge, note, terms
+      userId: getUserData._id, companyId: getUserData.activeCompany, party, poNumber, poDate, 
+      validDate, items, discountType, discountAmount, discountPercentage, additionalCharge, 
+      note, terms, autoRoundOff, roundOffAmount, roundOffType
     });
 
     if (!insert) {

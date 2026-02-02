@@ -40,40 +40,16 @@ const creditNoteSchema = new mongoose.Schema({
     ref: 'party',
     required: true
   },
-  creditNoteNumber: {
-    type: String,
-    required: true
-  },
-  creditNoteDate: {
-    type: Date,
-    required: true
-  },
-  salesInvoice: {
-    type: String,
-    required: true
-  },
-  items: {
-    type: [itemSchema],
-    required: true
-  },
-  discountType: {
-    type: String,
-  },
-  discountAmount: {
-    type: String,
-  },
-  discountPercentage: {
-    type: String,
-  },
-  additionalCharge: {
-    type: [additionalChargeSchema],
-  },
-  note: {
-    type: String,
-  },
-  terms: {
-    type: String,
-  },
+  creditNoteNumber: String,
+  creditNoteDate: Date,
+  salesInvoice: String,
+  items: [itemSchema],
+  discountType: String,
+  discountAmount: String,
+  discountPercentage: String,
+  additionalCharge: [additionalChargeSchema],
+  note: String,
+  terms: String,
   isDel: {
     type: Boolean,
     default: false
@@ -81,6 +57,15 @@ const creditNoteSchema = new mongoose.Schema({
   isTrash: {
     type: Boolean,
     default: false
+  },
+  autoRoundOff: {
+    type: Boolean,
+    default: false
+  },
+  roundOffAmount: Number,
+  roundOffType: {
+    type: String,
+    enum: ['0', '1'] // 1 =`add` | 0 =`reduce`
   }
 }, { timestamps: true });
 

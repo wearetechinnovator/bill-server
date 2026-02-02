@@ -11,7 +11,8 @@ const salesinvoiceModel = require('../models/salesinvoice.model');
 const add = async (req, res) => {
   const {
     token, party, creditNoteNumber, creditNoteDate, items, discountType, salesInvoice,
-    discountAmount, discountPercentage, additionalCharge, note, terms, update, id, finalAmount
+    discountAmount, discountPercentage, additionalCharge, note, terms, update, id, finalAmount,
+    autoRoundOff, roundOffAmount, roundOffType
   } = req.body;
 
   if ([token, party, creditNoteNumber, creditNoteDate, items]
@@ -38,8 +39,8 @@ const add = async (req, res) => {
     if (update && id) {
       const update = await creditNoteModel.updateOne({ _id: id }, {
         $set: {
-          party, creditNoteNumber, creditNoteDate, items, salesInvoice,
-          discountType, discountAmount, discountPercentage, additionalCharge, note, terms
+          party, creditNoteNumber, creditNoteDate, items, salesInvoice, discountType, discountAmount,
+          discountPercentage, additionalCharge, note, terms, autoRoundOff, roundOffAmount, roundOffType
         }
       })
 
@@ -61,29 +62,25 @@ const add = async (req, res) => {
     })
 
     const insert = await creditNoteModel.create({
-      userId: getUserData._id, companyId: getUserData.activeCompany,
-      party, creditNoteNumber, creditNoteDate, salesInvoice, items,
-      discountType, discountAmount, discountPercentage, additionalCharge, note, terms
+      userId: getUserData._id, companyId: getUserData.activeCompany, party, creditNoteNumber,
+      creditNoteDate, salesInvoice, items, discountType, discountAmount, discountPercentage,
+      additionalCharge, note, terms, autoRoundOff, roundOffAmount, roundOffType
     });
 
     if (!insert) {
       return res.status(500).json({ err: 'Invoice creation failed' });
     }
 
-
     // Insert party log
     await Log.insertPartyLog(token, insert._id, party, "Creditnote", finalAmount, '', 'creditnote');
-
 
     return res.status(200).json(insert);
 
   } catch (err) {
-    console.log(err)
     return res.status(500).json({ err: 'Something went wrong' });
   }
 
 };
-
 
 
 // Get Controller;
@@ -301,11 +298,11 @@ const getSales = async (req, res) => {
       isDel: false
     });
 
-    if(!bill || bill.length === 0){
-      return res.status(404).json({err: 'No inoice generate for this party'})
+    if (!bill || bill.length === 0) {
+      return res.status(404).json({ err: 'No inoice generate for this party' })
     }
 
-    return res.status(200).json({data: bill});
+    return res.status(200).json({ data: bill });
 
   } catch (error) {
     console.log(error)

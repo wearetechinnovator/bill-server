@@ -70,7 +70,10 @@ const salesInvoiceSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
-  autoRoundOff: Boolean,
+  autoRoundOff: {
+    type: Boolean,
+    default: false
+  },
   roundOffAmount: Number,
   roundOffType: {
     type: String,

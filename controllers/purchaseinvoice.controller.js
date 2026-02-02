@@ -13,7 +13,7 @@ const add = async (req, res) => {
   const {
     token, party, purchaseInvoiceNumber, originalInvoiceNumber, invoiceDate, validDate, items, discountType,
     discountAmount, discountPercentage, additionalCharge, note, terms, update, id,
-    paymentStatus, finalAmount, paymentAccount
+    paymentStatus, finalAmount, paymentAccount, autoRoundOff, roundOffAmount, roundOffType
   } = req.body;
 
 
@@ -46,7 +46,7 @@ const add = async (req, res) => {
         $set: {
           party, purchaseInvoiceNumber, invoiceDate, validDate, items, originalInvoiceNumber,
           discountType, discountAmount, discountPercentage, additionalCharge, note, terms,
-          paymentStatus, paymentAccount, finalAmount
+          paymentStatus, paymentAccount, finalAmount, autoRoundOff, roundOffAmount, roundOffType
         }
       })
 
@@ -61,8 +61,8 @@ const add = async (req, res) => {
     const insert = await purchaseInvoiceModel.create({
       userId: getUserData._id, companyId: getUserData.activeCompany,
       party, purchaseInvoiceNumber, originalInvoiceNumber, invoiceDate, validDate, items,
-      discountType, discountAmount, discountPercentage, additionalCharge, note, terms,
-      paymentStatus, paymentAccount, dueAmount: finalAmount, finalAmount
+      discountType, discountAmount, discountPercentage, additionalCharge, note, terms, paymentStatus,
+      paymentAccount, dueAmount: finalAmount, finalAmount, autoRoundOff, roundOffAmount, roundOffType
     });
 
 

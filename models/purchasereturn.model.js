@@ -3,51 +3,23 @@ const mongoose = require("mongoose");
 
 const itemSchema = new mongoose.Schema({
   itemId: String,
-  itemName: {
-    type: String
-  },
-  description: {
-    type: String
-  },
-  hsn: {
-    type: String,
-  },
-  qun: {
-    type: String
-  },
-  selectedUnit: {
-    type: String
-  },
-  unit: {
-    type: Array
-  },
-  price: {
-    type: String
-  },
-  discountPerAmount: {
-    type: String
-  },
-  discountPerPercentage: {
-    type: String
-  },
-  tax: {
-    type: String
-  },
-  taxAmount: {
-    type: String
-  },
-  amount: {
-    type: String
-  },
+  itemName: String,
+  description: String,
+  hsn: String,
+  qun: String,
+  selectedUnit: String,
+  unit: Array,
+  price: String,
+  discountPerAmount: String,
+  discountPerPercentage: String,
+  tax: String,
+  taxAmount: String,
+  amount: String,
 }, { _id: false });
 
 const additionalChargeSchema = new mongoose.Schema({
-  particular: {
-    type: String
-  },
-  amount: {
-    type: String
-  }
+  particular: String,
+  amount: String
 }, { _id: false });
 
 const purchaseReturnSchema = new mongoose.Schema({
@@ -86,6 +58,15 @@ const purchaseReturnSchema = new mongoose.Schema({
   isTrash: {
     type: Boolean,
     default: false
+  },
+  autoRoundOff: {
+    type: Boolean,
+    default: false
+  },
+  roundOffAmount: Number,
+  roundOffType: {
+    type: String,
+    enum: ['0', '1'] // 1 =`add` | 0 =`reduce`
   }
 }, { timestamps: true });
 

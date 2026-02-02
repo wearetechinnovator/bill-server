@@ -13,9 +13,9 @@ const add = async (req, res) => {
     autoRoundOff, roundOffAmount, roundOffType
   } = req.body;
 
+
   // Update only bill status :::::::::::::::;
   if (update && id && billStatus && Object.keys(req.body).length === 4) {
-
     const updateResult = await quotationModel.updateOne(
       { _id: id },
       { $set: { billStatus } }
@@ -179,6 +179,7 @@ const get = async (req, res) => {
   }
 
 }
+
 
 // Delete controller;
 const remove = async (req, res) => {

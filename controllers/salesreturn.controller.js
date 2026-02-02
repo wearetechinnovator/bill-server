@@ -10,7 +10,8 @@ const Log = require("../helper/insertLog");
 const add = async (req, res) => {
   const {
     token, party, salesReturnNumber, returnDate, items, discountType, finalAmount,
-    discountAmount, discountPercentage, additionalCharge, note, terms, update, id
+    discountAmount, discountPercentage, additionalCharge, note, terms, update, id, 
+    autoRoundOff, roundOffAmount, roundOffType
   } = req.body;
 
   if ([token, party, salesReturnNumber, returnDate, items]
@@ -36,8 +37,8 @@ const add = async (req, res) => {
     if (update && id) {
       const update = await salesReturnModel.updateOne({ _id: id }, {
         $set: {
-          party, salesReturnNumber, returnDate, items,
-          discountType, discountAmount, discountPercentage, additionalCharge, note, terms
+          party, salesReturnNumber, returnDate, items, discountType, discountAmount, discountPercentage,
+           additionalCharge, note, terms, autoRoundOff, roundOffAmount, roundOffType
         }
       })
 
@@ -59,9 +60,9 @@ const add = async (req, res) => {
     })
 
     const insert = await salesReturnModel.create({
-      userId: getUserData._id, companyId: getUserData.activeCompany,
-      party, salesReturnNumber, returnDate, items,
-      discountType, discountAmount, discountPercentage, additionalCharge, note, terms
+      userId: getUserData._id, companyId: getUserData.activeCompany, party, salesReturnNumber,
+      returnDate, items, discountType, discountAmount, discountPercentage, additionalCharge, 
+      note, terms, autoRoundOff, roundOffAmount, roundOffType
     });
 
     if (!insert) {
@@ -74,14 +75,11 @@ const add = async (req, res) => {
 
 
     return res.status(200).json(insert);
-
   } catch (err) {
-    console.log(err)
     return res.status(500).json({ err: 'Something went wrong' });
   }
 
 };
-
 
 
 // Get Controller;
@@ -183,7 +181,6 @@ const remove = async (req, res) => {
     return res.status(500).json({ err: "Something went wrong", remove: false });
   }
 };
-
 
 
 // Resoter from trash
