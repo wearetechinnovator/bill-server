@@ -1,7 +1,6 @@
 const { getId } = require('../helper/getIdFromToken');
 const purchaseReturnModel = require('../models/purchasereturn.model');
 const userModel = require('../models/user.model');
-const itemModel = require('../models/item.model');
 const Log = require("../helper/insertLog");
 
 
@@ -9,7 +8,8 @@ const Log = require("../helper/insertLog");
 const add = async (req, res) => {
   const {
     token, party, purchaseReturnNumber, returnDate, items, discountType, accountId,
-    discountAmount, discountPercentage, additionalCharge, note, terms, update, id, finalAmount,
+    discountAmount, discountPercentage, additionalCharge, note, terms, update, id,
+    finalAmount, paymentStatus, paymentType, paymentAccount, paymentAmount,
     autoRoundOff, roundOffAmount, roundOffType
   } = req.body;
 
@@ -37,7 +37,8 @@ const add = async (req, res) => {
       const update = await purchaseReturnModel.updateOne({ _id: id }, {
         $set: {
           party, purchaseReturnNumber, returnDate, items, accountId: accountId || null,
-          discountType, discountAmount, discountPercentage, additionalCharge, note, terms,
+          discountType, discountAmount, discountPercentage, additionalCharge,
+          paymentStatus, paymentAccount, paymentType, paymentAmount, finalAmount, note, terms,
           autoRoundOff, roundOffAmount, roundOffType
         }
       })
@@ -53,7 +54,8 @@ const add = async (req, res) => {
     const insert = await purchaseReturnModel.create({
       userId: getUserData._id, companyId: getUserData.activeCompany, party, purchaseReturnNumber,
       returnDate, items, accountId, discountType, discountAmount, discountPercentage, additionalCharge,
-      note, terms, autoRoundOff, roundOffAmount, roundOffType
+      note, terms, paymentStatus, paymentAccount, paymentType, paymentAmount, finalAmount,
+      autoRoundOff, roundOffAmount, roundOffType
     });
 
     if (!insert) {
@@ -67,7 +69,6 @@ const add = async (req, res) => {
     return res.status(200).json(insert);
 
   } catch (err) {
-    console.log(err)
     return res.status(500).json({ err: 'Something went wrong' });
   }
 

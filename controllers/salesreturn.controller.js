@@ -9,8 +9,8 @@ const Log = require("../helper/insertLog");
 // Create and Save a new Quotation;
 const add = async (req, res) => {
   const {
-    token, party, salesReturnNumber, returnDate, items, discountType, finalAmount,
-    discountAmount, discountPercentage, additionalCharge, note, terms, update, id, 
+    token, party, salesReturnNumber, returnDate, items, discountType, discountAmount, discountPercentage,
+    additionalCharge, note, terms, update, id, paymentStatus, paymentAccount, paymentType, paymentAmount, finalAmount,
     autoRoundOff, roundOffAmount, roundOffType
   } = req.body;
 
@@ -38,7 +38,8 @@ const add = async (req, res) => {
       const update = await salesReturnModel.updateOne({ _id: id }, {
         $set: {
           party, salesReturnNumber, returnDate, items, discountType, discountAmount, discountPercentage,
-           additionalCharge, note, terms, autoRoundOff, roundOffAmount, roundOffType
+          paymentStatus, paymentAccount, paymentType, paymentAmount, finalAmount,
+          additionalCharge, note, terms, autoRoundOff, roundOffAmount, roundOffType
         }
       })
 
@@ -61,7 +62,8 @@ const add = async (req, res) => {
 
     const insert = await salesReturnModel.create({
       userId: getUserData._id, companyId: getUserData.activeCompany, party, salesReturnNumber,
-      returnDate, items, discountType, discountAmount, discountPercentage, additionalCharge, 
+      returnDate, items, discountType, discountAmount, discountPercentage, additionalCharge,
+      paymentStatus, paymentAccount, paymentType, paymentAmount, finalAmount,
       note, terms, autoRoundOff, roundOffAmount, roundOffType
     });
 
@@ -71,7 +73,7 @@ const add = async (req, res) => {
 
 
     // Insert party log
-    await Log.insertPartyLog(token, insert._id, party, "Delivery Chalan", finalAmount, '', 'salesreturn');
+    // await Log.insertPartyLog(token, insert._id, party, "Delivery Chalan", finalAmount, '', 'salesreturn');
 
 
     return res.status(200).json(insert);
@@ -254,8 +256,8 @@ const filter = async (req, res) => {
     }
   }
 
-  let totalData = await salesReturnModel.find({...query, isDel: false}).countDocuments();
-  let allData = await salesReturnModel.find({...query, isDel: false}).skip(skip).limit(limit).sort({ _id: -1 }).populate('party');
+  let totalData = await salesReturnModel.find({ ...query, isDel: false }).countDocuments();
+  let allData = await salesReturnModel.find({ ...query, isDel: false }).skip(skip).limit(limit).sort({ _id: -1 }).populate('party');
 
 
   if (party && gst) {

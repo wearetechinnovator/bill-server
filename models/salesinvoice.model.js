@@ -52,14 +52,11 @@ const salesInvoiceSchema = new mongoose.Schema({
   discountAmount: String,
   discountPercentage: String,
   additionalCharge: [additionalChargeSchema],
-  paymentStatus: {
-    type: String,
-    enumm: ['0', '1', '2'], // 0=`notPaid` | 1=`paid` | 2=`partialPaid`;
-    default: '0'
-  },
-  dueAmount: Number,
-  finalAmount: Number,
+  paymentStatus: Boolean,
+  paymentType: String,
   paymentAccount: String,
+  paymentAmount: Number,
+  finalAmount: Number,
   note: String,
   terms: String,
   isDel: {

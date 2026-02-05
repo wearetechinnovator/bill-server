@@ -48,14 +48,10 @@ const purchaseInvoiceSchema = new mongoose.Schema({
   discountAmount: String,
   discountPercentage: String,
   additionalCharge: [additionalChargeSchema],
-  paymentStatus: {
-    type: String,
-    required: true,
-    enum: ['0', '1'], //0=`Not paid`, 1=`Paid`
-    default: '0'
-  },
+  paymentStatus: Boolean,
+  paymentType: String,
   paymentAccount: String,
-  dueAmount: Number,
+  paymentAmount: Number,
   finalAmount: Number,
   note: String,
   terms: String,

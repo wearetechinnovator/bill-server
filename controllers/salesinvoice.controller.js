@@ -14,25 +14,15 @@ const { default: mongoose } = require('mongoose');
 const add = async (req, res) => {
   const {
     token, party, salesInvoiceNumber, invoiceDate, DueDate, items, discountType,
-    discountAmount, discountPercentage, additionalCharge, note, terms, update, id, paymentStatus,
-    paymentAccount, finalAmount, paymentAmount, accountId, autoRoundOff, roundOffAmount, roundOffType
+    discountAmount, discountPercentage, additionalCharge, note, terms, update, id,
+    paymentStatus, paymentAccount, paymentType, paymentAmount, finalAmount,
+    accountId, autoRoundOff, roundOffAmount, roundOffType
   } = req.body;
 
 
   if ([token, party, salesInvoiceNumber, invoiceDate, items]
     .some(field => !field || field === '')) {
     return res.status(400).json({ err: 'fill the blank' });
-  }
-
-  let payStatus = paymentStatus;
-  if (parseInt(finalAmount) === parseInt(paymentAmount)) {
-    payStatus = "1" // full paid
-
-  } else if (paymentAmount < finalAmount && paymentAmount > 0) {
-    payStatus = "2" // partial paid
-
-  } else if (paymentAmount === 0 || !paymentAmount) {
-    payStatus = "0" // unpaid
   }
 
 
@@ -50,17 +40,17 @@ const add = async (req, res) => {
 
 
 
-    if (paymentStatus === "1") {
-      await paymentinModel.create({
-        userId: getUserData._id, companyId: getUserData.activeCompany,
-        party, paymentInNumber: salesInvoiceNumber, paymentInDate: invoiceDate,
-        amount: paymentAmount, account: paymentAccount
-      })
+    // if (paymentStatus) {
+    //   await paymentinModel.create({
+    //     userId: getUserData._id, companyId: getUserData.activeCompany,
+    //     party, paymentInNumber: salesInvoiceNumber, paymentInDate: invoiceDate,
+    //     amount: paymentAmount, account: paymentAccount
+    //   })
 
-      // Add ladger entry;
-      await addLadger(token, "Sales", paymentAmount, 0, salesInvoiceNumber, party);
+    //   // Add ladger entry;
+    //   await addLadger(token, "Sales", paymentAmount, 0, salesInvoiceNumber, party);
 
-    }
+    // }
 
     // update code.....
     if (update && id) {
@@ -68,8 +58,8 @@ const add = async (req, res) => {
         $set: {
           party, salesInvoiceNumber, invoiceDate, DueDate, items, accountId: accountId || null,
           discountType, discountAmount, discountPercentage, additionalCharge, note, terms,
-          paymentStatus: payStatus, paymentAccount, dueAmount: (finalAmount - paymentAmount),
-          finalAmount, autoRoundOff, roundOffAmount, roundOffType
+          paymentStatus, paymentAccount, paymentType, paymentAmount, finalAmount,
+          autoRoundOff, roundOffAmount, roundOffType
         }
       })
 
@@ -78,7 +68,6 @@ const add = async (req, res) => {
       }
 
       return res.status(200).json(update)
-
     } // Update close here;
 
 
@@ -95,8 +84,8 @@ const add = async (req, res) => {
       userId: getUserData._id, companyId: getUserData.activeCompany,
       party, salesInvoiceNumber, invoiceDate, DueDate, items, accountId,
       discountType, discountAmount, discountPercentage, additionalCharge, note, terms,
-      paymentStatus: payStatus, paymentAccount, dueAmount: (finalAmount - paymentAmount),
-      finalAmount, autoRoundOff, roundOffAmount, roundOffType
+      paymentStatus, paymentAccount, paymentType, paymentAmount, finalAmount,
+      autoRoundOff, roundOffAmount, roundOffType
     });
 
 
@@ -105,7 +94,7 @@ const add = async (req, res) => {
     }
 
     // Insert partylog;
-    await Log.insertPartyLog(token, insert._id, party, "Sales", finalAmount, "", 'salesinvoice');
+    //await Log.insertPartyLog(token, insert._id, party, "Sales", finalAmount, "", 'salesinvoice');
 
     return res.status(200).json(insert);
 

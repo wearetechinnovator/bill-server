@@ -1,19 +1,17 @@
 const { getId } = require('../helper/getIdFromToken');
 const purchaseInvoiceModel = require('../models/purchaseInvoice.model');
 const userModel = require('../models/user.model');
-const itemModel = require('../models/item.model');
 const paymentoutModel = require('../models/paymentout.model');
 const Log = require('../helper/insertLog');
 const { default: mongoose } = require('mongoose');
 
 
 
-// Create and Save a new Quotation;
 const add = async (req, res) => {
   const {
     token, party, purchaseInvoiceNumber, originalInvoiceNumber, invoiceDate, validDate, items, discountType,
-    discountAmount, discountPercentage, additionalCharge, note, terms, update, id,
-    paymentStatus, finalAmount, paymentAccount, autoRoundOff, roundOffAmount, roundOffType
+    discountAmount, discountPercentage, additionalCharge, note, terms, update, id, finalAmount,
+    paymentStatus, paymentType, paymentAccount, paymentAmount, autoRoundOff, roundOffAmount, roundOffType
   } = req.body;
 
 
@@ -22,7 +20,7 @@ const add = async (req, res) => {
     i.batchId = batchId; // add new key to each item
   });
 
-  if ([token, party, purchaseInvoiceNumber, invoiceDate, items, paymentStatus]
+  if ([token, party, purchaseInvoiceNumber, invoiceDate, items]
     .some(field => !field || field === '')) {
     return res.status(400).json({ err: 'fill the blank' });
   }
@@ -46,7 +44,8 @@ const add = async (req, res) => {
         $set: {
           party, purchaseInvoiceNumber, invoiceDate, validDate, items, originalInvoiceNumber,
           discountType, discountAmount, discountPercentage, additionalCharge, note, terms,
-          paymentStatus, paymentAccount, finalAmount, autoRoundOff, roundOffAmount, roundOffType
+          paymentStatus, paymentAccount, paymentType, paymentAmount, finalAmount, autoRoundOff,
+          roundOffAmount, roundOffType
         }
       })
 
@@ -59,15 +58,15 @@ const add = async (req, res) => {
     } // Update close here;
 
     const insert = await purchaseInvoiceModel.create({
-      userId: getUserData._id, companyId: getUserData.activeCompany,
-      party, purchaseInvoiceNumber, originalInvoiceNumber, invoiceDate, validDate, items,
-      discountType, discountAmount, discountPercentage, additionalCharge, note, terms, paymentStatus,
-      paymentAccount, dueAmount: finalAmount, finalAmount, autoRoundOff, roundOffAmount, roundOffType
+      userId: getUserData._id, companyId: getUserData.activeCompany, party, purchaseInvoiceNumber,
+      originalInvoiceNumber, invoiceDate, validDate, items, discountType, discountAmount, discountPercentage,
+      additionalCharge, note, terms, paymentStatus, paymentAccount, paymentType, paymentAmount,
+      finalAmount, autoRoundOff, roundOffAmount, roundOffType
     });
 
 
     // check payment
-    if (paymentStatus === '1') {
+    if (paymentStatus) {
       await paymentoutModel.create({
         userId: getUserData._id, companyId: getUserData.activeCompany,
         party, paymentOutNumber: purchaseInvoiceNumber, paymentOutDate: invoiceDate,

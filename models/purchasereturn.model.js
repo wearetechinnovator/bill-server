@@ -49,6 +49,11 @@ const purchaseReturnSchema = new mongoose.Schema({
   discountAmount: String,
   discountPercentage: String,
   additionalCharge: [additionalChargeSchema],
+  paymentStatus: Boolean,
+  paymentType: String,
+  paymentAccount: String,
+  paymentAmount: Number,
+  finalAmount: Number,
   note: String,
   terms: String,
   isDel: {

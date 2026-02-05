@@ -319,7 +319,6 @@ const getPartyBalance = async (req, res) => {
 		return res.status(200).json({ data });
 
 	} catch (error) {
-		console.log(error)
 		return res.status(500).json({ 'err': 'Something went wrong' });
 	}
 }
