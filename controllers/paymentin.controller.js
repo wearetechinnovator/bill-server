@@ -14,7 +14,8 @@ const add = async (req, res) => {
     paymentMode, account, amount, details, update, id, invoiceId, dueAmount
   } = req.body;
 
-  if ([token, party, paymentInNumber, paymentInDate, paymentMode, account, amount]
+
+  if ([token, party, paymentInNumber, paymentInDate, paymentMode, amount]
     .some((field) => field === "")) {
     return res.status(400).json({ msg: "Fill the blank" });
   }
@@ -40,7 +41,7 @@ const add = async (req, res) => {
         }
       })
 
-      if (!update) {
+      if (update.modifiedCount === 0) {
         return res.status(500).json({ err: 'Payment update failed', update: false })
       }
 
@@ -48,36 +49,6 @@ const add = async (req, res) => {
 
     } // Update close here;
 
-
-
-    // :::::::: update SalesDue amount :::::::;
-    let finalAmount = amount;
-    checkedInv.forEach(async (inv, _) => {
-
-      let due = parseFloat(inv.dueAmount) - parseFloat(finalAmount);
-      finalAmount = parseFloat(finalAmount) - parseFloat(inv.dueAmount);
-
-      const updateData = {
-        dueAmount: due.toString()
-      };
-
-      if (due === 0) {
-        updateData.paymentStatus = '1';
-      }
-      else if (due > 0) {
-        updateData.paymentStatus = '2';
-      }
-
-      await salesinvoiceModel.updateOne(
-        { salesInvoiceNumber: inv.salesInvoiceNumber },
-        { $set: updateData }
-      );
-
-    })
-    // add extra amount in ladger as dr.;
-    if (finalAmount > 0) {
-      await addLadger(token, "Sales", 0, finalAmount, paymentInNumber, party);
-    }
 
 
     const insert = await paymentInModel.create({
@@ -90,17 +61,16 @@ const add = async (req, res) => {
       return res.status(500).json({ err: 'Payment creation failed', create: false })
     }
 
-    const ladger = await addLadger(token, 'Sales', amount, 0, paymentInNumber, party);
-    if (!ladger) {
-      return res.status(500).json({ err: 'Ladger entry failed' });
-    }
+    // const ladger = await addLadger(token, 'Sales', amount, 0, paymentInNumber, party);
+    // if (!ladger) {
+    //   return res.status(500).json({ err: 'Ladger entry failed' });
+    // }
 
 
     // Insert partylog;
-    await Log.insertPartyLog(token, insert._id, party, "Paymentin", amount, "", 'paymentin');
+    // await Log.insertPartyLog(token, insert._id, party, "Paymentin", amount, "", 'paymentin');
 
     return res.status(200).json(insert);
-
   } catch (error) {
     console.log(error)
     return res.status(500).json({ 'err': 'Something went wrong', create: false });
@@ -126,7 +96,6 @@ const get = async (req, res) => {
     const getUser = await userModel.findOne({ _id: getInfo._id });
     const totalData = await paymentInModel.countDocuments({
       companyId: getUser.activeCompany,
-      isTrash: trash ? true : false,
       isDel: false
     });
 
@@ -135,16 +104,8 @@ const get = async (req, res) => {
       getData = await paymentInModel.findOne({
         companyId: getUser.activeCompany,
         _id: id,
-        isTrash: false,
         isDel: false
       });
-    }
-    else if (trash) {
-      getData = await paymentInModel.find({
-        companyId: getUser.activeCompany,
-        isTrash: trash ? true : false,
-        isDel: false
-      }).skip(skip).limit(limit).sort({ _id: -1 }).populate("party");;
     }
     else if (all) {
       getData = await paymentInModel.find({
@@ -154,7 +115,10 @@ const get = async (req, res) => {
     }
     else {
       if (totalPayment) {
-        data = await paymentInModel.find({ isDel: false, isTrash: false, companyId: getUser.activeCompany });
+        data = await paymentInModel.find({
+          companyId: getUser.activeCompany,
+          isDel: false,
+        });
 
         // let totalAmount = 0;
         // data.forEach((d, _) => {
@@ -173,7 +137,6 @@ const get = async (req, res) => {
 
       getData = await paymentInModel.find({
         companyId: getUser.activeCompany,
-        isTrash: false,
         isDel: false
       }).skip(skip).limit(limit).sort({ _id: -1 }).populate("party");
 
@@ -191,7 +154,6 @@ const get = async (req, res) => {
   }
 
 }
-
 
 
 // Delete controller

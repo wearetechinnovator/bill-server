@@ -123,19 +123,14 @@ const get = async (req, res) => {
 				getData = await partyModel.find({
 					name: { $regex: searchText.trim(), $options: "i" },
 					companyId: getUser.activeCompany,
-					$or: [
-						{ type: partyType },
-						{ type: "both" }
-					],
 					isDel: false,
-					isTrash: false
 				}).sort({ _id: -1 }).select("_id name");
+
 			}
 		}
 		else {
 			getData = await partyModel.find({
 				companyId: getUser.activeCompany,
-				isTrash: false,
 				isDel: false
 			}).skip(skip).limit(limit).sort({ _id: -1 });
 		}
@@ -293,7 +288,6 @@ const getPartyBalance = async (req, res) => {
 				companyId: getUser.activeCompany,
 				party: party._id,
 				isDel: '0',
-				isTrash: "0"
 			})
 			const totalSalesAmount = sales?.reduce((acc, i) => acc += i.finalAmount, 0);
 			const totalPurchaseAmount = purchase?.reduce((acc, i) => acc += i.finalAmount, 0);

@@ -11,27 +11,19 @@ const accountSchema = mongoose.Schema({
     ref: "Company",
     required: true,
   },
-  title: String,
-  holderName: String,
-  accountNumber: String,
-  ifscCode: String,
-  bankName: String,
+  accountName: String,
+  accountHolderName: String,
   openingBalance: Number,
-  type: {
-    type: String,
-    enum: ['bank', 'cash', "cheque"],
-    required: true,
-  },
-  details: String,
-  isTrash: {
-    type: Boolean,
-    default: false,
-  },
+  asOfDate: Date,
+  isBankDetails: Boolean,
+  accountNumber: Number,
+  ifscCode: String,
+  branchName: String,
+  upiId: String,
   isDel: {
     type: Boolean,
     default: false,
   },
-
 }, { timestamps: true });
 
 

@@ -169,7 +169,7 @@ const get = async (req, res) => {
         party: party || null,
         isDel: false,
         isTrash: false,
-        paymentStatus: { $ne: "1" }
+        $expr: { $ne: ["$finalAmount", "$paymentAmount"] }
       }).sort({ _id: -1 });
     }
     else {
