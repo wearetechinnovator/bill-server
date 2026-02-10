@@ -3,7 +3,7 @@ const paymentInModel = require("../models/paymentin.model");
 const salesinvoiceModel = require("../models/salesinvoice.model");
 const userModel = require("../models/user.model");
 const Log = require('../helper/insertLog');
-const { addLadger } = require("./ladger.controller");
+const { addLadger, updateLadger } = require("./ladger.controller");
 const { default: mongoose } = require("mongoose");
 
 
@@ -45,10 +45,30 @@ const add = async (req, res) => {
         return res.status(500).json({ err: 'Payment update failed', update: false })
       }
 
+      await updateLadger({
+        partyId: party,
+        voucher: 'pay_in',
+        voucherId: id,
+        date: paymentInDate,
+        credit: Number(amount).toFixed(2)
+      })
+
       return res.status(200).json(update)
 
     } // Update close here;
 
+    for (inv of checkedInv) {
+      const bill = await salesinvoiceModel.findOne({ _id: inv._id });
+      const prevPayment = bill.paymentAmount || 0;
+      const finalPay = Number(prevPayment) + Number(amount);
+
+      await salesinvoiceModel.updateOne({ _id: inv._id }, {
+        $set: {
+          paymentAmount: finalPay
+        }
+      })
+
+    }
 
 
     const insert = await paymentInModel.create({
@@ -61,18 +81,20 @@ const add = async (req, res) => {
       return res.status(500).json({ err: 'Payment creation failed', create: false })
     }
 
-    // const ladger = await addLadger(token, 'Sales', amount, 0, paymentInNumber, party);
-    // if (!ladger) {
-    //   return res.status(500).json({ err: 'Ladger entry failed' });
-    // }
-
+    await addLadger({
+      token: token,
+      partyId: party,
+      voucher: 'pay_in',
+      voucherId: insert._id,
+      date: paymentInDate,
+      credit: Number(amount).toFixed(2)
+    })
 
     // Insert partylog;
     // await Log.insertPartyLog(token, insert._id, party, "Paymentin", amount, "", 'paymentin');
 
     return res.status(200).json(insert);
   } catch (error) {
-    console.log(error)
     return res.status(500).json({ 'err': 'Something went wrong', create: false });
   }
 

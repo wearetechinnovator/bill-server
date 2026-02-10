@@ -4,6 +4,7 @@ const userModel = require('../models/user.model');
 const paymentoutModel = require('../models/paymentout.model');
 const Log = require('../helper/insertLog');
 const { default: mongoose } = require('mongoose');
+const { updateLadger, addLadger } = require('./ladger.controller');
 
 
 
@@ -49,9 +50,17 @@ const add = async (req, res) => {
         }
       })
 
-      if (!update) {
+      if (update.modifiedCount === 0) {
         return res.status(500).json({ err: 'Invoice update failed', update: false })
       }
+
+      await updateLadger({
+        partyId: party,
+        voucher: 'purchase',
+        voucherId: id,
+        date: invoiceDate,
+        credit: (finalAmount - (paymentAmount || 0)).toFixed(2)
+      })
 
       return res.status(200).json(update)
 
@@ -64,24 +73,18 @@ const add = async (req, res) => {
       finalAmount, autoRoundOff, roundOffAmount, roundOffType
     });
 
-
-    // check payment
-    if (paymentStatus) {
-      await paymentoutModel.create({
-        userId: getUserData._id, companyId: getUserData.activeCompany,
-        party, paymentOutNumber: purchaseInvoiceNumber, paymentOutDate: invoiceDate,
-        amount: finalAmount, account: paymentAccount
-      })
-
-    }
-
-
     if (!insert) {
       return res.status(500).json({ err: 'Invoice creation failed' });
     }
 
-    // Insert partylog;
-    await Log.insertPartyLog(token, insert._id, party, "Purchase", finalAmount, '', 'purchaseinvoice');
+    await addLadger({
+      token: token,
+      partyId: party,
+      voucher: 'purchase',
+      voucherId: insert._id,
+      date: invoiceDate,
+      credit: (finalAmount - (paymentAmount || 0)).toFixed(2)
+    })
 
     return res.status(200).json(insert);
 

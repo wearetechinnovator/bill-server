@@ -3,6 +3,7 @@ const { getId } = require("../helper/getIdFromToken");
 const paymentOutModel = require("../models/paymentout.model");
 const purchaseInvoiceModel = require("../models/purchaseInvoice.model");
 const userModel = require("../models/user.model");
+const { addLadger, updateLadger } = require("./ladger.controller");
 
 
 const add = async (req, res) => {
@@ -36,9 +37,17 @@ const add = async (req, res) => {
         }
       })
 
-      if (!update) {
+      if (update.modifiedCount === 0) {
         return res.status(500).json({ err: 'Payment update failed', update: false })
       }
+
+      await updateLadger({
+        partyId: party,
+        voucher: 'pay_out',
+        voucherId: id,
+        date: paymentOutDate,
+        debit: (amount).toFixed(2)
+      })
 
       return res.status(200).json(update)
 
@@ -72,6 +81,15 @@ const add = async (req, res) => {
     if (!insert) {
       return res.status(500).json({ err: 'Payment creation failed', create: false })
     }
+
+    await addLadger({
+      token: token,
+      partyId: party,
+      voucher: 'pay_out',
+      voucherId: insert._id,
+      date: paymentOutNumber,
+      debit: (amount).toFixed(2)
+    })
 
     return res.status(200).json(insert);
 
@@ -128,7 +146,7 @@ const get = async (req, res) => {
     else {
       if (totalPayment) {
         data = await paymentOutModel.find({ isDel: false, isTrash: false, companyId: getUser.activeCompany });
-        
+
         // let totalAmount = 0;
         // data.forEach((d, _) => {
         //   totalAmount += parseInt(d.amount)

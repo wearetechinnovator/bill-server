@@ -3,6 +3,7 @@ const debitNoteModel = require('../models/debitnote.model');
 const userModel = require('../models/user.model');
 const Log = require("../helper/insertLog");
 const purchaseInvoiceModel = require('../models/purchaseInvoice.model');
+const { addLadger, updateLadger } = require('./ladger.controller');
 
 
 
@@ -39,13 +40,21 @@ const add = async (req, res) => {
         $set: {
           party, debitNoteNumber, debitNoteDate, items, purchaseInvoice, accountId: accountId || null,
           discountType, discountAmount, discountPercentage, additionalCharge, note, terms,
-          autoRoundOff, roundOffAmount, roundOffType
+          autoRoundOff, roundOffAmount, roundOffType, finalAmount
         }
       })
 
-      if (!update) {
+      if (update.modifiedCount === 0) {
         return res.status(500).json({ err: 'Invoice update failed', update: false })
       }
+
+      await updateLadger({
+        partyId: party,
+        voucher: 'debit_note',
+        voucherId: id,
+        date: invoiceDate,
+        debit: (finalAmount).toFixed(2)
+      })
 
       return res.status(200).json(update)
 
@@ -55,15 +64,21 @@ const add = async (req, res) => {
       userId: getUserData._id, companyId: getUserData.activeCompany,
       party, debitNoteNumber, debitNoteDate, purchaseInvoice, items, accountId,
       discountType, discountAmount, discountPercentage, additionalCharge, note, terms,
-      autoRoundOff, roundOffAmount, roundOffType
+      autoRoundOff, roundOffAmount, roundOffType, finalAmount
     });
 
     if (!insert) {
       return res.status(500).json({ err: 'Invoice creation failed' });
     }
 
-    // Insert party log
-    await Log.insertPartyLog(token, insert._id, party, "Debitnote", finalAmount, '', 'debitnote');
+    await addLadger({
+      token: token,
+      partyId: party,
+      voucher: 'debit_note',
+      voucherId: insert._id,
+      date: debitNoteDate,
+      debit: (finalAmount).toFixed(2)
+    })
 
     return res.status(200).json(insert);
 

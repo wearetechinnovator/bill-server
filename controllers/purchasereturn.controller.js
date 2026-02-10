@@ -2,6 +2,7 @@ const { getId } = require('../helper/getIdFromToken');
 const purchaseReturnModel = require('../models/purchasereturn.model');
 const userModel = require('../models/user.model');
 const Log = require("../helper/insertLog");
+const { addLadger, updateLadger } = require('./ladger.controller');
 
 
 // Create and Save a new Quotation;
@@ -43,9 +44,17 @@ const add = async (req, res) => {
         }
       })
 
-      if (!update) {
+      if (update.modifiedCount === 0) {
         return res.status(500).json({ err: 'Invoice update failed', update: false })
       }
+
+      await updateLadger({
+        partyId: party,
+        voucher: 'purchase_return',
+        voucherId: id,
+        date: invoiceDate,
+        debit: (finalAmount - (paymentAmount || 0)).toFixed(2)
+      })
 
       return res.status(200).json(update)
 
@@ -62,9 +71,14 @@ const add = async (req, res) => {
       return res.status(500).json({ err: 'Invoice creation failed' });
     }
 
-
-    // Insert party log
-    await Log.insertPartyLog(token, insert._id, party, "Delivery Chalan", finalAmount, '', 'purchasereturn');
+    await addLadger({
+      token: token,
+      partyId: party,
+      voucher: 'purchase_return',
+      voucherId: insert._id,
+      date: returnDate,
+      debit: (finalAmount - (paymentAmount || 0)).toFixed(2)
+    })
 
     return res.status(200).json(insert);
 

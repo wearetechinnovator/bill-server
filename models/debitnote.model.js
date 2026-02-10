@@ -52,6 +52,7 @@ const debitNoteSchema = new mongoose.Schema({
   discountAmount: String,
   discountPercentage: String,
   additionalCharge: [additionalChargeSchema],
+  finalAmount: Number,
   note: String,
   terms: String,
   isDel: {

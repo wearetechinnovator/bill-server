@@ -4,7 +4,7 @@ const userModel = require('../models/user.model');
 const paymentinModel = require("../models/paymentin.model");
 const companyModel = require("../models/company.model");
 const Log = require('../helper/insertLog');
-const { addLadger } = require('./ladger.controller');
+const { addLadger, updateLadger } = require('./ladger.controller');
 const salesinvoiceModel = require('../models/salesinvoice.model');
 const { default: mongoose } = require('mongoose');
 
@@ -63,9 +63,18 @@ const add = async (req, res) => {
         }
       })
 
-      if (!update) {
+      if (update.modifiedCount === 0) {
         return res.status(500).json({ err: 'Invoice update failed', update: false })
       }
+
+
+      await updateLadger({
+        partyId: party,
+        voucher: 'sales',
+        voucherId: id,
+        date: invoiceDate,
+        debit: (finalAmount - (paymentAmount || 0)).toFixed(2)
+      })
 
       return res.status(200).json(update)
     } // Update close here;
@@ -93,8 +102,14 @@ const add = async (req, res) => {
       return res.status(500).json({ err: 'Invoice creation failed' });
     }
 
-    // Insert partylog;
-    //await Log.insertPartyLog(token, insert._id, party, "Sales", finalAmount, "", 'salesinvoice');
+    await addLadger({
+      token: token,
+      partyId: party,
+      voucher: 'sales',
+      voucherId: insert._id,
+      date: invoiceDate,
+      debit: (finalAmount - (paymentAmount || 0)).toFixed(2)
+    })
 
     return res.status(200).json(insert);
 

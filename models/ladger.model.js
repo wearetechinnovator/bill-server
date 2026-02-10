@@ -11,38 +11,32 @@ const ladgerSchema = new mongoose.Schema({
     ref: "Company",
     required: true
   },
-  partyId:{
+  partyId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Party',
     required: true
   },
-  date:{
-    type: Date,
-    default: new Date().toLocaleDateString(),
-    required: true
-  },
+  date: Date,
   voucher: {
     type: String,
-    required: true
+    enum: ['sales', 'sales_return', 'credit_note',
+      'purchase', 'purchase_return', 'debit_note', 'pay_in', 'pay_out'
+    ]
   },
-  transactionNo:{
-    type: String,
-    required: true
+  voucherModel: String,
+  voucherId: {
+   type: mongoose.Schema.Types.ObjectId,
+   refPath: 'voucherModel'
   },
   credit: {
     type: Number,
-    required: true
+    default: 0
   },
   debit: {
     type: Number,
-    required: true
+    default: 0
   },
-  balance:{
-    type: Number,
-    required: true
-  }
-
-}, {timestamps: true});
+}, { timestamps: true });
 
 
 const ladgerModel = new mongoose.model("ladger", ladgerSchema);

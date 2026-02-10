@@ -23,6 +23,7 @@ const otherTrancationRoute = require("./transaction.route");
 const partyCategoryRoute = require("./partycategory.route");
 const staffRoute = require("./staff.route");
 const attendanceRoute = require("./attendance.route");
+const ladgerRoute = require("./ladger.route");
 
 
 
@@ -50,6 +51,7 @@ router.use("/other-transaction/", otherTrancationRoute);
 router.use("/partycategory/", partyCategoryRoute);
 router.use("/staff/", staffRoute);
 router.use("/attendance/", attendanceRoute);
+router.use("/ladger/", ladgerRoute);
 
 
 

@@ -4,6 +4,7 @@ const userModel = require('../models/user.model');
 const companyModel = require("../models/company.model");
 const Log = require("../helper/insertLog");
 const salesinvoiceModel = require('../models/salesinvoice.model');
+const { addLadger, updateLadger } = require('./ladger.controller');
 
 
 
@@ -40,13 +41,22 @@ const add = async (req, res) => {
       const update = await creditNoteModel.updateOne({ _id: id }, {
         $set: {
           party, creditNoteNumber, creditNoteDate, items, salesInvoice, discountType, discountAmount,
-          discountPercentage, additionalCharge, note, terms, autoRoundOff, roundOffAmount, roundOffType
+          discountPercentage, additionalCharge, note, terms, autoRoundOff, roundOffAmount, roundOffType,
+          finalAmount
         }
       })
 
       if (!update) {
         return res.status(500).json({ err: 'Invoice update failed', update: false })
       }
+
+      await updateLadger({
+        partyId: party,
+        voucher: 'credit_note',
+        voucherId: id,
+        date: creditNoteDate,
+        credit: (finalAmount).toFixed(2)
+      })
 
       return res.status(200).json(update)
 
@@ -64,15 +74,21 @@ const add = async (req, res) => {
     const insert = await creditNoteModel.create({
       userId: getUserData._id, companyId: getUserData.activeCompany, party, creditNoteNumber,
       creditNoteDate, salesInvoice, items, discountType, discountAmount, discountPercentage,
-      additionalCharge, note, terms, autoRoundOff, roundOffAmount, roundOffType
+      additionalCharge, note, terms, autoRoundOff, roundOffAmount, roundOffType, finalAmount
     });
 
     if (!insert) {
       return res.status(500).json({ err: 'Invoice creation failed' });
     }
 
-    // Insert party log
-    await Log.insertPartyLog(token, insert._id, party, "Creditnote", finalAmount, '', 'creditnote');
+    await addLadger({
+      token: token,
+      partyId: party,
+      voucher: 'credit_note',
+      voucherId: insert._id,
+      date: creditNoteDate,
+      credit: (finalAmount).toFixed(2)
+    })
 
     return res.status(200).json(insert);
 
