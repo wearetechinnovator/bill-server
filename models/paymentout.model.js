@@ -16,32 +16,12 @@ const PaymentOutSchema = mongoose.Schema({
     ref: 'party',
     required: true
   },
-  paymentOutNumber: {
-    type: String,
-    required: true
-  },
-  paymentOutDate: {
-    type: Date,
-    required: true
-  },
-  paymentMode: {
-    type: String,
-  },
-  account: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "account",
-  },
-  amount: {
-    type: String,
-    required: true
-  },
-  details: {
-    type: String
-  },
-  isTrash: {
-    type: Boolean,
-    default: false
-  },
+  paymentOutNumber: String,
+  paymentOutDate: Date,
+  paymentMode: String,
+  account: String,
+  amount: Number,
+  invoiceId: String,
   isDel: {
     type: Boolean,
     default: false

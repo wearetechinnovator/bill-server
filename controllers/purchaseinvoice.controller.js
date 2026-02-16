@@ -144,8 +144,9 @@ const get = async (req, res) => {
         companyId: getUser.activeCompany,
         party: party || null,
         isDel: false,
-        isTrash: false
-      }).sort({ _id: -1 }).select('_id purchaseInvoiceNumber dueAmount');
+        isTrash: false,
+        $expr: { $ne: ["$finalAmount", "$paymentAmount"] }
+      }).sort({ _id: -1 });
     }
     else {
       getData = await purchaseInvoiceModel.find({

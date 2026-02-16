@@ -19,7 +19,7 @@ const add = async (req, res) => {
 
 	if ([token, party, paymentInNumber, paymentInDate, paymentMode, amount]
 		.some((field) => field === "")) {
-		return res.status(400).json({ msg: "Fill the blank" });
+		return res.status(400).json({ msg: "fill the required" });
 	}
 
 
@@ -35,14 +35,46 @@ const add = async (req, res) => {
 			return res.status(500).json({ err: 'Payment alredy exist', create: false })
 		}
 
-		// update code.....
+		// Update code.....
 		if (update && id) {
+			// Get uncheck invoices;
+			const getSattleInvoice = await paymentInModel.findOne({ _id: id });
+			const sattleInvoices = getSattleInvoice.sattleInvoice; // Previous sattle invoice;
+			const currentCheckedInv = checkedInv; // Current Sattle Invoice;
+
+			// Sei sob invoice j gula payment kora hoyechilo kintu edit korar somoy sei invoice gula
+			// unchecked kora hoyeche;
+			const uncheckdInv = sattleInvoices.filter(saInv =>
+				!currentCheckedInv.some(chInv => chInv._id === saInv._id)
+			);
+
 			const update = await paymentInModel.updateOne({ _id: id }, {
 				$set: {
 					party, paymentInNumber, paymentInDate, paymentMode, account, amount, details,
 					sattleInvoice: checkedInv
 				}
 			})
+
+			// Update sales invoice for reduce amount-- for uncheck bill;
+			for (let unInv of uncheckdInv) {
+				await salesinvoiceModel.updateOne(
+					{ _id: new mongoose.Types.ObjectId(String(unInv._id)) },
+					{
+						$inc: {
+							paymentAmount: -Number(unInv.receiveAmount || 0)
+						}
+					}
+				);
+			}
+
+			// Apply in invoice amount;
+			for (inv of checkedInv) {
+				await salesinvoiceModel.updateOne({ _id: inv._id }, {
+					$set: {
+						paymentAmount: Number(inv?.receiveAmount || 0) + Number(inv.paymentAmount || 0)
+					}
+				})
+			}
 
 			if (update.modifiedCount === 0) {
 				return res.status(500).json({ err: 'Payment update failed', update: false })
@@ -63,7 +95,7 @@ const add = async (req, res) => {
 		for (inv of checkedInv) {
 			await salesinvoiceModel.updateOne({ _id: inv._id }, {
 				$set: {
-					paymentAmount: inv?.receiveAmount || 0
+					paymentAmount: Number(inv?.receiveAmount || 0) + Number(inv.paymentAmount || 0)
 				}
 			})
 		}
@@ -195,6 +227,27 @@ const remove = async (req, res) => {
 
 	try {
 
+		for (let i of ids) {
+			const getSattleInvoice = await paymentInModel.findById(i);
+			if (!getSattleInvoice) continue;
+
+			const sattleInvoices = getSattleInvoice.sattleInvoice || [];
+
+			for (let inv of sattleInvoices) {
+				await salesinvoiceModel.updateOne(
+					{ _id: inv._id },
+					{
+						$inc: {
+							paymentAmount: -Number(inv.receiveAmount || 0)
+						}
+					}
+				);
+
+			}
+
+			await ladgerModel.deleteOne({ voucherId: i });
+		}
+
 		const removeParty = await paymentInModel.updateMany(
 			{ _id: { $in: ids } },
 			{ $set: { isDel: true } }
@@ -204,17 +257,11 @@ const remove = async (req, res) => {
 			return res.status(404).json({ err: "No matching parties found", remove: false });
 		}
 
-		for (let i of ids) {
-			// Delete Ladgers;
-			await ladgerModel.deleteOne({ voucherId: i });
 
-			// Decress Sales PaymentAmount;
-			await salesinvoiceModel.updateOne({ _id: '' }, { $set: {} });
-		}
-
-		return res.status(200).json({ msg: "Payment deleted successfully" });
+		return res.status(200).json({ msg: "Payment In deleted successfully" });
 
 	} catch (error) {
+		console.log(error);
 		return res.status(500).json({ err: "Something went wrong", remove: false });
 	}
 
