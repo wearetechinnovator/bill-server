@@ -144,7 +144,7 @@ const add = async (req, res) => {
 
 // Get Controller;
 const get = async (req, res) => {
-	const { token, trash, id, all, totalPayment } = req.body;
+	const { token, id, all, totalPayment } = req.body;
 	const { page, limit } = req.query;
 	const skip = (parseInt(page) - 1) * parseInt(limit);
 
@@ -180,11 +180,6 @@ const get = async (req, res) => {
 					companyId: getUser.activeCompany,
 					isDel: false,
 				});
-
-				// let totalAmount = 0;
-				// data.forEach((d, _) => {
-				//   totalAmount += parseInt(d.amount)
-				// })
 
 				const total = data.reduce((acc, i) => {
 					acc += parseInt(i.amount);
@@ -381,7 +376,6 @@ const getMonthWisePaymentIn = async (req, res) => {
 		const result = await paymentInModel.aggregate([
 			{
 				$match: {
-					isTrash: false,
 					isDel: false,
 					userId: new mongoose.Types.ObjectId(getInfo._id),
 					companyId: new mongoose.Types.ObjectId(getUserData.activeCompany),
@@ -475,7 +469,44 @@ const getMonthWisePaymentIn = async (req, res) => {
 };
 
 
+const getCashIn = async (req, res) => {
+	const { token } = req.body;
+
+	if (!token) {
+		return res.status(500).json({ 'err': 'Invalid user' });
+	}
+
+	try {
+		const getInfo = await getId(token);
+		const getUserData = await userModel.findOne({ _id: getInfo._id });
+
+		const cashIn = await paymentInModel.aggregate([
+			{
+				$match: {
+					isDel: false,
+					userId: new mongoose.Types.ObjectId(getInfo._id),
+					companyId: new mongoose.Types.ObjectId(getUserData.activeCompany),
+					paymentMode: 'cash'
+				}
+			},
+			{
+				$group: {
+					_id: null,
+					totalCashIn: { $sum: { $toDouble: "$amount" } }
+				}
+			}
+		])
+
+		res.status(200).json(cashIn)
+
+	} catch (error) {
+		return res.status(500).json({ err: "Something went wrong" });
+	}
+}
+
+
 module.exports = {
 	add, get, remove, restore, filter,
-	getMonthWisePaymentIn
+	getMonthWisePaymentIn,
+	getCashIn
 }

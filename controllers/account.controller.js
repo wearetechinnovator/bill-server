@@ -6,6 +6,7 @@ const paymentInModel = require("../models/paymentin.model");
 const transactionModel = require("../models/transaction.model");
 
 
+
 const add = async (req, res) => {
 	const {
 		token, accountName, accountHolderName, openingBalance, asOfDate, isBankDetails,
@@ -124,7 +125,7 @@ const get = async (req, res) => {
 			getData = await accountModel.find({
 				companyId: getUser.activeCompany,
 				isDel: false
-			}).skip(skip).limit(limit).sort({_id: -1})
+			}).skip(skip).limit(limit).sort({ _id: -1 })
 		}
 
 		if (!getData) {
@@ -139,6 +140,7 @@ const get = async (req, res) => {
 		return res.status(500).json({ 'err': 'Something went wrong', get: false });
 	}
 }
+
 
 // Delete controller
 const remove = async (req, res) => {
@@ -205,4 +207,94 @@ const restore = async (req, res) => {
 	}
 }
 
-module.exports = { add, get, remove, restore };
+
+// Get Balance;
+const getBalance = async (req, res) => {
+	const { token } = req.body;
+
+	if (!token) {
+		return res.status(500).json({ err: 'Please provide token' });
+	}
+
+	try {
+		const getInfo = await getId(token);
+		const getUserData = await userModel.findOne({ _id: getInfo._id });
+
+		const allPaymentIn = await paymentInModel.aggregate([
+			{
+				$match: {
+					userId: getUserData._id,
+					companyId: getUserData.activeCompany,
+				}
+			},
+			{
+				$group: {
+					_id: "$account",
+					totalPaymentIn: { $sum: "$amount" },
+					count: { $sum: 1 }
+				}
+			},
+			{
+				$project: {
+					_id: 0,
+					account: "$_id",
+					totalPaymentIn: 1,
+					count: 1
+				}
+			}
+		]);
+
+		const allPaymentOut = await paymentOutModel.aggregate([
+			{
+				$match: {
+					userId: getUserData._id,
+					companyId: getUserData.activeCompany,
+				}
+			},
+			{
+				$group: {
+					_id: "$account",
+					totalPaymentOut: { $sum: "$amount" },
+					count: { $sum: 1 }
+				}
+			},
+			{
+				$project: {
+					_id: 0,
+					account: "$_id",
+					totalPaymentOut: 1,
+					count: 1
+				}
+			}
+		]);
+
+		const allAccount = await accountModel.find({
+			userId: getUserData._id,
+			companyId: getUserData.activeCompany,
+		})
+
+		const balance = {};
+		allAccount.forEach((acc, _) => {
+			const payInBalance = allPaymentIn.find(pIn => pIn.account === String(acc._id));
+			const payOutBalance = allPaymentOut.find(pOut => pOut.account === String(acc._id));
+
+			balance[String(acc._id)] = Number(payInBalance?.totalPaymentIn || 0) - Number(payOutBalance?.totalPaymentOut || 0)
+		})
+
+		const cashIn = allPaymentIn.find(pIn => pIn.account === "");
+		const cashOut = allPaymentOut.find(pIn => pIn.account === "");
+		balance['cash'] = Number(cashIn?.totalPaymentIn || 0) - Number(cashOut?.totalPaymentOut || 0)
+
+		res.status(200).json(balance);
+
+	} catch (error) {
+		console.log(error);
+		return res.status(500).json({err: "Something went wrong"});
+	}
+}
+
+
+module.exports = {
+	add, get, remove, restore,
+	getBalance
+};

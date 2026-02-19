@@ -1,4 +1,4 @@
-const { add, get, remove, restore } = require("../controllers/account.controller");
+const { add, get, remove, restore, getBalance } = require("../controllers/account.controller");
 const router = require("express").Router();
 
 
@@ -18,6 +18,9 @@ router
   .route('/restore')
   .post(restore)
 
+router
+  .route("/get-balance")
+  .post(getBalance);
 
 
 module.exports = router;

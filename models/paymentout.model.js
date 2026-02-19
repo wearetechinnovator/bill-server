@@ -22,6 +22,7 @@ const PaymentOutSchema = mongoose.Schema({
   account: String,
   amount: Number,
   invoiceId: String,
+  sattleInvoice: [Object],
   isDel: {
     type: Boolean,
     default: false

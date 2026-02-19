@@ -373,7 +373,6 @@ const getMonthWisePaymentOut = async (req, res) => {
         const result = await paymentOutModel.aggregate([
             {
                 $match: {
-                    isTrash: false,
                     isDel: false,
                     userId: new mongoose.Types.ObjectId(String(getInfo._id)),
                     companyId: new mongoose.Types.ObjectId(getUserData.activeCompany),
@@ -467,8 +466,44 @@ const getMonthWisePaymentOut = async (req, res) => {
 };
 
 
+const getCashOut = async (req, res) => {
+    const { token } = req.body;
+
+    if (!token) {
+        return res.status(500).json({ 'err': 'Invalid user' });
+    }
+
+    try {
+        const getInfo = await getId(token);
+        const getUserData = await userModel.findOne({ _id: getInfo._id });
+
+        const cashIn = await paymentOutModel.aggregate([
+            {
+                $match: {
+                    isDel: false,
+                    userId: new mongoose.Types.ObjectId(getInfo._id),
+                    companyId: new mongoose.Types.ObjectId(getUserData.activeCompany),
+                    paymentMode: 'cash'
+                }
+            },
+            {
+                $group: {
+                    _id: null,
+                    totalCashOut: { $sum: { $toDouble: "$amount" } }
+                }
+            }
+        ])
+
+        res.status(200).json(cashIn)
+
+    } catch (error) {
+        return res.status(500).json({ err: "Something went wrong" });
+    }
+}
+
 
 module.exports = {
     add, get, remove, restore, filter,
-    getMonthWisePaymentOut
+    getMonthWisePaymentOut,
+    getCashOut
 }
