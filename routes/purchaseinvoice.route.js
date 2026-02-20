@@ -1,4 +1,4 @@
-const { add, get, remove, restore, filter, getTotalPay } = require("../controllers/purchaseinvoice.controller");
+const { add, get, remove, restore, filter, getTotalPay, getTotalPurchaseAmount } = require("../controllers/purchaseinvoice.controller");
 const router = require("express").Router();
 
 
@@ -27,6 +27,11 @@ router
 router
   .route("/get-total-pay")
   .post(getTotalPay);
+
+router
+  .route("/get-total-purchase-amount")
+  .post(getTotalPurchaseAmount);
+
 
 
 

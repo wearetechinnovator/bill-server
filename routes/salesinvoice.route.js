@@ -1,6 +1,7 @@
 const {
   add, get, remove,
-  restore, filter, summaryReport, getTotalCollect
+  restore, filter, summaryReport, getTotalCollect,
+  getTotalSaleAmount
 } = require("../controllers/salesinvoice.controller");
 const router = require("express").Router();
 
@@ -29,10 +30,13 @@ router
   .route("/summary-reports")
   .post(summaryReport);
 
-
 router
   .route("/get-total-collect")
   .post(getTotalCollect);
+
+router
+  .route("/get-total-sale-amount")
+  .post(getTotalSaleAmount);
 
 
 

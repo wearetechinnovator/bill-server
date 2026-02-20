@@ -418,16 +418,20 @@ const getTotalCollect = async (req, res) => {
         $match: {
           userId: new mongoose.Types.ObjectId(String(getInfo._id)),
           companyId: new mongoose.Types.ObjectId(getUser.activeCompany),
-          paymentStatus: { $ne: '1' },
-          isDel: false
+          isDel: false,
         }
-
       },
-      { $unwind: "$items" },
       {
         $group: {
           _id: null,
-          totalAmount: { $sum: { $toDouble: "$dueAmount" } },
+          totalAmount: {
+            $sum: {
+              $subtract: [
+                { $toDouble: "$finalAmount" },
+                { $ifNull: [{ $toDouble: "$paymentAmount" }, 0] }
+              ]
+            }
+          }
         }
       }
     ]);
@@ -442,6 +446,47 @@ const getTotalCollect = async (req, res) => {
 
 
 
+const getTotalSaleAmount = async (req, res) => {
+  const { token } = req.body;
+
+  if (!token) {
+    return res.status(500).json({ 'err': 'Invalid user' });
+  }
+
+  try {
+    const getInfo = await getId(token);
+    if (!getInfo) {
+      return res.status(401).json({ err: 'invalid token' });
+    }
+    const getUser = await userModel.findOne({ _id: getInfo._id });
+
+    const data = await salesInvoiceModel.aggregate([
+      {
+        $match: {
+          userId: new mongoose.Types.ObjectId(String(getInfo._id)),
+          companyId: new mongoose.Types.ObjectId(getUser.activeCompany),
+          isDel: false
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          totalAmount: { $sum: { $toDouble: "$finalAmount" } },
+        }
+      }
+    ]);
+
+
+    return res.status(200).json(data);
+
+  } catch (error) {
+    console.log(error)
+    return res.status(500).json({ err: "Something went wrong" });
+  }
+
+}
+
+
 module.exports = {
   add,
   get,
@@ -449,6 +494,7 @@ module.exports = {
   restore,
   filter,
   summaryReport,
-  getTotalCollect
+  getTotalCollect,
+  getTotalSaleAmount
 }
 
