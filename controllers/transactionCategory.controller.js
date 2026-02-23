@@ -30,7 +30,7 @@ const add = async (req, res) => {
                 return res.status(500).json({ err: 'Transaction Category update failed', update: false })
             }
 
-            return res.status(200).json(update)
+            return res.status(200).json({msg: 'Transaction Category updated successfully', update: true});
 
         } // Update close here;
 
