@@ -13,47 +13,22 @@ const transactionSchema = new mongoose.Schema({
   },
   transactionType: {
     type: String,
-    required: true,
-    enum:['income', 'expense']
+    enum: ['income', 'expense']
   },
-  purpose: {
-    type: String,
-    required: true
-  },
-  transactionNumber:{
-    type: String,
-    required: true
-  },
-  transactionDate: {
-    type: String, 
-    required: true
-  },
-  paymentMode: {
-    type: String,
-    enum: ['cash', 'bank', "cheque"],
-    required: true
-  },
-  account:{
+  transactionNumber: String,
+  category: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "account",
-    required: true
+    ref: 'transaction_category',
   },
-  amount:{
-    type:String,
-    required: true
-  },
-  note:{
-    type: String, 
-  },
-  isTrash: {
+  transactionDate: Date,
+  paymentMode: String,
+  account: String,
+  amount: Number,
+  note: String,
+  isDel: {
     type: Boolean,
     default: false
-  },
-  isDel:{
-    type:Boolean,
-    default: false
   }
-
 }, { timestamps: true })
 
 

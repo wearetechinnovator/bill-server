@@ -4,14 +4,14 @@ const userModel = require("../models/user.model");
 
 
 const add = async (req, res) => {
-  const { token, transactionType, purpose, transactionNumber, transactionDate, paymentMode,
-    account, amount, note, update, id
+  const { token, update, id, transactionType, transactionNumber, transactionDate, paymentMode,
+    account, amount, note, category
   } = req.body;
 
-  if ([token, transactionType, purpose, transactionNumber, transactionDate, paymentMode,
-    account, amount]
-    .some((field) => field === "")) {
-    return res.status(400).json({ msg: "Fill the blank" });
+
+  if ([token, transactionType, transactionNumber, transactionDate, paymentMode, amount, category]
+    .some((field) => field === "" || !field)) {
+    return res.status(400).json({ msg: "fill the require fields" });
   }
 
 
@@ -20,7 +20,8 @@ const add = async (req, res) => {
     const getUserData = await userModel.findOne({ _id: getInfo._id });
 
     const isExist = await transactionModel.findOne({
-      userId: getInfo._id, companyId: getUserData.activeCompany, transactionNumber, isDel: false
+      userId: getInfo._id, companyId: getUserData.activeCompany,
+      transactionNumber, isDel: false
     });
     if (isExist && !update) {
       return res.status(500).json({ err: 'Transaction alredy exist', create: false })
@@ -30,12 +31,12 @@ const add = async (req, res) => {
     if (update && id) {
       const update = await transactionModel.updateOne({ _id: id }, {
         $set: {
-          transactionType, purpose, transactionNumber, transactionDate, paymentMode,
-          account, amount, note
+          transactionType, transactionNumber, transactionDate, paymentMode,
+          account, amount, note, category
         }
       })
 
-      if (!update) {
+      if (update.modifiedCount === 0) {
         return res.status(500).json({ err: 'Transaction update failed', update: false })
       }
 
@@ -45,8 +46,8 @@ const add = async (req, res) => {
 
     const insert = await transactionModel.create({
       userId: getUserData._id, companyId: getUserData.activeCompany,
-      transactionType, purpose, transactionNumber, transactionDate, paymentMode,
-      account, amount, note
+      transactionType, transactionNumber, transactionDate, paymentMode,
+      account, amount, note, category
     });
 
     if (!insert) {
@@ -79,7 +80,6 @@ const get = async (req, res) => {
     const getUser = await userModel.findOne({ _id: getInfo._id });
     const totalData = await transactionModel.countDocuments({
       companyId: getUser.activeCompany,
-      isTrash: trash ? true : false,
       isDel: false
     });
 
@@ -89,16 +89,8 @@ const get = async (req, res) => {
       getData = await transactionModel.findOne({
         companyId: getUser.activeCompany,
         _id: id,
-        isTrash: false,
         isDel: false
       });
-    }
-    else if (trash) {
-      getData = await transactionModel.find({
-        companyId: getUser.activeCompany,
-        isTrash: trash ? true : false,
-        isDel: false
-      }).skip(skip).limit(limit).sort({ _id: -1 }).populate("account");
     }
     else if (all) {
       getData = await transactionModel.find({
@@ -109,9 +101,9 @@ const get = async (req, res) => {
     else {
       getData = await transactionModel.find({
         companyId: getUser.activeCompany,
-        isTrash: false,
         isDel: false
-      }).skip(skip).limit(limit).sort({ _id: -1 }).populate("account");
+      }).skip(skip).limit(limit).sort({ _id: -1 })
+        .populate("account").populate("category");
     }
 
     if (!getData) {
