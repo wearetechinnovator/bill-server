@@ -4,6 +4,7 @@ const { getId } = require("../helper/getIdFromToken");
 const paymentOutModel = require("../models/paymentout.model");
 const paymentInModel = require("../models/paymentin.model");
 const transactionModel = require("../models/transaction.model");
+const { default: mongoose } = require("mongoose");
 
 
 
@@ -268,6 +269,51 @@ const getBalance = async (req, res) => {
 			}
 		]);
 
+		const otherTransaction = await transactionModel.aggregate([
+			{
+				$match: {
+					userId: new mongoose.Types.ObjectId(String(getUserData._id)),
+					companyId: new mongoose.Types.ObjectId(String(getUserData.activeCompany)),
+					isDel: false
+				}
+			},
+			{
+				$group: {
+					_id: {
+						$cond: [
+							{
+								$or: [
+									{ $eq: ["$paymentMode", "cash"] },
+									{ $eq: ["$account", ""] }
+								]
+							},
+							"Cash",       // 👈 group as Cash
+							"$account"    // 👈 group by account id
+						]
+					},
+					totalIncome: {
+						$sum: {
+							$cond: [{ $eq: ["$transactionType", "income"] }, "$amount", 0]
+						}
+					},
+					totalExpense: {
+						$sum: {
+							$cond: [{ $eq: ["$transactionType", "expense"] }, "$amount", 0]
+						}
+					}
+				}
+			},
+			{
+				$project: {
+					_id: 0,
+					account: "$_id",
+					totalIncome: 1,
+					totalExpense: 1,
+					balance: { $subtract: ["$totalIncome", "$totalExpense"] }
+				}
+			}
+		]);
+
 		const allAccount = await accountModel.find({
 			userId: getUserData._id,
 			companyId: getUserData.activeCompany,
@@ -277,19 +323,19 @@ const getBalance = async (req, res) => {
 		allAccount.forEach((acc, _) => {
 			const payInBalance = allPaymentIn.find(pIn => pIn.account === String(acc._id));
 			const payOutBalance = allPaymentOut.find(pOut => pOut.account === String(acc._id));
+			const transactionBalance = otherTransaction.find(t => t.account === String(acc._id));
 
-			balance[String(acc._id)] = Number(payInBalance?.totalPaymentIn || 0) - Number(payOutBalance?.totalPaymentOut || 0)
+			balance[String(acc._id)] = Number(payInBalance?.totalPaymentIn || 0) - Number(payOutBalance?.totalPaymentOut || 0) + Number(transactionBalance?.balance || 0);
 		})
 
 		const cashIn = allPaymentIn.find(pIn => pIn.account === "");
 		const cashOut = allPaymentOut.find(pIn => pIn.account === "");
-		balance['cash'] = Number(cashIn?.totalPaymentIn || 0) - Number(cashOut?.totalPaymentOut || 0)
+		balance['cash'] = Number(cashIn?.totalPaymentIn || 0) - Number(cashOut?.totalPaymentOut || 0) + Number(otherTransaction.find(t => t.account === "Cash")?.balance || 0);
 
 		res.status(200).json(balance);
 
 	} catch (error) {
-		console.log(error);
-		return res.status(500).json({err: "Something went wrong"});
+		return res.status(500).json({ err: "Something went wrong" });
 	}
 }
 

@@ -1,5 +1,8 @@
 const router = require('express').Router()
-const { add, get, remove, restore } = require("../controllers/transaction.controller")
+const {
+  add, get, remove, restore,
+  getTotalIncomeExpense
+} = require("../controllers/transaction.controller")
 
 
 
@@ -17,7 +20,12 @@ router
 
 router
   .route('/restore')
-  .post(restore)
+  .post(restore);
+
+router
+  .route('/get-total-income-expense')
+  .post(getTotalIncomeExpense);
+
 
 
 
