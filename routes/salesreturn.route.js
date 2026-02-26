@@ -23,11 +23,6 @@ router
   .post(restore);
 
 
-router
-  .route("/filter")
-  .post(filter);
-
-
 
 module.exports = router;
 

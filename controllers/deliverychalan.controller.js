@@ -3,6 +3,7 @@ const deliverChalanModel = require('../models/deliverychalan.model');
 const userModel = require('../models/user.model');
 const companyModel = require('../models/company.model');
 const Log = require("../helper/insertLog");
+const partyModel = require('../models/party.model');
 
 
 
@@ -82,7 +83,9 @@ const add = async (req, res) => {
 
 // Get Controller;
 const get = async (req, res) => {
-  const { token, trash, id, all } = req.body;
+  const { token, trash, id, all,
+    startDate, endDate, billNo, partyName
+  } = req.body;
   const { page, limit } = req.query;
   const skip = (parseInt(page) - 1) * parseInt(limit);
 
@@ -95,37 +98,49 @@ const get = async (req, res) => {
     const getUser = await userModel.findOne({ _id: getInfo._id });
     const totalData = await deliverChalanModel.countDocuments({
       companyId: getUser.activeCompany,
-      isTrash: trash ? true : false,
       isDel: false
     });
 
     let getData;
+    let filter = {};
+    if (startDate && endDate) {
+      filter.chalanDate = {
+        $gte: new Date(startDate),
+        $lte: new Date(endDate)
+      }
+    }
+    if (billNo) {
+      filter.chalanNumber = billNo
+    }
+    if (partyName) {
+      const parties = await partyModel.find({
+        name: new RegExp(`${partyName}`, "i")
+      }).select("_id");
+
+      const partyIds = parties.map(p => p._id);
+
+      filter.party = { $in: partyIds };
+    }
+
     if (id) {
       getData = await deliverChalanModel.findOne({
         companyId: getUser.activeCompany,
         _id: id,
-        isTrash: false,
         isDel: false
       }).populate("party").populate('accountId');
-    }
-    else if (trash) {
-      getData = await deliverChalanModel.find({
-        companyId: getUser.activeCompany,
-        isTrash: trash ? true : false,
-        isDel: false
-      }).skip(skip).limit(limit).sort({ _id: -1 }).populate('party');
     }
     else if (all) {
       getData = await deliverChalanModel.find({
         companyId: getUser.activeCompany,
-        isDel: false
+        isDel: false,
+        ...filter
       }).skip(skip).limit(limit).sort({ _id: -1 }).populate('party');
     }
     else {
       getData = await deliverChalanModel.find({
         companyId: getUser.activeCompany,
-        isTrash: false,
-        isDel: false
+        isDel: false,
+        ...filter
       }).skip(skip).limit(limit).sort({ _id: -1 }).populate('party');
     }
 
