@@ -1,4 +1,5 @@
 const { getId } = require('../helper/getIdFromToken');
+const transactionModel = require('../models/transaction.model');
 const transactionCategoryModal = require('../models/transactionCategory.modal');
 const userModel = require('../models/user.model');
 
@@ -104,6 +105,11 @@ const remove = async (req, res) => {
     }
 
     try {
+        const categoryInTransaction = await transactionModel.find({category: id});
+        if(categoryInTransaction.length > 0){
+            return res.status(500).json({err: "This category is associated with existing transactions, so it can't be deleted."})
+        }
+
         const removeData = await transactionCategoryModal.updateMany({ _id: id }, {
             $set: {
                 isDel: true

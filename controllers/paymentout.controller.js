@@ -6,6 +6,7 @@ const userModel = require("../models/user.model");
 const { addLadger, updateLadger } = require("./ladger.controller");
 const sattlementModel = require("../models/sattlement.model");
 const ladgerModel = require("../models/ladger.model");
+const partyModel = require('../models/party.model');
 
 
 const add = async (req, res) => {
@@ -138,7 +139,9 @@ const add = async (req, res) => {
 
 // Get Controller;
 const get = async (req, res) => {
-    const { token, trash, id, all, totalPayment } = req.body;
+    const { token, trash, id, all, totalPayment,
+        startDate, endDate, billNo, partyName
+    } = req.body;
     const { page, limit } = req.query;
     const skip = (parseInt(page) - 1) * parseInt(limit);
 
@@ -155,6 +158,26 @@ const get = async (req, res) => {
         });
 
         let getData;
+        let filter = {};
+        if (startDate && endDate) {
+            filter.paymentOutDate = {
+                $gte: new Date(startDate),
+                $lte: new Date(endDate)
+            }
+        }
+        if (billNo) {
+            filter.paymentOutNumber = billNo
+        }
+        if (partyName) {
+            const parties = await partyModel.find({
+                name: new RegExp(`${partyName}`, "i")
+            }).select("_id");
+
+            const partyIds = parties.map(p => p._id);
+
+            filter.party = { $in: partyIds };
+        }
+
         if (id) {
             getData = await paymentOutModel.findOne({
                 companyId: getUser.activeCompany,
@@ -162,27 +185,16 @@ const get = async (req, res) => {
                 isDel: false
             });
         }
-        else if (trash) {
-            getData = await paymentOutModel.find({
-                companyId: getUser.activeCompany,
-                isDel: false
-            }).skip(skip).limit(limit).sort({ _id: -1 }).populate("party");;
-        }
         else if (all) {
             getData = await paymentOutModel.find({
                 companyId: getUser.activeCompany,
-                isDel: false
+                isDel: false,
+                ...filter
             }).skip(skip).limit(limit).sort({ _id: -1 }).populate("party");;
         }
         else {
             if (totalPayment) {
                 data = await paymentOutModel.find({ isDel: false, companyId: getUser.activeCompany });
-
-                // let totalAmount = 0;
-                // data.forEach((d, _) => {
-                //   totalAmount += parseInt(d.amount)
-                // })
-
                 const total = data.reduce((acc, i) => {
                     acc += parseInt(i.amount);
                     return acc;
@@ -195,7 +207,8 @@ const get = async (req, res) => {
 
             getData = await paymentOutModel.find({
                 companyId: getUser.activeCompany,
-                isDel: false
+                isDel: false,
+                ...filter
             }).skip(skip).limit(limit).sort({ _id: -1 }).populate("party");
         }
 

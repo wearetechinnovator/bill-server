@@ -7,6 +7,7 @@ const { addLadger, updateLadger } = require("./ladger.controller");
 const { default: mongoose } = require("mongoose");
 const ladgerModel = require("../models/ladger.model");
 const sattlementModel = require("../models/sattlement.model");
+const partyModel = require('../models/party.model');
 
 
 
@@ -144,7 +145,9 @@ const add = async (req, res) => {
 
 // Get Controller;
 const get = async (req, res) => {
-	const { token, id, all, totalPayment } = req.body;
+	const { token, id, all, totalPayment,
+		startDate, endDate, billNo, partyName
+	} = req.body;
 	const { page, limit } = req.query;
 	const skip = (parseInt(page) - 1) * parseInt(limit);
 
@@ -161,6 +164,26 @@ const get = async (req, res) => {
 		});
 
 		let getData;
+		let filter = {};
+		if (startDate && endDate) {
+			filter.paymentInDate = {
+				$gte: new Date(startDate),
+				$lte: new Date(endDate)
+			}
+		}
+		if (billNo) {
+			filter.paymentInNumber = billNo
+		}
+		if (partyName) {
+			const parties = await partyModel.find({
+				name: new RegExp(`${partyName}`, "i")
+			}).select("_id");
+
+			const partyIds = parties.map(p => p._id);
+
+			filter.party = { $in: partyIds };
+		}
+
 		if (id) {
 			getData = await paymentInModel.findOne({
 				companyId: getUser.activeCompany,
@@ -171,7 +194,8 @@ const get = async (req, res) => {
 		else if (all) {
 			getData = await paymentInModel.find({
 				companyId: getUser.activeCompany,
-				isDel: false
+				isDel: false,
+				...filter
 			}).skip(skip).limit(limit).sort({ _id: -1 }).populate("party");;
 		}
 		else {
@@ -190,16 +214,16 @@ const get = async (req, res) => {
 
 			}
 
-
 			getData = await paymentInModel.find({
 				companyId: getUser.activeCompany,
-				isDel: false
+				isDel: false,
+				...filter
 			}).skip(skip).limit(limit).sort({ _id: -1 }).populate("party");
 
 		}
 
 		if (!getData) {
-			return res.status(500).json({ 'err': 'No party availble', get: false });
+			return res.status(500).json({ 'err': 'No Paymentin availble', get: false });
 		}
 
 		return res.status(200).json({ data: getData, totalData: totalData });
