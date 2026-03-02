@@ -214,6 +214,9 @@ const getTotalIncomeExpense = async (req, res) => {
 	try {
 		const getInfo = await getId(token);
 		const getUser = await userModel.findOne({ _id: getInfo._id });
+		if(!getUser.activeCompany){
+			return res.status(500).json({err: "No Company found"})
+		}
 
 		const result = await transactionModel.aggregate([
 			{

@@ -220,6 +220,9 @@ const getBalance = async (req, res) => {
 	try {
 		const getInfo = await getId(token);
 		const getUserData = await userModel.findOne({ _id: getInfo._id });
+		if(!getUserData.activeCompany){
+			return res.status(500).json({err: "No Company found"})
+		}
 
 		const allPaymentIn = await paymentInModel.aggregate([
 			{
