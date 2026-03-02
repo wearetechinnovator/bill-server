@@ -21,40 +21,31 @@ const itemSchema = new mongoose.Schema({
   unit: {
     type: Array
   },
-  price: {
-    type: String
-  },
-  discountPerAmount: {
-    type: String,
-  },
+  price: Number,
+  discountPerAmount: Number,
   discountPerPercentage: {
     type: String,
   },
   tax: {
     type: String,
   },
-  taxAmount: {
-    type: String,
-  },
-  amount: {
-    type: String,
-  },
+  taxAmount: Number,
+  amount: Number,
 }, { _id: false });
 
 const additionalChargeSchema = new mongoose.Schema({
   particular: {
     type: String,
   },
-  amount: {
-    type: String,
-  }
+  amount:Number
 }, { _id: false });
 
 const proformaSchema = new mongoose.Schema({
   userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
-    required: true
+    required: true,
+    index: true
   },
   companyId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -75,7 +66,7 @@ const proformaSchema = new mongoose.Schema({
   validDate: Date,
   items: [itemSchema],
   discountType: String,
-  discountAmount: String,
+  discountAmount: Number,
   discountPercentage: String,
   additionalCharge: [additionalChargeSchema],
   note: String,

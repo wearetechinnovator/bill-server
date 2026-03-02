@@ -5,6 +5,7 @@ const accountSchema = mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
     required: true,
+    index: true
   },
   companyId: {
     type: mongoose.Schema.Types.ObjectId,

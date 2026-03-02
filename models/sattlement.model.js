@@ -5,7 +5,8 @@ const sattlementSchema = new mongoose.Schema({
     userId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
-        required: true
+        required: true,
+        index: true
     },
     companyId: {
         type: mongoose.Schema.Types.ObjectId,
@@ -19,7 +20,7 @@ const sattlementSchema = new mongoose.Schema({
     typeId: String, //Paymentin id --or-- Paymentout id;
     amount: Number,
     sattleInvoice: [String],
-}, {timestamps: true})
+}, { timestamps: true })
 
 
 const sattlementModel = new mongoose.model("sattlement", sattlementSchema);
