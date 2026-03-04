@@ -183,14 +183,14 @@ const get = async (req, res) => {
                 companyId: getUser.activeCompany,
                 _id: id,
                 isDel: false
-            });
+            }).populate("party");
         }
         else if (all) {
             getData = await paymentOutModel.find({
                 companyId: getUser.activeCompany,
                 isDel: false,
                 ...filter
-            }).skip(skip).limit(limit).sort({ _id: -1 }).populate("party");;
+            }).skip(skip).limit(limit).sort({ _id: -1 }).populate("party");
         }
         else {
             if (totalPayment) {

@@ -105,7 +105,7 @@ const get = async (req, res) => {
 
 const getPartyBalance = async (req, res) => {
 	const { token, partyId } = req.body;
-
+	
 	if (!token || !partyId) {
 		return res.status(500).json({ err: "required are blank" })
 	}

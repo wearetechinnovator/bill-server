@@ -189,7 +189,7 @@ const get = async (req, res) => {
 				companyId: getUser.activeCompany,
 				_id: id,
 				isDel: false
-			});
+			}).populate("party");
 		}
 		else if (all) {
 			getData = await paymentInModel.find({
