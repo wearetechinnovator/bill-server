@@ -25,6 +25,7 @@ const staffRoute = require("./staff.route");
 const attendanceRoute = require("./attendance.route");
 const ladgerRoute = require("./ladger.route");
 const transactionCategoryRoute = require("./transactionCategory.route");
+const staffPaymentRoute = require("./staffPayment.route");
 
 
 
@@ -54,6 +55,7 @@ router.use("/partycategory/", partyCategoryRoute);
 router.use("/staff/", staffRoute);
 router.use("/attendance/", attendanceRoute);
 router.use("/ladger/", ladgerRoute);
+router.use("/staff-payment/", staffPaymentRoute);
 
 
 

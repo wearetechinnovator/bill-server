@@ -38,5 +38,5 @@ const attendanceSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 
-const attendanceModel = new mongoose.model("staffattendance", attendanceSchema);
+const attendanceModel = new mongoose.model("staff_attendance", attendanceSchema);
 module.exports = attendanceModel;

@@ -27,5 +27,5 @@ const attendanceSettingSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 
-const attendanceSettingModel = new mongoose.model("attendancesetting", attendanceSettingSchema);
+const attendanceSettingModel = new mongoose.model("attendance_setting", attendanceSettingSchema);
 module.exports = attendanceSettingModel;
