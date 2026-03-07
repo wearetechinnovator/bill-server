@@ -5,6 +5,8 @@ const mongoose = require("mongoose");
 const morgan = require('morgan');
 const router = require("./routes/index.route");
 const puppeteer = require("puppeteer");
+const attendanceReminder = require("./jobs/staffAttendanceReminder");
+const staffAttendancePresent = require("./jobs/staffAttandancePresent");
 
 const app = express();
 const PORT = process.env.PORT || 8080;
@@ -117,7 +119,10 @@ app.post("/generate-pdf", async (req, res) => {
 
 // create database connection mongoose
 mongoose.connect(process.env.MONGO_URI).then(() => {
-  console.log("[*] Database run")
+  console.log("[*] Database run");
+  
+  attendanceReminder(); //Staff Attendance Reminder Mail;
+  staffAttendancePresent(); // Default Presend Attendance;
 
   app.listen(PORT || 8080, () => {
     console.log("[*] Server run", PORT)
