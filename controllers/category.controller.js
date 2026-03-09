@@ -15,7 +15,7 @@ const add = async (req, res) => {
 
     const isExist = await categoryModel.findOne({ title, companyId: getUserData.activeCompany, isDel: false });
     if (isExist && !update) {
-      return res.status(500).json({ err: 'Category alredy exist', create: false })
+      return res.status(500).json({ err: 'Category alredy exist', create: false, isDel: false })
     }
 
     // update code.....

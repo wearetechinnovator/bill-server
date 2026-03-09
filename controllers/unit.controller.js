@@ -15,9 +15,9 @@ const add = async (req, res) => {
     const getInfo = await getId(token);
     const getUserData = await userModel.findOne({ _id: getInfo._id });
 
-    const isExist = await unitModel.findOne({ title, companyId: getUserData.activeCompany, isDel: false});
+    const isExist = await unitModel.findOne({ title, companyId: getUserData.activeCompany, isDel: false });
     if (isExist && !update) {
-      return res.status(500).json({ err: 'Unit alredy exist', create: false })
+      return res.status(500).json({ err: 'Unit alredy exist', create: false, isDel: false })
     }
 
     // update code.....
@@ -55,7 +55,7 @@ const add = async (req, res) => {
 
 // get Controller
 const get = async (req, res) => {
-  const { token, trash, id, all } = req.body;
+  const { token, id, all } = req.body;
   const { page, limit } = req.query;
   const skip = (parseInt(page) - 1) * parseInt(limit);
 
@@ -68,7 +68,6 @@ const get = async (req, res) => {
     const getUser = await userModel.findOne({ _id: getInfo._id });
     const totalData = await unitModel.countDocuments({
       companyId: getUser.activeCompany,
-      isTrash: trash ? true : false,
       isDel: false
     });
 
@@ -77,29 +76,20 @@ const get = async (req, res) => {
       getData = await unitModel.findOne({
         companyId: getUser.activeCompany,
         _id: id,
-        isTrash: false,
         isDel: false
       })
-    }
-    else if (trash) {
-      getData = await unitModel.find({
-        companyId: getUser.activeCompany,
-        isTrash: trash ? true : false,
-        isDel: false
-      }).skip(skip).limit(limit).sort({_id: -1});
     }
     else if (all) {
       getData = await unitModel.find({
         companyId: getUser.activeCompany,
         isDel: false
-      }).skip(skip).limit(limit).sort({_id: -1});
+      }).skip(skip).limit(limit).sort({ _id: -1 });
     }
-    else{
+    else {
       getData = await unitModel.find({
         companyId: getUser.activeCompany,
-        isTrash: false,
         isDel: false
-      }).skip(skip).limit(limit).sort({_id: -1});
+      }).skip(skip).limit(limit).sort({ _id: -1 });
     }
 
     if (!getData) {
@@ -117,20 +107,15 @@ const get = async (req, res) => {
 
 // Delete controller
 const remove = async (req, res) => {
-  const { ids, trash } = req.body;
-  console.log(ids)
+  const { ids } = req.body;
 
   if (!ids || !Array.isArray(ids) || ids.length === 0) {
     return res.status(400).json({ err: "No valid ids provided", remove: false });
   }
 
   try {
-    let updateQuery;
-    if (trash) {
-      updateQuery = { $set: { isTrash: true } };
-    } else {
-      updateQuery = { $set: { isDel: true } };
-    }
+    let updateQuery = { $set: { isDel: true } };
+
 
     const removeData = await unitModel.updateMany(
       { _id: { $in: ids } },
@@ -142,9 +127,7 @@ const remove = async (req, res) => {
     }
 
     return res.status(200).json({
-      msg: trash
-        ? "Unit successfully trash"
-        : "Unit successfully delete",
+      msg: "Unit successfully delete",
       modifiedCount: removeData.modifiedCount,
     });
 
@@ -174,7 +157,7 @@ const restore = async (req, res) => {
       return res.status(404).json({ err: "No unit restore", restore: false });
     }
 
-    return res.status(200).json({msg: 'Restore successfully', restore: true})
+    return res.status(200).json({ msg: 'Restore successfully', restore: true })
 
   } catch (error) {
     return res.status(500).json({ err: "Something went wrong", restore: false });

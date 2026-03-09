@@ -13,6 +13,7 @@ module.exports = async function remainder() {
             attendanceReminder: true,
             reminderTime: `${hour}:00`
         }).populate('companyId');
+        if (settings.length < 1) return;
 
 
         for (let setting of settings) {

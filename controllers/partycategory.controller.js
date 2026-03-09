@@ -20,7 +20,7 @@ const add = async (req, res) => {
     });
 
     if (isExist && !update) {
-      return res.status(500).json({ err: 'Party category alredy exist', create: false })
+      return res.status(500).json({ err: 'Party category alredy exist', create: false, isDel: false })
     }
 
     // update code.....

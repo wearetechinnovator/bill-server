@@ -30,7 +30,7 @@ const add = async (req, res) => {
 
 		const isExist = await itemModel.findOne({ title, companyId: getUserData.activeCompany, isDel: false });
 		if (isExist && !update) {
-			return res.status(500).json({ err: 'Item alredy exist', create: false })
+			return res.status(500).json({ err: 'Item alredy exist', create: false, isDel: false })
 		}
 
 		// update code.....

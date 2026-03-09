@@ -31,7 +31,7 @@ const add = async (req, res) => {
 			userId: getInfo._id, companyId: getUserData.activeCompany, name, isDel: false
 		});
 		if (isPartyExist && !update) {
-			return res.status(500).json({ err: 'Party alredy exist', create: false })
+			return res.status(500).json({ err: 'Party alredy exist', create: false, isDel: false })
 		}
 
 		// update code.....

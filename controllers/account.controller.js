@@ -42,7 +42,8 @@ const add = async (req, res) => {
 
 		if (isExist && !update) {
 			return res.status(500).json({
-				err: "Account alredy exist", create: false
+				err: "Account alredy exist", create: false,
+				isDel: false
 			});
 		}
 

@@ -29,7 +29,7 @@ const add = async (req, res) => {
             isDel: false
         });
         if (isExist && !update) {
-            return res.status(500).json({ err: 'Payment alredy exist', create: false })
+            return res.status(500).json({ err: 'Payment alredy exist', create: false, isDel: false })
         }
 
         // update code.....

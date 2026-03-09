@@ -234,6 +234,7 @@ const get = async (req, res) => {
 // Delete controller;
 const remove = async (req, res) => {
 	const { ids, trash } = req.body;
+	console.log(req.body);
 
 	if (!ids || !Array.isArray(ids) || ids.length === 0) {
 		return res.status(400).json({ err: "No valid IDs provided", remove: false });
