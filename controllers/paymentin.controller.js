@@ -93,6 +93,7 @@ const add = async (req, res) => {
 
 		} // Update close here;
 
+
 		for (inv of checkedInv) {
 			await salesinvoiceModel.updateOne({ _id: inv._id }, {
 				$set: {

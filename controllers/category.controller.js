@@ -54,7 +54,7 @@ const add = async (req, res) => {
 
 // get Controller
 const get = async (req, res) => {
-  const { token, trash, id, all, search, searchText } = req.body;
+  const { token, id, all, search, searchText } = req.body;
   const { page, limit } = req.query;
   const skip = (parseInt(page) - 1) * parseInt(limit);
 
@@ -69,25 +69,23 @@ const get = async (req, res) => {
 
     const totalData = await categoryModel.countDocuments({
       companyId: getUser.activeCompany,
-      isTrash: trash ? true : false,
       isDel: false
     });
 
     let getData;
+    let filter = {};
+    if (!search && searchText) {
+      filter.title = { $regex: searchText.trim(), $options: "i" }
+    }
+
+
+
     if (id) {
       getData = await categoryModel.findOne({
         companyId: getUser.activeCompany,
         _id: id,
-        isTrash: false,
         isDel: false
       })
-    }
-    else if (trash) {
-      getData = await categoryModel.find({
-        companyId: getUser.activeCompany,
-        isTrash: trash ? true : false,
-        isDel: false
-      }).skip(skip).limit(limit);
     }
     else if (all) {
       getData = await categoryModel.find({
@@ -101,15 +99,14 @@ const get = async (req, res) => {
           title: { $regex: searchText.trim(), $options: "i" },
           companyId: getUser.activeCompany,
           isDel: false,
-          isTrash: false
         }).sort({ _id: -1 }).select("_id title");
       }
     }
     else {
       getData = await categoryModel.find({
         companyId: getUser.activeCompany,
-        isTrash: false,
-        isDel: false
+        isDel: false,
+        ...filter
       }).skip(skip).limit(limit).populate('tax').sort({ _id: -1 });
     }
 

@@ -86,7 +86,7 @@ const add = async (req, res) => {
 
 // get Controller
 const get = async (req, res) => {
-	const { token, trash, id, all } = req.body;
+	const { token, id, all, searchText } = req.body;
 	const { page, limit } = req.query;
 	const skip = (parseInt(page) - 1) * parseInt(limit);
 
@@ -104,18 +104,18 @@ const get = async (req, res) => {
 		});
 
 		let getData;
+		let filter = {};
+		if (searchText) {
+			filter.accountName = { $regex: searchText.trim(), $options: "i" }
+		}
+
+
 		if (id) {
 			getData = await accountModel.findOne({
 				companyId: getUser.activeCompany,
 				_id: id,
 				isDel: false
 			})
-		}
-		else if (trash) {
-			getData = await accountModel.find({
-				companyId: getUser.activeCompany,
-				isDel: false
-			}).skip(skip).limit(limit);
 		}
 		else if (all) {
 			getData = await accountModel.find({
@@ -126,7 +126,8 @@ const get = async (req, res) => {
 		else {
 			getData = await accountModel.find({
 				companyId: getUser.activeCompany,
-				isDel: false
+				isDel: false,
+				...filter
 			}).skip(skip).limit(limit).sort({ _id: -1 })
 		}
 
@@ -221,8 +222,8 @@ const getBalance = async (req, res) => {
 	try {
 		const getInfo = await getId(token);
 		const getUserData = await userModel.findOne({ _id: getInfo._id });
-		if(!getUserData.activeCompany){
-			return res.status(500).json({err: "No Company found"})
+		if (!getUserData.activeCompany) {
+			return res.status(500).json({ err: "No Company found" })
 		}
 
 		const allPaymentIn = await paymentInModel.aggregate([

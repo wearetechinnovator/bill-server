@@ -12,93 +12,37 @@ const companySchema = new mongoose.Schema({
     type: String, 
     required: true,
   },
-  phone: {
-    type: String
-  },
-  email: {
-    type: String
-  },
-  gst: {
-    type: String
-  },
-  pan: {
-    type: String
-  },
-  invoiceLogo: {
-    type: String
-  },
-  signature: {
-    type: String
-  },
-  address: {
-    type: String
-  },
-  country: {
-    type: String
-  },
-  state: {
-    type: String
-  },
-  city: {
-    type: String
-  },
-  pin: {
-    type: String
-  },
-  poInitial: {
-    type: String
-  },
-  invoiceInitial: {
-    type: String
-  },
-  proformaInitial: {
-    type: String
-  },
-  poNextCount: {
-    type: String
-  },
-  invoiceNextCount: {
-    type: String
-  },
-  proformaNextCount: {
-    type: String
-  },
-  quotationInitial: {
-    type: String
-  },
-  creditNoteInitial: {
-    type: String
-  },
-  deliverChalanInitial: {
-    type: String
-  },
-  salesReturnInitial: {
-    type: String
-  },
-  quotationCount: {
-    type: String
-  },
-  creditNoteCount: {
-    type: String
-  },
-  salesReturnCount: {
-    type: String
-  },
-  deliveryChalanCount: {
-    type: String
-  },
-  salesReminder: {
-    type: String
-  },
-  purchaseReminder: {
-    type: String
-  },
-  logoFileName: {
-    type: String
-  },
-  signatureFileName: {
-    type: String
-  },
+  phone: String,
+  email: String,
+  gst: String,
+  pan: String,
+  invoiceLogo: String,
+  signature: String,
+  address: String,
+  country: String,
+  state: String,
+  city: String,
+  pin: String,
+  poInitial: String,
+  purchaseInvoiceInitial: String,
+  purchaseInvoiceNextCount: String,
+  invoiceInitial: String,
+  proformaInitial: String,
+  poNextCount: String,
+  invoiceNextCount: String,
+  proformaNextCount: String,
+  quotationInitial: String,
+  creditNoteInitial: String,
+  deliverChalanInitial: String,
+  salesReturnInitial: String,
+  quotationCount: String,
+  creditNoteCount: String,
+  salesReturnCount: String,
+  deliveryChalanCount: String,
+  salesReminder: String,
+  purchaseReminder: String,
+  logoFileName: String,
+  signatureFileName: String,
 
 }, {timestamps: true});
 

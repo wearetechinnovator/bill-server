@@ -71,6 +71,7 @@ const get = async (req, res) => {
 	const {
 		token, id, all,
 		startDate, endDate, category,
+		searchText,
 	} = req.body;
 	const { page, limit } = req.query;
 	const skip = (parseInt(page) - 1) * parseInt(limit);
@@ -95,9 +96,14 @@ const get = async (req, res) => {
 				$lte: new Date(endDate)
 			}
 		}
-		if(category) {
+		if (category) {
 			filter.category = category;
 		}
+		if (searchText) {
+			filter.transactionNumber = searchText
+		}
+
+
 
 		if (id) {
 			getData = await transactionModel.findOne({
@@ -120,19 +126,19 @@ const get = async (req, res) => {
 				isDel: false,
 				...filter
 			}).skip(skip).limit(limit).sort({ _id: -1 })
-			.populate("account").populate("category");
-	}
+				.populate("account").populate("category");
+		}
 
 		if (!getData) {
-		return res.status(500).json({ 'err': 'No Transaction availble', get: false });
+			return res.status(500).json({ 'err': 'No Transaction availble', get: false });
+		}
+
+		return res.status(200).json({ data: getData, totalData: totalData });
+
+	} catch (error) {
+		console.log(error)
+		return res.status(500).json({ 'err': 'Something went wrong', get: false });
 	}
-
-	return res.status(200).json({ data: getData, totalData: totalData });
-
-} catch (error) {
-	console.log(error)
-	return res.status(500).json({ 'err': 'Something went wrong', get: false });
-}
 
 }
 
@@ -214,8 +220,8 @@ const getTotalIncomeExpense = async (req, res) => {
 	try {
 		const getInfo = await getId(token);
 		const getUser = await userModel.findOne({ _id: getInfo._id });
-		if(!getUser.activeCompany){
-			return res.status(500).json({err: "No Company found"})
+		if (!getUser.activeCompany) {
+			return res.status(500).json({ err: "No Company found" })
 		}
 
 		const result = await transactionModel.aggregate([

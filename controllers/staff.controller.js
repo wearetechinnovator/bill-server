@@ -68,7 +68,7 @@ const add = async (req, res) => {
 
 // get Controller
 const get = async (req, res) => {
-  const { token, id, all } = req.body;
+  const { token, id, all, searchText } = req.body;
   const { page, limit } = req.query;
   const skip = (parseInt(page) - 1) * parseInt(limit);
 
@@ -85,6 +85,15 @@ const get = async (req, res) => {
     });
 
     let getData;
+    let filter = {};
+    if (searchText) {
+      filter.$or = [
+        { staffName: { $regex: searchText.trim(), $options: "i" } },
+        { mobileNumber: { $regex: searchText.trim(), $options: "i" } }
+      ];
+    }
+
+
     if (id) {
       getData = await staffModel.findOne({
         companyId: getUser.activeCompany,
@@ -101,7 +110,8 @@ const get = async (req, res) => {
     else {
       getData = await staffModel.find({
         companyId: getUser.activeCompany,
-        isDel: false
+        isDel: false,
+        ...filter
       }).skip(skip).limit(limit).sort({ _id: -1 });
     }
 

@@ -55,7 +55,7 @@ const add = async (req, res) => {
 
 // get Controller
 const get = async (req, res) => {
-  const { token, id, all } = req.body;
+  const { token, id, all, searchText } = req.body;
   const { page, limit } = req.query;
   const skip = (parseInt(page) - 1) * parseInt(limit);
 
@@ -72,6 +72,12 @@ const get = async (req, res) => {
     });
 
     let getData;
+    let filter = {};
+    if (searchText) {
+      filter.title = { $regex: searchText.trim(), $options: "i" }
+    }
+
+
     if (id) {
       getData = await unitModel.findOne({
         companyId: getUser.activeCompany,
@@ -88,7 +94,8 @@ const get = async (req, res) => {
     else {
       getData = await unitModel.find({
         companyId: getUser.activeCompany,
-        isDel: false
+        isDel: false,
+        ...filter
       }).skip(skip).limit(limit).sort({ _id: -1 });
     }
 

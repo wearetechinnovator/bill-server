@@ -16,7 +16,7 @@ const add = async (req, res) => {
     const getInfo = await getId(token);
     const getUserData = await userModel.findOne({ _id: getInfo._id });
 
-    const isExist = await taxModel.findOne({ title, companyId: getUserData.activeCompany, isDel: false});
+    const isExist = await taxModel.findOne({ title, companyId: getUserData.activeCompany, isDel: false });
     if (isExist && !update) {
       return res.status(500).json({ err: 'Tax alredy exist', create: false })
     }
@@ -57,7 +57,7 @@ const add = async (req, res) => {
 
 // get Controller
 const get = async (req, res) => {
-  const { token, trash, id, all } = req.body;
+  const { token, id, all, searchText } = req.body;
   const { page, limit } = req.query;
   const skip = (parseInt(page) - 1) * parseInt(limit);
 
@@ -70,25 +70,22 @@ const get = async (req, res) => {
     const getUser = await userModel.findOne({ _id: getInfo._id });
     const totalData = await taxModel.countDocuments({
       companyId: getUser.activeCompany,
-      isTrash: trash ? true : false,
       isDel: false
     });
 
     let getData;
+    let filter = {};
+    if (searchText) {
+      filter.title = { $regex: searchText.trim(), $options: "i" }
+    }
+
+
     if (id) {
       getData = await taxModel.findOne({
         companyId: getUser.activeCompany,
         _id: id,
-        isTrash: false,
         isDel: false
       })
-    }
-    else if (trash) {
-      getData = await taxModel.find({
-        companyId: getUser.activeCompany,
-        isTrash: trash ? true : false,
-        isDel: false
-      }).skip(skip).limit(limit).sort({ _id: -1 });
     }
     else if (all) {
       getData = await taxModel.find({
@@ -99,8 +96,8 @@ const get = async (req, res) => {
     else {
       getData = await taxModel.find({
         companyId: getUser.activeCompany,
-        isTrash: false,
-        isDel: false
+        isDel: false,
+        ...filter
       }).skip(skip).limit(limit).sort({ _id: -1 });
     }
 
@@ -153,7 +150,7 @@ const remove = async (req, res) => {
     console.log(error)
     return res.status(500).json({ err: "Something went wrong", remove: false });
   }
-  
+
 }
 
 

@@ -78,7 +78,12 @@ const add = async (req, res) => {
 
 // Get Controller;
 const get = async (req, res) => {
-	const { token, trash, id, all, search, searchText, partyType } = req.body;
+	const {
+		token, id, all,
+		search,
+		searchText,
+		partyType
+	} = req.body;
 	const { page, limit } = req.query;
 	const skip = (parseInt(page) - 1) * parseInt(limit);
 
@@ -91,26 +96,22 @@ const get = async (req, res) => {
 		const getUser = await userModel.findOne({ _id: getInfo._id });
 		const totalData = await partyModel.countDocuments({
 			companyId: getUser.activeCompany,
-			isTrash: trash ? true : false,
 			isDel: false
 		});
 
 
 		let getData;
+		let filter = {};
+		if (!search && searchText) {
+			filter.name = { $regex: searchText.trim(), $options: "i" }
+		}
+
 		if (id) {
 			getData = await partyModel.findOne({
 				companyId: getUser.activeCompany,
 				_id: id,
-				isTrash: false,
 				isDel: false
 			}).populate("partyCategory")
-		}
-		else if (trash) {
-			getData = await partyModel.find({
-				companyId: getUser.activeCompany,
-				isTrash: trash ? true : false,
-				isDel: false
-			}).skip(skip).limit(limit).sort({ _id: -1 });
 		}
 		else if (all) {
 			getData = await partyModel.find({
@@ -131,7 +132,8 @@ const get = async (req, res) => {
 		else {
 			getData = await partyModel.find({
 				companyId: getUser.activeCompany,
-				isDel: false
+				isDel: false,
+				...filter
 			}).skip(skip).limit(limit).sort({ _id: -1 });
 		}
 
@@ -150,23 +152,16 @@ const get = async (req, res) => {
 
 // Delete controller
 const remove = async (req, res) => {
-	const { ids, trash } = req.body;
+	const { ids } = req.body;
 
 	if (!ids || !Array.isArray(ids) || ids.length === 0) {
 		return res.status(400).json({ err: "No valid IDs provided", remove: false });
 	}
 
 	try {
-		let updateQuery;
-		if (trash) {
-			updateQuery = { $set: { isTrash: true } };
-		} else {
-			updateQuery = { $set: { isDel: true } };
-		}
-
 		const removeParty = await partyModel.updateMany(
 			{ _id: { $in: ids } },
-			updateQuery
+			{ $set: { isDel: true } }
 		);
 
 		if (removeParty.matchedCount === 0) {
@@ -174,13 +169,12 @@ const remove = async (req, res) => {
 		}
 
 		return res.status(200).json({
-			msg: trash
-				? "Parties added to trash successfully"
-				: "Parties deleted successfully",
+			msg: "Parties deleted successfully",
 			modifiedCount: removeParty.modifiedCount,
 		});
 
 	} catch (error) {
+		console.log(error);
 		return res.status(500).json({ err: "Something went wrong", remove: false });
 	}
 };

@@ -6,6 +6,7 @@ const Log = require('../helper/insertLog');
 const { default: mongoose } = require('mongoose');
 const { updateLadger, addLadger } = require('./ladger.controller');
 const partyModel = require('../models/party.model');
+const companyModel = require('../models/company.model');
 
 
 
@@ -32,8 +33,8 @@ const add = async (req, res) => {
 		const getUserData = await userModel.findOne({ _id: getInfo._id });
 
 		const isExist = await purchaseInvoiceModel.findOne({
-			userId: getInfo._id, companyId: getUserData.activeCompany, purchaseInvoiceNumber: purchaseInvoiceNumber,
-			isDel: false
+			userId: getInfo._id, companyId: getUserData.activeCompany,
+			purchaseInvoiceNumber: purchaseInvoiceNumber, isDel: false
 		});
 		if (isExist && !update) {
 			return res.status(500).json({ err: 'Invoice already exist' })
@@ -66,6 +67,14 @@ const add = async (req, res) => {
 			return res.status(200).json(update)
 
 		} // Update close here;
+
+		let company = await companyModel.findOne({ _id: getUserData.activeCompany });
+		const getInvPrefix = parseInt(company.purchaseInvoiceNextCount) + 1;
+		await companyModel.updateOne({ _id: getUserData.activeCompany }, {
+			$set: {
+				purchaseInvoiceNextCount: getInvPrefix
+			}
+		})
 
 		const insert = await purchaseInvoiceModel.create({
 			userId: getUserData._id, companyId: getUserData.activeCompany, party, purchaseInvoiceNumber,

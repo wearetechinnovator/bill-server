@@ -12,7 +12,7 @@ const add = async (req, res) => {
     address, country, state, poInitial, invoiceInitial, proformaInitial, poNextCount,
     invoiceNextCount, proformaNextCount, quotationInitial, creditNoteInitial, deliverChalanInitial,
     salesReturnInitial, quotationCount, creditNoteCount, salesReturnCount, deliveryChalanCount,
-    salesReminder, purchaseReminder, update, city, pin
+    salesReminder, purchaseReminder, update, city, pin, purchaseInvoiceInitial, purchaseInvoiceNextCount
   } = req.body;
 
 
@@ -36,7 +36,7 @@ const add = async (req, res) => {
         proformaInitial, poNextCount, invoiceNextCount, proformaNextCount,
         salesReminder, purchaseReminder, quotationInitial, creditNoteInitial,
         deliverChalanInitial, salesReturnInitial, quotationCount, creditNoteCount,
-        salesReturnCount, deliveryChalanCount, city, pin
+        salesReturnCount, deliveryChalanCount, city, pin, purchaseInvoiceInitial, purchaseInvoiceNextCount
       }
 
       // file upload ------------
@@ -104,7 +104,7 @@ const add = async (req, res) => {
       proformaInitial, poNextCount, invoiceNextCount, proformaNextCount,
       salesReminder, purchaseReminder, quotationInitial, creditNoteInitial,
       deliverChalanInitial, salesReturnInitial, quotationCount, creditNoteCount,
-      salesReturnCount, deliveryChalanCount, city, pin,
+      salesReturnCount, deliveryChalanCount, city, pin, purchaseInvoiceInitial, purchaseInvoiceNextCount
     });
 
     if (!insert) {
