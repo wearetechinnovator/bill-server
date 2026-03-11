@@ -113,7 +113,10 @@ const get = async (req, res) => {
 		let getData;
 		let filter = {};
 		if (!search && searchText) {
-			filter.title = { $regex: searchText.trim(), $options: "i" }
+			filter.$or = [
+				{ title: { $regex: searchText.trim(), $options: "i" } },
+				{ hsn: { $regex: searchText.trim(), $options: "i" } }
+			]
 		}
 
 
@@ -234,7 +237,8 @@ const get = async (req, res) => {
 				let salesSmallest = 0;
 				const salesInv = await salesinvoiceModel.find({
 					"items.itemId": item._id.toString(),
-					isDel: false
+					isDel: false,
+					isCancel: false
 				});
 
 				salesInv.forEach(inv => {

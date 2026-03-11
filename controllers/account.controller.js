@@ -329,8 +329,9 @@ const getBalance = async (req, res) => {
 			const payInBalance = allPaymentIn.find(pIn => pIn.account === String(acc._id));
 			const payOutBalance = allPaymentOut.find(pOut => pOut.account === String(acc._id));
 			const transactionBalance = otherTransaction.find(t => t.account === String(acc._id));
+			const openingBalance = acc.openingBalance || 0;
 
-			balance[String(acc._id)] = Number(payInBalance?.totalPaymentIn || 0) - Number(payOutBalance?.totalPaymentOut || 0) + Number(transactionBalance?.balance || 0);
+			balance[String(acc._id)] = Number(payInBalance?.totalPaymentIn || 0) - Number(payOutBalance?.totalPaymentOut || 0) + Number(transactionBalance?.balance || 0) + openingBalance;
 		})
 
 		const cashIn = allPaymentIn.find(pIn => pIn.account === "");

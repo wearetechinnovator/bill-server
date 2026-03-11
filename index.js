@@ -86,6 +86,15 @@ app.post("/generate-pdf", async (req, res) => {
           .discount-font {
             font-size: 8px;
           }
+          .cancel__invoice {
+            position: absolute;
+            color: rgba(255, 0, 0, 0.295);
+            text-transform: uppercase;
+            font-size: 7rem;
+            transform: rotate(-50deg);
+            top: 220px;
+            left: 90px;
+          }
         </style>
       </head>
       <body>
@@ -120,7 +129,7 @@ app.post("/generate-pdf", async (req, res) => {
 // create database connection mongoose
 mongoose.connect(process.env.MONGO_URI).then(() => {
   console.log("[*] Database run");
-  
+
   attendanceReminder(); //Staff Attendance Reminder Mail;
   staffAttendancePresent(); // Default Presend Attendance;
 

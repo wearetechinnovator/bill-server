@@ -68,6 +68,10 @@ const salesInvoiceSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  isCancel: {
+    type: Boolean,
+    default: false
+  },
   autoRoundOff: {
     type: Boolean,
     default: false

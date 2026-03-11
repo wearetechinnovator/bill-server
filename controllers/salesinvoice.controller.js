@@ -39,20 +39,6 @@ const add = async (req, res) => {
 			return res.status(500).json({ err: 'Invoice already exist' })
 		}
 
-
-
-		// if (paymentStatus) {
-		//   await paymentinModel.create({
-		//     userId: getUserData._id, companyId: getUserData.activeCompany,
-		//     party, paymentInNumber: salesInvoiceNumber, paymentInDate: invoiceDate,
-		//     amount: paymentAmount, account: paymentAccount
-		//   })
-
-		//   // Add ladger entry;
-		//   await addLadger(token, "Sales", paymentAmount, 0, salesInvoiceNumber, party);
-
-		// }
-
 		// update code.....
 		if (update && id) {
 			const update = await salesInvoiceModel.updateOne({ _id: id }, {
@@ -165,6 +151,7 @@ const get = async (req, res) => {
 				$lte: new Date(endDate)
 			}
 		}
+
 		if (billNo) {
 			filter.salesInvoiceNumber = billNo
 		}
@@ -178,6 +165,8 @@ const get = async (req, res) => {
 			filter.party = { $in: partyIds };
 		}
 
+
+		
 		if (id) {
 			getData = await salesInvoiceModel.findOne({
 				companyId: getUser.activeCompany,
@@ -197,6 +186,7 @@ const get = async (req, res) => {
 				companyId: getUser.activeCompany,
 				party: party || null,
 				isDel: false,
+				isCancel: false,
 				$expr: { $ne: ["$finalAmount", "$paymentAmount"] },
 			}).sort({ _id: -1 });
 		}
@@ -233,24 +223,17 @@ const get = async (req, res) => {
 
 // Delete controller;
 const remove = async (req, res) => {
-	const { ids, trash } = req.body;
-	console.log(req.body);
+	const { ids } = req.body;
 
 	if (!ids || !Array.isArray(ids) || ids.length === 0) {
 		return res.status(400).json({ err: "No valid IDs provided", remove: false });
 	}
 
 	try {
-		let updateQuery;
-		if (trash) {
-			updateQuery = { $set: { isTrash: true } };
-		} else {
-			updateQuery = { $set: { isDel: true } };
-		}
 
 		const removeParty = await salesInvoiceModel.updateMany(
 			{ _id: { $in: ids } },
-			updateQuery
+			{ $set: { isDel: true } }
 		);
 
 		if (removeParty.matchedCount === 0) {
@@ -258,9 +241,7 @@ const remove = async (req, res) => {
 		}
 
 		return res.status(200).json({
-			msg: trash
-				? "Invoice added to trash successfully"
-				: "Invoice deleted successfully",
+			msg: "Invoice deleted successfully",
 			modifiedCount: removeParty.modifiedCount,
 		});
 
@@ -500,6 +481,41 @@ const getTotalSaleAmount = async (req, res) => {
 }
 
 
+const cancelInvoice = async (req, res) => {
+	const { token, id } = req.body;
+
+	if (!token || !id) {
+		return res.status(500).json({ err: "fill the required fields" });
+	}
+
+	const getInfo = await getId(token);
+	const getUser = await userModel.findOne({ _id: getInfo._id });
+	if(!getUser){
+		return res.status(500).json({ err: "Invalid user" });
+	}
+
+	try {
+		const cancel = await salesInvoiceModel.updateOne({ _id: id, companyId: getUser.activeCompany }, {
+			$set: {
+				isCancel: true
+			}
+		})
+
+		if (cancel.modifiedCount === 0) {
+			return res.status(500).json({ err: "Invoice not cancelled" });
+		}
+
+		return res.status(200).json({ msg: "Invoice cancelled successfully" });
+
+	} catch (err) {
+		console.log(err);
+		return res.status(500).json({ err: "Something went wrong" });
+	}
+}
+
+
+
+
 module.exports = {
 	add,
 	get,
@@ -508,6 +524,7 @@ module.exports = {
 	filter,
 	summaryReport,
 	getTotalCollect,
-	getTotalSaleAmount
+	getTotalSaleAmount,
+	cancelInvoice
 }
 

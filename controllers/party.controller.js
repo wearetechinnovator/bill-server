@@ -104,7 +104,12 @@ const get = async (req, res) => {
 		let filter = {};
 		if (!search && searchText) {
 			filter.name = { $regex: searchText.trim(), $options: "i" }
+			filter.$or = [
+				{ name: { $regex: searchText.trim(), $options: "i" } },
+				{ contactNumber: { $regex: searchText.trim(), $options: "i" } }
+			]
 		}
+		
 
 		if (id) {
 			getData = await partyModel.findOne({
