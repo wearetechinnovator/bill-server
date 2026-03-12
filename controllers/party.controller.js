@@ -11,7 +11,6 @@ const { default: mongoose } = require('mongoose');
 const CUSTOMER = 'customer';
 const SUPPLIER = 'supplier';
 const BOTHPARTY = 'both';
-
 // Add controller;
 const add = async (req, res) => {
 	const { token, name, type, contactNumber, billingAddress, shippingAddress, email,
@@ -109,7 +108,7 @@ const get = async (req, res) => {
 				{ contactNumber: { $regex: searchText.trim(), $options: "i" } }
 			]
 		}
-		
+
 
 		if (id) {
 			getData = await partyModel.findOne({

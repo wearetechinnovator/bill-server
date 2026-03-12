@@ -8,6 +8,8 @@ const transactionCategoryModal = require('../models/transactionCategory.modal');
 // CONSTANTS;
 const STAFF_SALARY_TRANSACTION_CATEGORY = "Employee Salary & Advance";
 const EXPENSE = "expense";
+const LOAN = "loan";
+const LOAN_RECEIVED = 'loan_received';
 
 const add = async (req, res) => {
     const { token, staffId, paymentType, paymentDate, paymentAmount, paymentRemark,
@@ -37,16 +39,18 @@ const add = async (req, res) => {
             })
 
             // ::Update Expenses::
-            // Get Transactionid
-            const staffPayment = await staffPaymentModel.findOne({ _id: id });
+            if (paymentType !== LOAN && paymentType !== LOAN_RECEIVED) {
+                // Get Transactionid
+                const staffPayment = await staffPaymentModel.findOne({ _id: id });
 
-            // Update Transaction
-            await transactionModel.updateOne({ _id: staffPayment.transactionId }, {
-                $set: {
-                    transactionDate: paymentDate, paymentMode: paymentMode,
-                    account: paymentAccount, amount: paymentAmount, note: paymentRemark,
-                }
-            })
+                // Update Transaction
+                await transactionModel.updateOne({ _id: staffPayment.transactionId }, {
+                    $set: {
+                        transactionDate: paymentDate, paymentMode: paymentMode,
+                        account: paymentAccount, amount: paymentAmount, note: paymentRemark,
+                    }
+                })
+            }
 
             if (update.modifiedCount === 0) {
                 return res.status(500).json({ err: 'Staff Payment update failed', update: false })
@@ -60,34 +64,38 @@ const add = async (req, res) => {
         /**
          * 1. Check Transaction Category exist or not, if not create then first create category
          * 2. Then Create Expanses
+         * 3. Transaction will be not create if payment type is `Loan` and `Loan Received`;
          */
         let getExpCategory;
+        let addTransaction;
+        if (paymentType !== LOAN && paymentType !== LOAN_RECEIVED) {
 
-        getExpCategory = await transactionCategoryModal.findOne({
-            userId: getUserData._id, companyId: getUserData.activeCompany,
-            categoryName: STAFF_SALARY_TRANSACTION_CATEGORY
-        })
-
-        if (!getExpCategory) {
-            getExpCategory = await transactionCategoryModal.create({
+            getExpCategory = await transactionCategoryModal.findOne({
                 userId: getUserData._id, companyId: getUserData.activeCompany,
                 categoryName: STAFF_SALARY_TRANSACTION_CATEGORY
             })
+
+            if (!getExpCategory) {
+                getExpCategory = await transactionCategoryModal.create({
+                    userId: getUserData._id, companyId: getUserData.activeCompany,
+                    categoryName: STAFF_SALARY_TRANSACTION_CATEGORY
+                })
+            }
+
+            // Get last record for transaction number;
+            const transaction = await transactionModel.findOne({
+                userId: getUserData._id, companyId: getUserData.activeCompany,
+            }).sort({ _id: -1 });
+
+            // Expanses Create
+            addTransaction = await transactionModel.create({
+                userId: getUserData._id, companyId: getUserData.activeCompany,
+                transactionType: EXPENSE, transactionNumber: Number(transaction?.transactionNumber || 0) + 1,
+                transactionDate: paymentDate, paymentMode: paymentMode,
+                account: paymentAccount, amount: paymentAmount, note: paymentRemark,
+                category: getExpCategory._id
+            })
         }
-
-        // Get last record for transaction number;
-        const transaction = await transactionModel.findOne({
-            userId: getUserData._id, companyId: getUserData.activeCompany,
-        }).sort({ _id: -1 });
-
-        // Expanses Create
-        const Addtransaction = await transactionModel.create({
-            userId: getUserData._id, companyId: getUserData.activeCompany,
-            transactionType: EXPENSE, transactionNumber: Number(transaction?.transactionNumber || 0) + 1,
-            transactionDate: paymentDate, paymentMode: paymentMode,
-            account: paymentAccount, amount: paymentAmount, note: paymentRemark,
-            category: getExpCategory._id
-        })
         // ========================[Transaction Add close]=====================
 
 
@@ -96,11 +104,13 @@ const add = async (req, res) => {
             userId: getUserData._id, companyId: getUserData.activeCompany,
             staffId, paymentType, paymentDate, paymentAmount,
             paymentMode, paymentAccount, paymentRemark,
-            transactionId: Addtransaction._id
+            transactionId: addTransaction?._id || ""
         });
 
         if (!insert) {
-            await transactionModel.deleteOne({ _id: Addtransaction._id });
+            if (paymentType !== LOAN && paymentType !== LOAN_RECEIVED)
+                await transactionModel.deleteOne({ _id: addTransaction?._id });
+
             return res.status(500).json({ err: 'Staff Payment failed', create: false });
         }
 
@@ -127,7 +137,6 @@ const get = async (req, res) => {
 
         let getData;
         let filter = {};
-
         if (startDate && endDate) {
             filter.paymentDate = {
                 $gte: new Date(startDate),
@@ -135,8 +144,16 @@ const get = async (req, res) => {
             }
         }
         if (paymentType) {
-            filter.paymentType = paymentType;
+            if (paymentType !== LOAN)
+                filter.paymentType = paymentType;
+            else
+                filter.$or = [
+                    { paymentType: LOAN },
+                    { paymentType: LOAN_RECEIVED }
+                ];
         }
+
+
 
         if (id) {
             getData = await staffPaymentModel.findOne({
@@ -149,9 +166,9 @@ const get = async (req, res) => {
         else {
             getData = await staffPaymentModel.find({
                 companyId: getUser.activeCompany,
-                isDel: false,
                 staffId: staffId,
-                ...filter
+                ...filter,
+                isDel: false,
             }).populate("staffId");
         }
 
@@ -190,11 +207,13 @@ const remove = async (req, res) => {
         const staffPayment = await staffPaymentModel.findOne({ _id: ids[0] });
 
         // Update Transaction
-        await transactionModel.updateOne({ _id: staffPayment.transactionId }, {
-            $set: {
-                isDel: true
-            }
-        })
+        if (staffPayment.paymentType !== LOAN && staffPayment.paymentType !== LOAN_RECEIVED) {
+            await transactionModel.updateOne({ _id: staffPayment.transactionId }, {
+                $set: {
+                    isDel: true
+                }
+            })
+        }
 
 
         if (removeParty.matchedCount === 0) {
@@ -204,13 +223,15 @@ const remove = async (req, res) => {
         return res.status(200).json({ msg: "Payment deleted successfully" });
 
     } catch (error) {
+        console.log(error);
         return res.status(500).json({ err: "Something went wrong", remove: false });
     }
 };
 
 
+
 module.exports = {
     add,
     get,
-    remove,
+    remove
 }
