@@ -3,6 +3,7 @@ const { getId } = require('../helper/getIdFromToken');
 const userModel = require('../models/user.model');
 const transactionModel = require('../models/transaction.model');
 const transactionCategoryModal = require('../models/transactionCategory.modal');
+const staffMonthlyPaymentModel = require("../models/staffMonthlyPayment.model");
 
 
 // CONSTANTS;
@@ -10,10 +11,11 @@ const STAFF_SALARY_TRANSACTION_CATEGORY = "Employee Salary & Advance";
 const EXPENSE = "expense";
 const LOAN = "loan";
 const LOAN_RECEIVED = 'loan_received';
+const SALARY = 'salary';
 
 const add = async (req, res) => {
     const { token, staffId, paymentType, paymentDate, paymentAmount, paymentRemark,
-        paymentMode, paymentAccount, update, id
+        paymentMode, paymentAccount, update, id, month, year, totalSalaryAount
     } = req.body;
 
     if ([token, staffId, paymentType, paymentDate, paymentMode, paymentAmount].some((field => !field || field === ""))) {
@@ -95,9 +97,27 @@ const add = async (req, res) => {
                 account: paymentAccount, amount: paymentAmount, note: paymentRemark,
                 category: getExpCategory._id
             })
-        }
-        // ========================[Transaction Add close]=====================
 
+        } //==========================[Transaction Add close]======================
+
+
+        // If PaymentType is `salary` then staffMonthlySalary data;
+        if (paymentType === SALARY) {
+            let status;
+            if(paymentAmount < totalSalaryAount)
+                status = "2"
+            else if(paymentAmount >= totalSalaryAount)
+                status = "1"
+        
+            const monthlySalary = await staffMonthlyPaymentModel.create({
+                userId: getUserData._id, companyId: getUserData.activeCompany,
+                staffId, month, year, paymentAmount, amount: totalSalaryAount,
+                paymentStatus: status
+            });
+
+            if(!monthlySalary) return res.status(500).json({err: "Payment failed, Something went wrong"});
+
+        }
 
         // Insert Staff Payment
         const insert = await staffPaymentModel.create({
@@ -229,9 +249,66 @@ const remove = async (req, res) => {
 };
 
 
+const getTotalLoan = async (req, res) => {
+    const { token, staffId } = req.body;
+
+    if (!token || !staffId) {
+        return res.status(500).json({ err: "Invalid token or staffid provided" });
+    }
+
+    try {
+        const getInfo = await getId(token);
+        const getUser = await userModel.findOne({ _id: getInfo._id });
+
+        const totalLoan = await staffPaymentModel.aggregate([
+            {
+                $match: {
+                    userId: getUser._id, companyId: getUser.activeCompany,
+                    paymentType: LOAN
+                }
+            },
+            {
+                $group: {
+                    _id: null,
+                    totalLoanAmount: { $sum: "$paymentAmount" }
+                }
+            }
+        ]);
+
+        const totalLoanReceive = await staffPaymentModel.aggregate([
+            {
+                $match: {
+                    userId: getUser._id, companyId: getUser.activeCompany,
+                    paymentType: LOAN_RECEIVED
+                }
+            },
+            {
+                $group: {
+                    _id: null,
+                    totalLoanReceiveAmount: { $sum: "$paymentAmount" }
+                }
+            }
+        ]);
+
+        const TOTAL_LOAN_AMOUNT = (totalLoan[0]?.totalLoanAmount || 0) - (totalLoanReceive[0]?.totalLoanReceiveAmount || 0)
+
+        res.status(200).json({
+            loan: totalLoan[0]?.totalLoanAmount || 0,
+            loanReceived: totalLoanReceive[0]?.totalLoanReceiveAmount || 0,
+            totalLoan: TOTAL_LOAN_AMOUNT
+        })
+
+    } catch (err) {
+        console.log(err);
+        return res.status(500).json({ err: "Something went wrong" });
+    }
+}
+
+
 
 module.exports = {
     add,
     get,
-    remove
+    remove,
+    getTotalLoan
 }

@@ -152,7 +152,6 @@ const remove = async (req, res) => {
     });
 
   } catch (error) {
-    console.log(error)
     return res.status(500).json({ err: "Something went wrong", remove: false });
   }
 
@@ -236,5 +235,5 @@ const getAttendanceSetting = async (req, res) => {
 module.exports = {
   add, get, remove,
   addAttendanceSetting,
-  getAttendanceSetting
+  getAttendanceSetting,
 }
