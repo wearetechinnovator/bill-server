@@ -4,6 +4,7 @@ const userModel = require('../models/user.model');
 const transactionModel = require('../models/transaction.model');
 const transactionCategoryModal = require('../models/transactionCategory.modal');
 const staffMonthlyPaymentModel = require("../models/staffMonthlyPayment.model");
+const { default: mongoose } = require("mongoose");
 
 
 // CONSTANTS;
@@ -15,7 +16,7 @@ const SALARY = 'salary';
 
 const add = async (req, res) => {
     const { token, staffId, paymentType, paymentDate, paymentAmount, paymentRemark,
-        paymentMode, paymentAccount, update, id, month, year, totalSalaryAount
+        paymentMode, paymentAccount, update, id, month, year, totalSalary
     } = req.body;
 
     if ([token, staffId, paymentType, paymentDate, paymentMode, paymentAmount].some((field => !field || field === ""))) {
@@ -98,26 +99,28 @@ const add = async (req, res) => {
                 category: getExpCategory._id
             })
 
-        } //==========================[Transaction Add close]======================
+        } //================[Transaction Add close]===============
 
 
+        //=================[Monthly Payment Insert]===============
         // If PaymentType is `salary` then staffMonthlySalary data;
         if (paymentType === SALARY) {
-            let status;
-            if(paymentAmount < totalSalaryAount)
-                status = "2"
-            else if(paymentAmount >= totalSalaryAount)
-                status = "1"
-        
+            let status; // 1=`Full Paid` | 2=`Partial Paid`
+            if (paymentAmount < totalSalary)
+                status = "2";
+            else if (paymentAmount >= totalSalary)
+                status = "1";
+
             const monthlySalary = await staffMonthlyPaymentModel.create({
                 userId: getUserData._id, companyId: getUserData.activeCompany,
-                staffId, month, year, paymentAmount, amount: totalSalaryAount,
+                staffId, month: Number(month) + 1, year, payAmount: paymentAmount, amount: totalSalary,
                 paymentStatus: status
             });
 
-            if(!monthlySalary) return res.status(500).json({err: "Payment failed, Something went wrong"});
+            if (!monthlySalary) return res.status(500).json({ err: "Payment failed, Something went wrong" });
 
         }
+
 
         // Insert Staff Payment
         const insert = await staffPaymentModel.create({
@@ -299,16 +302,113 @@ const getTotalLoan = async (req, res) => {
         })
 
     } catch (err) {
-        console.log(err);
         return res.status(500).json({ err: "Something went wrong" });
     }
 }
 
+
+const getTotalDues = async (req, res) => {
+    const { token, currentMonth, currentYear, staffId } = req.body;
+
+    if (!token || !staffId || currentMonth === undefined || !currentYear) {
+        return res.status(500).json({ err: "Invalid token or staffid provided" });
+    }
+
+    try {
+        const getInfo = await getId(token);
+        const getUser = await userModel.findOne({ _id: getInfo._id });
+
+        if (!getUser) {
+            return res.status(500).json({ err: "invalid user or token" });
+        }
+
+        const result = await staffMonthlyPaymentModel.aggregate([
+            {
+                $match: {
+                    userId: getUser._id,
+                    companyId: getUser.activeCompany,
+                    staffId: new mongoose.Types.ObjectId(String(staffId)),
+                    // $or: [
+                    //     { year: { $lt: currentYear } }, // previous years
+                    //     {
+                    //         year: currentYear,
+                    //         month: { $lt: currentMonth } // previous months this year
+                    //     }
+                    // ]
+                }
+            },
+            {
+                $project: {
+                    dueAmount: { $subtract: ["$amount", "$payAmount"] }
+                }
+            },
+            {
+                $group: {
+                    _id: null,
+                    totalDue: { $sum: "$dueAmount" }
+                }
+            }
+        ]);
+
+        const totalDue = result.length ? result[0].totalDue : 0;
+
+        return res.status(200).json({ due: totalDue });
+
+    } catch (err) {
+        console.log(err);
+        return res.status(500).json({ err: "Something went wrong" });
+    }
+};
+
+
+const getLastMonthPayment = async (req, res) => {
+    const { token, currentMonth, currentYear, staffId } = req.body;
+
+    if (!token || !staffId || currentMonth === undefined || !currentYear) {
+        return res.status(500).json({ err: "Invalid token or staffid provided" });
+    }
+
+    try {
+        const getInfo = await getId(token);
+        const getUser = await userModel.findOne({ _id: getInfo._id });
+        if (!getUser) return res.status(500).json({ err: "invalid user or token" });
+
+        let lastMonth = Number(currentMonth) - 1;
+        let year = Number(currentYear);
+
+        // Handle January case
+        if (lastMonth === 0) {
+            lastMonth = 12;
+            year = year - 1;
+        }
+
+        const payment = await staffMonthlyPaymentModel.findOne({
+            userId: getUser._id,
+            companyId: getUser.activeCompany,
+            staffId,
+            month: lastMonth,
+            year
+        });
+
+        const dueAmount = payment ? (payment.amount - payment.payAmount) : 0;
+
+        return res.status(200).json({
+            lastMonth,
+            year,
+            dueAmount
+        });
+
+    } catch (err) {
+        return res.status(500).json({ err: "Something went wrong" });
+    }
+};
 
 
 module.exports = {
     add,
     get,
     remove,
-    getTotalLoan
+    getTotalLoan,
+    getTotalDues,
+    getLastMonthPayment
 }

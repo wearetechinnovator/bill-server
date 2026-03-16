@@ -33,8 +33,9 @@ const attendanceSchema = new mongoose.Schema({
     overTimeHour: Number,
     overTimeMinute: Number,
     overTimeRate: String,
+    overTimeHourlyAmount: String,
     customeOverTimeRate: String,
-    fixedOverTimeAmount: Number
+    fixedOverTimeAmount: Number,
 }, { timestamps: true });
 
 

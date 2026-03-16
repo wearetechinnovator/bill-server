@@ -160,8 +160,8 @@ const remove = async (req, res) => {
 
 const addAttendanceSetting = async (req, res) => {
   const {
-    attendanceReminder, reminderTime, defaultPresent, workingHourFrom,
-    workingHourTo, weeklyOffDays, token
+    attendanceReminder, reminderTime, defaultPresent, workingHour,
+    workingMinute, weeklyOffDays, token
   } = req.body;
 
   if (!token) {
@@ -178,22 +178,23 @@ const addAttendanceSetting = async (req, res) => {
       },
       {
         $set: {
-          attendanceReminder, reminderTime, defaultPresent, workingHourFrom,
-          workingHourTo, weeklyOffDays
+          attendanceReminder, reminderTime, defaultPresent, workingHour,
+          workingMinute, weeklyOffDays
         }
       },
       { upsert: true }
     );
 
 
-    if (!insert || insert.modifiedCount === 0) {
+
+    if (!insert || (insert.modifiedCount === 0 && insert.upsertedCount === 0)) {
       return res.status(500).json({ err: 'Setting not added', create: false })
     }
 
     return res.status(200).json(insert);
 
   } catch (error) {
-    console.log(error);
+    console.log("Error", error);
     return res.status(500).json({ 'err': 'Something went wrong', create: false });
   }
 

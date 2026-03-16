@@ -7,7 +7,7 @@ const { default: mongoose } = require("mongoose");
 
 const addAttendance = async (req, res) => {
     const { attendanceData, token } = req.body;
-    
+
     if ([attendanceData, token].some((field) => !field || field === "") || attendanceData.length === 0) {
         return res.status(500).json({ err: "require fields are empty" });
     }
@@ -92,7 +92,6 @@ const getAttendance = async (req, res) => {
         return res.status(200).json({ data: attendanceData })
 
     } catch (error) {
-        console.log(error);
         return res.status(500).json({ err: "Something went wrong" });
     }
 }
@@ -142,6 +141,7 @@ const getUserAttendance = async (req, res) => {
                     overTimeRate: 1,
                     customeOverTimeRate: 1,
                     fixedOverTimeAmount: 1,
+                    overTimeHourlyAmount: 1,
                 }
             }
         ])
@@ -153,9 +153,7 @@ const getUserAttendance = async (req, res) => {
         return res.status(200).json({ data: staffAttendanceList })
 
     } catch (error) {
-        console.log(error);
         return res.status(500).json({ err: "Something went wrong" });
-
     }
 }
 

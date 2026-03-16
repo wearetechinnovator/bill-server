@@ -21,8 +21,8 @@ const attendanceSettingSchema = new mongoose.Schema({
         type: Boolean,
         default: false
     },
-    workingHourFrom: String,
-    workingHourTo: String,
+    workingHour: String,
+    workingMinute: String,
     weeklyOffDays: [String],
 }, { timestamps: true });
 
