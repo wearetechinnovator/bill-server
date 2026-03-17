@@ -327,19 +327,17 @@ const getTotalDues = async (req, res) => {
                 $match: {
                     userId: getUser._id,
                     companyId: getUser.activeCompany,
-                    staffId: new mongoose.Types.ObjectId(String(staffId)),
-                    // $or: [
-                    //     { year: { $lt: currentYear } }, // previous years
-                    //     {
-                    //         year: currentYear,
-                    //         month: { $lt: currentMonth } // previous months this year
-                    //     }
-                    // ]
+                    staffId: new mongoose.Types.ObjectId(String(staffId))
                 }
             },
             {
                 $project: {
-                    dueAmount: { $subtract: ["$amount", "$payAmount"] }
+                    dueAmount: {
+                        $max: [
+                            { $subtract: ["$amount", "$payAmount"] },
+                            0
+                        ]
+                    }
                 }
             },
             {
