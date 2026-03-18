@@ -9,9 +9,10 @@ const ladgerModel = require("../models/ladger.model");
 const partyModel = require('../models/party.model');
 
 
+
 const add = async (req, res) => {
     const { token, party, paymentOutNumber, paymentOutDate, checkedInv,
-        paymentMode, account, amount, details, update, id, invoiceId
+        paymentMode, account, amount, details, update, id, invoiceId, tdsRate
     } = req.body;
 
     if ([token, party, paymentOutNumber, paymentOutDate, paymentMode, amount]
@@ -47,7 +48,7 @@ const add = async (req, res) => {
             const update = await paymentOutModel.updateOne({ _id: id }, {
                 $set: {
                     party, paymentOutNumber, paymentOutDate, paymentMode, account, amount, details,
-                    sattleInvoice: checkedInv
+                    sattleInvoice: checkedInv, tdsRate
                 }
             })
 
@@ -101,7 +102,7 @@ const add = async (req, res) => {
         const insert = await paymentOutModel.create({
             userId: getUserData._id, companyId: getUserData.activeCompany, invoiceId,
             party, paymentOutNumber, paymentOutDate, paymentMode, account, amount, details,
-            sattleInvoice: checkedInv
+            sattleInvoice: checkedInv, tdsRate
         });
 
         if (!insert) {
@@ -129,10 +130,8 @@ const add = async (req, res) => {
         return res.status(200).json(insert);
 
     } catch (error) {
-        console.log(error)
         return res.status(500).json({ 'err': 'Something went wrong', create: false });
     }
-
 
 }
 

@@ -14,7 +14,7 @@ const partyModel = require('../models/party.model');
 
 const add = async (req, res) => {
 	const { token, party, paymentInNumber, paymentInDate, checkedInv,
-		paymentMode, account, amount, details, update, id, invoiceId,
+		paymentMode, account, amount, details, update, id, invoiceId, tdsRate
 	} = req.body;
 
 
@@ -52,7 +52,7 @@ const add = async (req, res) => {
 			const update = await paymentInModel.updateOne({ _id: id }, {
 				$set: {
 					party, paymentInNumber, paymentInDate, paymentMode, account, amount, details,
-					sattleInvoice: checkedInv
+					sattleInvoice: checkedInv, tdsRate
 				}
 			})
 
@@ -106,7 +106,7 @@ const add = async (req, res) => {
 		const insert = await paymentInModel.create({
 			userId: getUserData._id, companyId: getUserData.activeCompany, invoiceId,
 			party, paymentInNumber, paymentInDate, paymentMode, account, amount, details,
-			sattleInvoice: checkedInv
+			sattleInvoice: checkedInv, tdsRate
 		});
 
 
@@ -140,7 +140,6 @@ const add = async (req, res) => {
 	} catch (error) {
 		return res.status(500).json({ 'err': 'Something went wrong', create: false });
 	}
-
 }
 
 

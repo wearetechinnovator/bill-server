@@ -26,6 +26,7 @@ const attendanceRoute = require("./attendance.route");
 const ladgerRoute = require("./ladger.route");
 const transactionCategoryRoute = require("./transactionCategory.route");
 const staffPaymentRoute = require("./staffPayment.route");
+const tdsRateRoute = require("./tdsRate.route");
 
 
 
@@ -56,6 +57,7 @@ router.use("/staff/", staffRoute);
 router.use("/attendance/", attendanceRoute);
 router.use("/ladger/", ladgerRoute);
 router.use("/staff-payment/", staffPaymentRoute);
+router.use("/tds-rate/", tdsRateRoute);
 
 
 
