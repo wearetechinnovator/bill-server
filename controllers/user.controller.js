@@ -6,9 +6,10 @@ const jwt = require("jsonwebtoken");
 const path = require('path');
 const { saveBase64Image } = require('../helper/uploader');
 const jwt_key = process.env.JWT_SECRET;
-const { Resend } = require("resend");
 const nodemailer = require('nodemailer');
 const mailModel = require('../models/mail.model');
+const sendEmail = require('../helper/sendEmail');
+
 
 
 
@@ -207,24 +208,16 @@ const forgot = async (req, res) => {
     await userModel.updateOne({ email }, { $set: { forgotOtp: OTP } });
     const token = jwt.sign(JSON.stringify({ email }), "adfa;3kw3254543=-2=34hnas3");
 
-    const resend = new Resend('re_L8y4DSVS_GqE1a8ooYY46CAzH8VJJdQ8B');
-
-
-    const emailSend = await resend.emails.send({
-      from: 'Easybill <onboarding@resend.dev>',
-      to: [email],
+    const emailSend = await sendEmail({
+      to: email,
       subject: 'Forgot Easybill Password',
-      html: `<p>Your EasyBil OTP is <b>${OTP}</b></p>`,
-    });
-
-
-    if (!emailSend) {
-      return res.status(500).json({ err: 'Email not send', forgot: false });
-    }
+      body: `<p>Your EasyBil OTP is <b>${OTP}</b></p>`
+    })
 
     return res.status(200).json({ msg: 'Email send successfully', forgot: true, token });
 
   } catch (error) {
+    console.log(error);
     return res.status(500).json({ 'err': 'Something went wrong', forgot: false });
   }
 
