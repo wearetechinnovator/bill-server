@@ -14,7 +14,8 @@ const BOTHPARTY = 'both';
 // Add controller;
 const add = async (req, res) => {
 	const { token, name, type, contactNumber, billingAddress, shippingAddress, email,
-		pan, gst, openingBalance, details, update, id, creditPeriod, creditLimit, dob, partyCategory
+		pan, gst, openingBalance, details, update, id, creditPeriod, creditLimit, dob, partyCategory,
+		openingBalanceType
 	} = req.body;
 
 	if ([token, name, type, contactNumber, billingAddress]
@@ -38,7 +39,7 @@ const add = async (req, res) => {
 			const update = await partyModel.updateOne({ _id: id }, {
 				$set: {
 					name, type, contactNumber, billingAddress, email,
-					pan, gst, openingBalance, details,
+					pan, gst, openingBalance, details, openingBalanceType,
 					shippingAddress, pan, gst, openingBalance, details, partyCategory: partyCategory || null,
 					shippingAddress, creditPeriod, creditLimit, dob
 
@@ -56,7 +57,7 @@ const add = async (req, res) => {
 		const insert = await partyModel.create({
 			userId: getUserData._id, companyId: getUserData.activeCompany,
 			name, type, contactNumber, billingAddress, email,
-			pan, gst, openingBalance, details,
+			pan, gst, openingBalance, details, openingBalanceType,
 			shippingAddress, pan, gst, openingBalance, details, partyCategory: partyCategory || null,
 			shippingAddress, creditPeriod, creditLimit, dob
 		});
@@ -73,7 +74,6 @@ const add = async (req, res) => {
 	}
 
 }
-
 
 // Get Controller;
 const get = async (req, res) => {
@@ -153,7 +153,6 @@ const get = async (req, res) => {
 
 }
 
-
 // Delete controller
 const remove = async (req, res) => {
 	const { ids } = req.body;
@@ -183,7 +182,6 @@ const remove = async (req, res) => {
 	}
 };
 
-
 // Resoter from trash
 const restore = async (req, res) => {
 	const { ids } = req.body;
@@ -210,7 +208,6 @@ const restore = async (req, res) => {
 		return res.status(500).json({ err: "Something went wrong", restore: false });
 	}
 }
-
 
 const getLog = async (req, res) => {
 	const { token, partyId } = req.body;
@@ -249,7 +246,6 @@ const getLog = async (req, res) => {
 
 
 }
-
 
 // Get party's Balance;
 const getPartyBalance = async (req, res) => {
@@ -292,17 +288,22 @@ const getPartyBalance = async (req, res) => {
 
 			if (party.type === CUSTOMER) {
 				data.push({
-					partyId: party._id, balance: (totalSalesAmount).toFixed(2), type: party.type
+					partyId: party._id,
+					balance: (Number(totalSalesAmount) + Number(party.openingBalance || 0)).toFixed(2),
+					type: party.type
 				});
 			}
 			else if (party.type === SUPPLIER) {
 				data.push({
-					partyId: party._id, balance: (totalPurchaseAmount).toFixed(2), type: party.type
+					partyId: party._id,
+					balance: (Number(totalPurchaseAmount) + Number(party.openingBalance || 0)).toFixed(2),
+					type: party.type
 				});
 			}
 			else if (party.type === BOTHPARTY) {
 				data.push({
-					partyId: party._id, balance: (totalPurchaseAmount + totalSalesAmount).toFixed(2),
+					partyId: party._id,
+					balance: (Number(totalPurchaseAmount + totalSalesAmount) + Number(party.openingBalance || 0)).toFixed(2),
 					type: party.type
 				});
 			}

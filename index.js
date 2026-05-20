@@ -18,10 +18,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/api/v1", router);
 
 
-
-app.get("/", (req, res) => {
-  res.send({ msg: "Hello world" })
-})
+app.get("/ping", (req, res) => res.send({ msg: "PONG" }));
 
 
 app.post("/generate-pdf", async (req, res) => {

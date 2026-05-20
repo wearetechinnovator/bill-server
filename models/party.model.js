@@ -33,6 +33,10 @@ const partySchema = new mongoose.Schema({
     type: String,
     default: 0
   },
+  openingBalanceType:{
+    type: String,
+    enum: ["collect", "pay"],
+  },
   creditLimit: {
     type: String,
     default: 0

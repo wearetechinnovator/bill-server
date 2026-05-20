@@ -430,6 +430,8 @@ const getTotalCollect = async (req, res) => {
 			}
 		]);
 
+		console.log(data);
+
 		return res.status(200).json(data);
 
 	} catch (error) {
