@@ -204,24 +204,74 @@ const forgot = async (req, res) => {
       OTP += Math.floor(Math.random() * 10);
     }
 
-
     await userModel.updateOne({ email }, { $set: { forgotOtp: OTP } });
     const token = jwt.sign(JSON.stringify({ email }), "adfa;3kw3254543=-2=34hnas3");
 
+    // Professional email template
+    const emailTemplate = `
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      </head>
+      <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f5f7fa;">
+          <table role="presentation" style="width: 100%; border-collapse: collapse; background-color: #f5f7fa;">
+              <tr>
+                  <td style="padding: 40px 20px;">
+                      <table role="presentation" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07); overflow: hidden;">
+                          <tr>
+                              <td style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 30px; text-align: center;">
+                                  <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 600;">EasyBill</h1>
+                                  <p style="margin: 8px 0 0 0; color: rgba(255, 255, 255, 0.9); font-size: 14px;">Password Reset Request</p>
+                              </td>
+                          </tr>
+                          <tr>
+                              <td style="padding: 40px 30px;">
+                                  <h2 style="margin: 0 0 16px 0; color: #1a202c; font-size: 22px; font-weight: 600;">Forgot Your Password?</h2>
+                                  <p style="margin: 0 0 24px 0; color: #4a5568; font-size: 15px; line-height: 1.6;">
+                                      No worries! Use the verification code below to reset your password:
+                                  </p>
+                                  <table role="presentation" style="width: 100%; margin: 0 0 24px 0;">
+                                      <tr>
+                                          <td style="text-align: center; padding: 24px; background-color: #f7fafc; border-radius: 8px; border: 2px dashed #cbd5e0;">
+                                              <p style="margin: 0 0 8px 0; color: #718096; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">Your Verification Code</p>
+                                              <p style="margin: 0; color: #2d3748; font-size: 36px; font-weight: 700; letter-spacing: 8px; font-family: 'Courier New', monospace;">${OTP}</p>
+                                          </td>
+                                      </tr>
+                                  </table>
+                                  <div style="background-color: #fff5f5; border-left: 4px solid #fc8181; padding: 16px; margin: 0 0 24px 0; border-radius: 4px;">
+                                      <p style="margin: 0; color: #742a2a; font-size: 14px;">
+                                          <strong>⏱️ Time Sensitive:</strong> This code expires in 10 minutes.
+                                      </p>
+                                  </div>
+                              </td>
+                          </tr>
+                          <tr>
+                              <td style="background-color: #f7fafc; padding: 30px; text-align: center; border-top: 1px solid #e2e8f0;">
+                                  <p style="margin: 0; color: #a0aec0; font-size: 12px;">© 2024 EasyBill. All rights reserved.</p>
+                              </td>
+                          </tr>
+                      </table>
+                  </td>
+              </tr>
+          </table>
+      </body>
+      </html>
+    `;
+
     const emailSend = await sendEmail({
       to: email,
-      subject: 'Forgot Easybill Password',
-      body: `<p>Your EasyBil OTP is <b>${OTP}</b></p>`
-    })
+      subject: 'Reset Your EasyBill Password',
+      body: emailTemplate
+    });
 
-    return res.status(200).json({ msg: 'Email send successfully', forgot: true, token });
+    return res.status(200).json({ msg: 'Email sent successfully', forgot: true, token });
 
   } catch (error) {
     console.log(error);
     return res.status(500).json({ 'err': 'Something went wrong', forgot: false });
   }
-
-
 }
 
 
