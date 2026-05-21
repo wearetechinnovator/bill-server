@@ -26,7 +26,7 @@ const addLadger = async ({ token, partyId, voucher, voucherId, credit, debit, da
 		// insert ladger
 		const insert = await ladgerModel.create({
 			userId: getUserData._id, companyId: getUserData.activeCompany,
-			partyId, voucher, credit, debit, date, voucherId: new mongoose.Types.ObjectId(String(voucherId)),
+			partyId, voucher, credit, debit, date, voucherId: voucherId? new mongoose.Types.ObjectId(String(voucherId)):null,
 			voucherModel: voucherModels[voucher]
 		})
 
@@ -146,10 +146,83 @@ const getPartyBalance = async (req, res) => {
 }
 
 
+const getAllPartyBalance = async (req, res) => {
+	const { token } = req.body;
+
+	if (!token) {
+		return res.status(400).json({
+			err: "Required fields are blank"
+		});
+	}
+
+	try {
+
+		const getInfo = await getId(token);
+
+		const getUser = await userModel.findById(getInfo._id).select("activeCompany");
+
+		const data = await ladgerModel.aggregate([
+			{
+				$match: {
+					companyId: getUser.activeCompany,
+					userId: new mongoose.Types.ObjectId(
+						String(getInfo._id)
+					)
+				}
+			},
+
+			{
+				$group: {
+					_id: "$partyId",
+
+					totalDebit: {
+						$sum: {
+							$ifNull: ["$debit", 0]
+						}
+					},
+
+					totalCredit: {
+						$sum: {
+							$ifNull: ["$credit", 0]
+						}
+					}
+				}
+			},
+
+			{
+				$project: {
+					_id: 0,
+					partyId: "$_id",
+					totalDebit: 1,
+					totalCredit: 1,
+					balance: {
+						$subtract: [
+							"$totalDebit",
+							"$totalCredit"
+						]
+					}
+				}
+			}
+		]);
+
+		return res.status(200).json({
+			get: true,
+			data
+		});
+
+	} catch (error) {
+		return res.status(500).json({
+			err: "Something went wrong"
+		});
+	}
+};
+
+
 
 module.exports = {
 	addLadger,
 	updateLadger,
 	get,
-	getPartyBalance
+	getPartyBalance,
+	getAllPartyBalance
 }

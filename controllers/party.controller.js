@@ -5,6 +5,7 @@ const salesinvoiceModel = require('../models/salesinvoice.model');
 const purchaseInvoiceModel = require('../models/purchaseInvoice.model');
 const userModel = require('../models/user.model');
 const { default: mongoose } = require('mongoose');
+const { addLadger } = require('./ladger.controller');
 
 
 
@@ -39,9 +40,9 @@ const add = async (req, res) => {
 			const update = await partyModel.updateOne({ _id: id }, {
 				$set: {
 					name, type, contactNumber, billingAddress, email,
-					pan, gst, openingBalance, details, openingBalanceType,
-					shippingAddress, pan, gst, openingBalance, details, partyCategory: partyCategory || null,
-					shippingAddress, creditPeriod, creditLimit, dob, country, state, postalCode
+					pan, gst, openingBalance, openingBalanceType,
+					shippingAddress, details, partyCategory: partyCategory || null,
+					creditPeriod, creditLimit, dob, country, state, postalCode
 
 				}
 			})
@@ -50,6 +51,21 @@ const add = async (req, res) => {
 				return res.status(500).json({ err: 'Party update failed', update: false })
 			}
 
+			// Opening Balance Ladger Entry
+			// ============================ 
+			const ladgerData = {
+				token: token,
+				partyId: id,
+				voucher: 'opening_balance',
+				date: new Date().toISOString(),
+			}
+			if (openingBalanceType === "collect") {
+				ladgerData.debit = Number(openingBalance || 0).toFixed(2)
+			} else {
+				ladgerData.credit = Number(openingBalance || 0).toFixed(2)
+			}
+			await addLadger(ladgerData);
+
 			return res.status(200).json(update)
 
 		} // Update close here;
@@ -57,11 +73,28 @@ const add = async (req, res) => {
 		const insert = await partyModel.create({
 			userId: getUserData._id, companyId: getUserData.activeCompany,
 			name, type, contactNumber, billingAddress, email,
-			pan, gst, openingBalance, details, openingBalanceType,
-			shippingAddress, pan, gst, openingBalance, details, partyCategory: partyCategory || null,
+			pan, gst, openingBalance, openingBalanceType,
+			details, partyCategory: partyCategory || null,
 			shippingAddress, creditPeriod, creditLimit, dob,
 			country, state, postalCode
 		});
+
+
+		// Opening Balance Ladger Entry
+		// ============================ 
+		const ladgerData = {
+			token: token,
+			partyId: insert._id,
+			voucher: 'opening_balance',
+			date: new Date().toISOString(),
+		}
+		if (openingBalanceType === "collect") {
+			ladgerData.debit = Number(openingBalance || 0).toFixed(2)
+		} else {
+			ladgerData.credit = Number(openingBalance || 0).toFixed(2)
+		}
+		await addLadger(ladgerData);
+
 
 		if (!insert) {
 			return res.status(500).json({ err: 'Party creation failed', create: false })

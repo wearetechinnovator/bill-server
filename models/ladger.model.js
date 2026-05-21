@@ -21,13 +21,15 @@ const ladgerSchema = new mongoose.Schema({
   voucher: {
     type: String,
     enum: ['sales', 'sales_return', 'credit_note',
-      'purchase', 'purchase_return', 'debit_note', 'pay_in', 'pay_out'
+      'purchase', 'purchase_return', 'debit_note', 'pay_in', 'pay_out',
+      'opening_balance'
     ]
   },
   voucherModel: String,
   voucherId: {
    type: mongoose.Schema.Types.ObjectId,
-   refPath: 'voucherModel'
+   refPath: 'voucherModel',
+   default: null
   },
   credit: {
     type: Number,
