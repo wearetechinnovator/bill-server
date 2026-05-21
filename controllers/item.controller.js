@@ -5,6 +5,9 @@ const purchaseInvoiceModel = require("../models/purchaseInvoice.model");
 const purchaseReturModel = require("../models/purchasereturn.model");
 const salesinvoiceModel = require("../models/salesinvoice.model");
 const salesReturnModel = require("../models/salesreturn.model");
+const bwipjs = require('bwip-js');
+const fs = require('fs');
+const path = require('path');
 
 
 
@@ -12,7 +15,7 @@ const salesReturnModel = require("../models/salesreturn.model");
 // Add controller;
 const add = async (req, res) => {
 	const { token, title, type, salePrice, category, details, update, id, unit, stock, hsn,
-		purchasePrice, purchaseTaxType, saleTaxType, tax
+		purchasePrice, purchaseTaxType, saleTaxType, tax, itemCode
 	} = req.body;
 
 	if ([token, title, salePrice,].some(field => !field || field === "")) {
@@ -38,7 +41,7 @@ const add = async (req, res) => {
 			const update = await itemModel.updateOne({ _id: id }, {
 				$set: {
 					title, type, salePrice, category: category || null, details, unit, hsn,
-					purchasePrice, purchaseTaxType, saleTaxType, tax
+					purchasePrice, purchaseTaxType, saleTaxType, tax, itemCode
 				}
 			})
 
@@ -68,11 +71,40 @@ const add = async (req, res) => {
 		}
 
 
+		// ===========[Generate Barcode]=========;
+		if (itemCode) {
+			const baseFolder = path.join(__dirname, '..', 'barcodes');
+			const barcodePath = path.join(__dirname, '..', 'barcodes', `${itemCode}.png`);
+
+			if (!fs.existsSync(baseFolder)) {
+				fs.mkdirSync(baseFolder);
+			}
+
+			bwipjs.toBuffer({
+				bcid: 'code128',
+				text: itemCode,
+				scale: 1,
+				height: 5,
+				// includetext: true,
+				// textxalign: 'center',
+				// textgapsp: 5,
+			}, (err, png) => {
+				if (err) {
+					console.error(err);
+				} else {
+					fs.writeFileSync(barcodePath, png);
+				}
+			});
+		}
+
+
+
 		const insert = await itemModel.create({
 			userId: getUserData._id, companyId: getUserData.activeCompany, hsn,
 			purchasePrice, purchaseTaxType, saleTaxType,
 			title, type, salePrice, category: category || null, details, unit,
-			stock: openingStock, alert: stockAlert, tax,
+			stock: openingStock, alert: stockAlert, tax, itemCode,
+			barcodeImage: `/barcodes/${itemCode}.png`
 		});
 
 		if (!insert) {
@@ -92,7 +124,7 @@ const add = async (req, res) => {
 
 // get Controller
 const get = async (req, res) => {
-	const { token, id, all, search, searchText } = req.body;
+	const { token, id, all, search, searchText, barCode } = req.body;
 	const { page, limit } = req.query;
 	const skip = (parseInt(page) - 1) * parseInt(limit);
 
@@ -124,6 +156,14 @@ const get = async (req, res) => {
 			getData = await itemModel.findOne({
 				companyId: getUser.activeCompany,
 				_id: id,
+				isDel: false
+			}).populate('category');
+		}
+		else if (barCode) {
+			getData = await itemModel.findOne({
+				companyId: getUser.activeCompany,
+				itemCode: barCode,
+				isTrash: false,
 				isDel: false
 			}).populate('category');
 		}

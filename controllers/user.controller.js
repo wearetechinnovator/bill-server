@@ -390,7 +390,6 @@ const sendBill = async (req, res) => {
 
 
   const checkToken = jwt.verify(token, jwt_key);
-
   if (!checkToken) {
     return res.status(500).json({ err: 'Invalid token', send: false });
   }
@@ -404,8 +403,8 @@ const sendBill = async (req, res) => {
     port: 587, // Use 465 for SSL, 587 for TLS
     secure: false, // true for 465, false for 587
     auth: {
-      user: process.env.SMTP_USER_NAME,
-      pass: process.env.SMTP_APP_PASSWORD
+      user: process.env.APP_EMAIL,
+      pass: process.env.APP_PASS
     }
   });
 
@@ -428,6 +427,7 @@ const sendBill = async (req, res) => {
 
   transporter.sendMail(mailOptions, async (error, info) => {
     if (error) {
+      console.log(error);
       return res.status(500).json({ err: 'Email not send', send: false });
     } else {
 

@@ -15,7 +15,7 @@ const BOTHPARTY = 'both';
 const add = async (req, res) => {
 	const { token, name, type, contactNumber, billingAddress, shippingAddress, email,
 		pan, gst, openingBalance, details, update, id, creditPeriod, creditLimit, dob, partyCategory,
-		openingBalanceType
+		openingBalanceType, country, state, postalCode
 	} = req.body;
 
 	if ([token, name, type, contactNumber, billingAddress]
@@ -41,7 +41,7 @@ const add = async (req, res) => {
 					name, type, contactNumber, billingAddress, email,
 					pan, gst, openingBalance, details, openingBalanceType,
 					shippingAddress, pan, gst, openingBalance, details, partyCategory: partyCategory || null,
-					shippingAddress, creditPeriod, creditLimit, dob
+					shippingAddress, creditPeriod, creditLimit, dob, country, state, postalCode
 
 				}
 			})
@@ -59,7 +59,8 @@ const add = async (req, res) => {
 			name, type, contactNumber, billingAddress, email,
 			pan, gst, openingBalance, details, openingBalanceType,
 			shippingAddress, pan, gst, openingBalance, details, partyCategory: partyCategory || null,
-			shippingAddress, creditPeriod, creditLimit, dob
+			shippingAddress, creditPeriod, creditLimit, dob,
+			country, state, postalCode
 		});
 
 		if (!insert) {
@@ -102,7 +103,7 @@ const get = async (req, res) => {
 		let getData;
 		let filter = {};
 		if (!search && searchText) {
-			filter.name = { $regex: searchText.trim(), $options: "i" }
+			// filter.name = { $regex: searchText.trim(), $options: "i" }
 			filter.$or = [
 				{ name: { $regex: searchText.trim(), $options: "i" } },
 				{ contactNumber: { $regex: searchText.trim(), $options: "i" } }
