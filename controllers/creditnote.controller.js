@@ -51,13 +51,13 @@ const add = async (req, res) => {
 				return res.status(500).json({ err: 'Invoice update failed', update: false })
 			}
 
-			await updateLadger({
-				partyId: party,
-				voucher: 'credit_note',
-				voucherId: id,
-				date: creditNoteDate,
-				credit: (finalAmount).toFixed(2)
-			})
+			// await updateLadger({
+			// 	partyId: party,
+			// 	voucher: 'credit_note',
+			// 	voucherId: id,
+			// 	date: creditNoteDate,
+			// 	credit: (finalAmount).toFixed(2)
+			// })
 
 			return res.status(200).json(update)
 
@@ -82,14 +82,14 @@ const add = async (req, res) => {
 			return res.status(500).json({ err: 'Invoice creation failed' });
 		}
 
-		await addLadger({
-			token: token,
-			partyId: party,
-			voucher: 'credit_note',
-			voucherId: insert._id,
-			date: creditNoteDate,
-			credit: (finalAmount).toFixed(2)
-		})
+		// await addLadger({
+		// 	token: token,
+		// 	partyId: party,
+		// 	voucher: 'credit_note',
+		// 	voucherId: insert._id,
+		// 	date: creditNoteDate,
+		// 	credit: (finalAmount).toFixed(2)
+		// })
 
 		return res.status(200).json(insert);
 

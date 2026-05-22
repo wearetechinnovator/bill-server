@@ -26,7 +26,7 @@ const addLadger = async ({ token, partyId, voucher, voucherId, credit, debit, da
 		// insert ladger
 		const insert = await ladgerModel.create({
 			userId: getUserData._id, companyId: getUserData.activeCompany,
-			partyId, voucher, credit, debit, date, voucherId: voucherId? new mongoose.Types.ObjectId(String(voucherId)):null,
+			partyId, voucher, credit, debit, date, voucherId: voucherId ? new mongoose.Types.ObjectId(String(voucherId)) : null,
 			voucherModel: voucherModels[voucher]
 		})
 
@@ -45,13 +45,26 @@ const addLadger = async ({ token, partyId, voucher, voucherId, credit, debit, da
 
 const updateLadger = async ({ partyId, voucher, voucherId, credit, debit, date }) => {
 	try {
-		const update = await ladgerModel.updateOne({ voucherId, voucher }, {
-			$set: {
-				partyId, voucher, credit, debit, date,
-				voucherId: new mongoose.Types.ObjectId(String(voucherId)),
-				voucherModel: voucherModels[voucher]
+		const update =  await ladgerModel.updateOne(
+			{
+				voucherId,
+				voucher,
+				partyId
+			},
+			{
+				$set: {
+					partyId,
+					voucher,
+					credit,
+					debit,
+					date,
+					voucherId: voucherId
+						? new mongoose.Types.ObjectId(String(voucherId))
+						: null,
+					voucherModel: voucherModels[voucher]
+				}
 			}
-		})
+		)
 
 		if (update.modifiedCount === 0) {
 			return false;
@@ -105,7 +118,7 @@ const get = async (req, res) => {
 
 const getPartyBalance = async (req, res) => {
 	const { token, partyId } = req.body;
-	
+
 	if (!token || !partyId) {
 		return res.status(500).json({ err: "required are blank" })
 	}
@@ -136,7 +149,7 @@ const getPartyBalance = async (req, res) => {
 				}
 			}
 		]);
-		
+
 		return res.status(200).json({ data })
 
 	} catch (error) {

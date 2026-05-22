@@ -25,20 +25,44 @@ const companySchema = new mongoose.Schema({
   pin: String,
   poInitial: String,
   purchaseInvoiceInitial: String,
-  purchaseInvoiceNextCount: String,
+  purchaseInvoiceNextCount: {
+    type: String,
+    default: "1"
+  },
   invoiceInitial: String,
   proformaInitial: String,
-  poNextCount: String,
-  invoiceNextCount: String,
-  proformaNextCount: String,
+  poNextCount: {
+    type: String,
+    default: "1"
+  },
+  invoiceNextCount: {
+    type: String,
+    default: "1"
+  },
+  proformaNextCount: {
+    type: String,
+    default: "1"
+  },
   quotationInitial: String,
   creditNoteInitial: String,
   deliverChalanInitial: String,
   salesReturnInitial: String,
-  quotationCount: String,
-  creditNoteCount: String,
-  salesReturnCount: String,
-  deliveryChalanCount: String,
+  quotationCount: {
+    type: String,
+    default: "1"
+  },
+  creditNoteCount: {
+    type: String,
+    default: "1"
+  },
+  salesReturnCount: {
+    type: String,
+    default: "1"
+  },
+  deliveryChalanCount: {
+    type: String,
+    default: "1"
+  },
   salesReminder: String,
   purchaseReminder: String,
   logoFileName: String,

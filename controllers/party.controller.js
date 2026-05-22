@@ -5,7 +5,7 @@ const salesinvoiceModel = require('../models/salesinvoice.model');
 const purchaseInvoiceModel = require('../models/purchaseInvoice.model');
 const userModel = require('../models/user.model');
 const { default: mongoose } = require('mongoose');
-const { addLadger } = require('./ladger.controller');
+const { addLadger, updateLadger } = require('./ladger.controller');
 
 
 
@@ -19,7 +19,7 @@ const add = async (req, res) => {
 		openingBalanceType, country, state, postalCode
 	} = req.body;
 
-	if ([token, name, type, contactNumber, billingAddress]
+	if ([token, name, type, contactNumber, billingAddress, country, state]
 		.some((field) => !field || field === "")) {
 		return res.json({ err: 'require fields are empty', create: false });
 	}
@@ -29,7 +29,7 @@ const add = async (req, res) => {
 		const getUserData = await userModel.findOne({ _id: getInfo._id });
 
 		const isPartyExist = await partyModel.findOne({
-			userId: getInfo._id, companyId: getUserData.activeCompany, name, isDel: false
+			userId: getInfo._id, companyId: getUserData.activeCompany, contactNumber, isDel: false
 		});
 		if (isPartyExist && !update) {
 			return res.status(500).json({ err: 'Party alredy exist', create: false, isDel: false })
@@ -64,7 +64,7 @@ const add = async (req, res) => {
 			} else {
 				ladgerData.credit = Number(openingBalance || 0).toFixed(2)
 			}
-			await addLadger(ladgerData);
+			await updateLadger(ladgerData);
 
 			return res.status(200).json(update)
 
@@ -81,19 +81,21 @@ const add = async (req, res) => {
 
 
 		// Opening Balance Ladger Entry
-		// ============================ 
-		const ladgerData = {
-			token: token,
-			partyId: insert._id,
-			voucher: 'opening_balance',
-			date: new Date().toISOString(),
+		// ============================
+		if (openingBalance && Number(openingBalance) > 0) {
+			const ladgerData = {
+				token: token,
+				partyId: insert._id,
+				voucher: 'opening_balance',
+				date: new Date().toISOString(),
+			}
+			if (openingBalanceType === "collect") {
+				ladgerData.debit = Number(openingBalance || 0).toFixed(2)
+			} else {
+				ladgerData.credit = Number(openingBalance || 0).toFixed(2)
+			}
+			await addLadger(ladgerData);
 		}
-		if (openingBalanceType === "collect") {
-			ladgerData.debit = Number(openingBalance || 0).toFixed(2)
-		} else {
-			ladgerData.credit = Number(openingBalance || 0).toFixed(2)
-		}
-		await addLadger(ladgerData);
 
 
 		if (!insert) {
@@ -103,10 +105,9 @@ const add = async (req, res) => {
 		return res.status(200).json(insert);
 
 	} catch (error) {
-		console.log(error)
+		console.log(error);
 		return res.status(500).json({ 'err': 'Something went wrong', create: false });
 	}
-
 }
 
 // Get Controller;
@@ -278,76 +279,6 @@ const getLog = async (req, res) => {
 		return res.status(500).json({ err: "Something went wrong", get: false });
 	}
 
-
-}
-
-// Get party's Balance;
-const getPartyBalance = async (req, res) => {
-	const { token } = req.body;
-
-	if (!token) {
-		return res.status(500).json({ 'err': 'Invalid user', get: false });
-	}
-
-	try {
-		const getInfo = await getId(token);
-		const getUser = await userModel.findOne({ _id: getInfo._id });
-
-		// Get All party
-		const allParty = await partyModel.find({
-			userId: getInfo._id,
-			companyId: getUser.activeCompany,
-			isDel: "0",
-		})
-
-		let data = [];
-		for (let party of allParty) {
-			// Get All Sales;
-			const sales = await salesinvoiceModel.find({
-				userId: getInfo._id,
-				companyId: getUser.activeCompany,
-				party: party._id,
-				isDel: '0',
-			})
-
-			// Get All Purchase;
-			const purchase = await purchaseInvoiceModel.find({
-				userId: getInfo._id,
-				companyId: getUser.activeCompany,
-				party: party._id,
-				isDel: '0',
-			})
-			const totalSalesAmount = sales?.reduce((acc, i) => acc += i.finalAmount, 0);
-			const totalPurchaseAmount = purchase?.reduce((acc, i) => acc += i.finalAmount, 0);
-
-			if (party.type === CUSTOMER) {
-				data.push({
-					partyId: party._id,
-					balance: (Number(totalSalesAmount) + Number(party.openingBalance || 0)).toFixed(2),
-					type: party.type
-				});
-			}
-			else if (party.type === SUPPLIER) {
-				data.push({
-					partyId: party._id,
-					balance: (Number(totalPurchaseAmount) + Number(party.openingBalance || 0)).toFixed(2),
-					type: party.type
-				});
-			}
-			else if (party.type === BOTHPARTY) {
-				data.push({
-					partyId: party._id,
-					balance: (Number(totalPurchaseAmount + totalSalesAmount) + Number(party.openingBalance || 0)).toFixed(2),
-					type: party.type
-				});
-			}
-		}
-
-		return res.status(200).json({ data });
-
-	} catch (error) {
-		return res.status(500).json({ 'err': 'Something went wrong' });
-	}
 }
 
 
@@ -357,5 +288,4 @@ module.exports = {
 	remove,
 	restore,
 	getLog,
-	getPartyBalance
 }

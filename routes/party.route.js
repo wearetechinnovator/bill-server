@@ -1,5 +1,7 @@
 const { add, get, remove, restore, getLog, getPartyBalance } = require("../controllers/party.controller");
-const { get: ladgerGet } = require("../controllers/ladger.controller")
+const PartyController = require("../controllers/extranal/party.controller");
+const { get: ladgerGet } = require("../controllers/ladger.controller");
+const extranalApiCheck = require("../middlewares/extranalApiCheck");
 const router = require("express").Router();
 
 router
@@ -7,12 +9,12 @@ router
   .post(add);
 
 router
-  .route("/get")
-  .post(get);
+  .route("/extranal/add")
+  .post(extranalApiCheck, PartyController.addParty);
 
 router
-  .route("/get-party-balance")
-  .post(getPartyBalance);
+  .route("/get")
+  .post(get);
 
 router
   .route("/delete")
