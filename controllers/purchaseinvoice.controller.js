@@ -96,6 +96,7 @@ const add = async (req, res) => {
 			credit: (finalAmount - (paymentAmount || 0)).toFixed(2)
 		})
 
+
 		return res.status(200).json(insert);
 
 	} catch (err) {

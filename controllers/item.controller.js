@@ -125,244 +125,375 @@ const add = async (req, res) => {
 // get Controller
 const get = async (req, res) => {
 	const { token, id, all, search, searchText, barCode } = req.body;
-	const { page, limit } = req.query;
+	const { page = 1, limit = 10 } = req.query;
+
 	const skip = (parseInt(page) - 1) * parseInt(limit);
 
-
 	if (!token) {
-		return res.status(500).json({ 'err': 'Invalid user', get: false });
+		return res.status(500).json({
+			err: "Invalid user",
+			get: false
+		});
 	}
 
-
 	try {
+
+		// =========================================================
+		// USER
+		// =========================================================
+
 		const getInfo = await getId(token);
-		const getUser = await userModel.findOne({ _id: getInfo._id });
+
+		const getUser = await userModel.findOne({
+			_id: getInfo._id
+		});
+
+		// =========================================================
+		// TOTAL DATA
+		// =========================================================
+
 		const totalData = await itemModel.countDocuments({
 			companyId: getUser.activeCompany,
 			isDel: false
 		});
 
+		// =========================================================
+		// FILTER
+		// =========================================================
+
 		let getData;
 		let filter = {};
+
 		if (!search && searchText) {
 			filter.$or = [
-				{ title: { $regex: searchText.trim(), $options: "i" } },
-				{ hsn: { $regex: searchText.trim(), $options: "i" } }
-			]
+				{
+					title: {
+						$regex: searchText.trim(),
+						$options: "i"
+					}
+				},
+				{
+					hsn: {
+						$regex: searchText.trim(),
+						$options: "i"
+					}
+				}
+			];
 		}
 
+		// =========================================================
+		// GET DATA
+		// =========================================================
 
 		if (id) {
+
 			getData = await itemModel.findOne({
 				companyId: getUser.activeCompany,
 				_id: id,
 				isDel: false
-			}).populate('category');
+			}).populate("category");
+
 		}
 		else if (barCode) {
+
 			getData = await itemModel.findOne({
 				companyId: getUser.activeCompany,
 				itemCode: barCode,
 				isTrash: false,
 				isDel: false
-			}).populate('category');
+			}).populate("category");
+
 		}
 		else if (all) {
+
 			getData = await itemModel.find({
 				companyId: getUser.activeCompany,
 				isDel: false
-			}).skip(skip).limit(limit).populate('category').sort({ _id: -1 });
+			})
+				.skip(skip)
+				.limit(limit)
+				.populate("category")
+				.sort({ _id: -1 });
+
 		}
 		else if (search) {
+
 			if (searchText.trim() !== "") {
+
 				getData = await itemModel.find({
-					title: { $regex: searchText.trim(), $options: "i" },
+					title: {
+						$regex: searchText.trim(),
+						$options: "i"
+					},
 					companyId: getUser.activeCompany,
-					isDel: false,
-				}).sort({ _id: -1 }).select("_id title");
+					isDel: false
+				})
+					.sort({ _id: -1 })
+					.select("_id title");
+
 			}
+
 		}
 		else {
+
 			getData = await itemModel.find({
 				companyId: getUser.activeCompany,
 				isDel: false,
 				...filter
-			}).skip(skip).limit(limit).populate('category').sort({ _id: -1 });
+			})
+				.skip(skip)
+				.limit(limit)
+				.populate("category")
+				.sort({ _id: -1 });
+
 		}
 
 		if (!getData) {
-			return res.status(500).json({ 'err': 'No item availble', get: false });
+			return res.status(500).json({
+				err: "No item available",
+				get: false
+			});
+		}
+
+		// =========================================================
+		// FORCE ARRAY
+		// =========================================================
+
+		const items = Array.isArray(getData)
+			? getData
+			: [getData];
+
+		// =========================================================
+		// STOCK CALCULATION
+		// =========================================================
+
+		const results = [];
+
+		for (const item of items) {
+			const unitSizeInSmallest = {};
+
+			const units = item.unit || [];
+
+			let multiplier = 1;
+
+			for (let i = units.length - 1; i >= 0; i--) {
+
+				const current = units[i];
+
+				unitSizeInSmallest[current.unit] = multiplier;
+
+				if (i > 0) {
+					multiplier *= Number(current.conversion || 1);
+				}
+			}
+
+			// =====================================================
+			// OPENING STOCK
+			// =====================================================
+
+			let openingSmallest = 0;
+
+			for (const u of units) {
+
+				const qty = Number(u.opening || 0);
+
+				const size = unitSizeInSmallest[u.unit] || 1;
+
+				openingSmallest += qty * size;
+
+			}
+
+			// =====================================================
+			// PURCHASE
+			// =====================================================
+
+			let purchaseSmallest = 0;
+
+			const purchaseInv = await purchaseInvoiceModel.find({
+				"items.itemId": item._id.toString(),
+				isDel: false
+			});
+
+			for (const inv of purchaseInv) {
+
+				for (const pItem of inv.items || []) {
+
+					if (String(pItem.itemId) !== String(item._id)) {
+						continue;
+					}
+
+					const qty = Number(pItem.qun || 0);
+
+					const size =
+						unitSizeInSmallest[pItem.selectedUnit] || 1;
+
+					purchaseSmallest += qty * size;
+
+				}
+
+			}
+
+			// =====================================================
+			// PURCHASE RETURN
+			// =====================================================
+
+			let purchaseReturnSmallest = 0;
+
+			const purchaseReturnInv = await purchaseReturModel.find({
+				"items.itemId": item._id.toString(),
+				isDel: false
+			});
+
+			for (const inv of purchaseReturnInv) {
+
+				for (const pItem of inv.items || []) {
+
+					if (String(pItem.itemId) !== String(item._id)) {
+						continue;
+					}
+
+					const qty = Number(pItem.qun || 0);
+
+					const size =
+						unitSizeInSmallest[pItem.selectedUnit] || 1;
+
+					purchaseReturnSmallest += qty * size;
+
+				}
+
+			}
+
+			// =====================================================
+			// SALES
+			// =====================================================
+
+			let salesSmallest = 0;
+
+			const salesInv = await salesinvoiceModel.find({
+				"items.itemId": item._id.toString(),
+				isDel: false,
+				isCancel: false
+			});
+
+			for (const inv of salesInv) {
+
+				for (const sItem of inv.items || []) {
+
+					if (String(sItem.itemId) !== String(item._id)) {
+						continue;
+					}
+
+					const qty = Number(sItem.qun || 0);
+
+					const size =
+						unitSizeInSmallest[sItem.selectedUnit] || 1;
+
+					salesSmallest += qty * size;
+
+				}
+
+			}
+
+			// =====================================================
+			// SALES RETURN
+			// =====================================================
+
+			let salesReturnSmallest = 0;
+
+			const salesReturnInv = await salesReturnModel.find({
+				"items.itemId": item._id.toString(),
+				isDel: false
+			});
+
+			for (const inv of salesReturnInv) {
+
+				for (const sItem of inv.items || []) {
+
+					if (String(sItem.itemId) !== String(item._id)) {
+						continue;
+					}
+
+					const qty = Number(sItem.qun || 0);
+
+					const size =
+						unitSizeInSmallest[sItem.selectedUnit] || 1;
+
+					salesReturnSmallest += qty * size;
+
+				}
+
+			}
+
+			// =====================================================
+			// FINAL TOTAL
+			// =====================================================
+
+			const totalSmallestUnits =
+				openingSmallest
+				+ purchaseSmallest
+				- purchaseReturnSmallest
+				- salesSmallest
+				+ salesReturnSmallest;
+
+			// =====================================================
+			// CONVERT BACK TO UNITS
+			// =====================================================
+
+			const sortedUnits = Object.keys(unitSizeInSmallest)
+				.sort(
+					(a, b) =>
+						unitSizeInSmallest[b] -
+						unitSizeInSmallest[a]
+				);
+
+			let remaining = totalSmallestUnits;
+
+			const stockObj = {};
+
+			for (const unitName of sortedUnits) {
+
+				const size = unitSizeInSmallest[unitName];
+
+				const qty = Math.floor(remaining / size);
+
+				stockObj[unitName] = qty;
+
+				remaining -= qty * size;
+
+			}
+
+			// =====================================================
+			// PUSH RESULT
+			// =====================================================
+
+			results.push({
+				itemId: item._id,
+				title: item.title,
+				totalSmallestUnits,
+				stock: stockObj
+			});
+
 		}
 
 
+		// =========================================================
+		// RESPONSE
+		// =========================================================
+		return res.status(200).json({
+			data: getData,
+			totalData,
+			stock: results
+		});
 
-		// ========================= [Get stock] =========================
-
-		const results = []; // array of { itemId, title, stockObj, totalSmallest }
-
-		if (getData.length > 0) {
-			for (const item of getData) {
-
-				// ---------------------------------------
-				// 1) Build conversion map (unit -> conversion)
-				// ---------------------------------------
-				const unitMap = {};
-				item?.unit?.forEach(u => {
-					unitMap[u.unit] = Number(u.conversion);
-				});
-
-				// Defensive: No units
-				const conversions = Object.values(unitMap);
-				if (conversions.length === 0) {
-					results.push({ itemId: item._id, title: item.title, stock: {} });
-					continue;
-				}
-
-				// Smallest = highest conversion numeric
-				const maxConv = Math.max(...conversions);
-
-				// Convert each unit to smallest-unit multiplier
-				const unitSizeInSmallest = {};
-				for (const [u, conv] of Object.entries(unitMap)) {
-					unitSizeInSmallest[u] = maxConv / conv;
-				}
-
-				// ------------------------------------------------------
-				//                     PURCHASE TOTAL
-				// ------------------------------------------------------
-				let purchaseSmallest = 0;
-				const purchaseInv = await purchaseInvoiceModel.find({
-					"items.itemId": item._id.toString(),
-					isDel: false
-				});
-
-				purchaseInv.forEach(inv => {
-					(inv.items || []).forEach(pItem => {
-						if (String(pItem.itemId) !== String(item._id)) return;
-
-						const qty = Number(pItem.qun) || 0;
-						const usedUnit = pItem.selectedUnit;
-						const size = unitSizeInSmallest[usedUnit];
-						if (!size) return;
-
-						purchaseSmallest += qty * size;
-					});
-				});
-
-				// ------------------------------------------------------
-				//                PURCHASE RETURN (SUBTRACT)
-				// ------------------------------------------------------
-				let purchaseReturnSmallest = 0;
-				const purchaseReturnInv = await purchaseReturModel.find({
-					"items.itemId": item._id.toString(),
-					isDel: false
-				});
-
-				purchaseReturnInv.forEach(inv => {
-					(inv.items || []).forEach(pItem => {
-						if (String(pItem.itemId) !== String(item._id)) return;
-
-						const qty = Number(pItem.qun) || 0;
-						const usedUnit = pItem.selectedUnit;
-						const size = unitSizeInSmallest[usedUnit];
-						if (!size) return;
-
-						purchaseReturnSmallest += qty * size; // FIXED
-					});
-				});
-
-				// ------------------------------------------------------
-				//                  SALES TOTAL (SUBTRACT)
-				// ------------------------------------------------------
-				let salesSmallest = 0;
-				const salesInv = await salesinvoiceModel.find({
-					"items.itemId": item._id.toString(),
-					isDel: false,
-					isCancel: false
-				});
-
-				salesInv.forEach(inv => {
-					(inv.items || []).forEach(sItem => {
-						if (String(sItem.itemId) !== String(item._id)) return;
-
-						const qty = Number(sItem.qun) || 0;
-						const usedUnit = sItem.selectedUnit;
-						const size = unitSizeInSmallest[usedUnit];
-						if (!size) return;
-
-						salesSmallest += qty * size;
-					});
-				});
-
-				// ------------------------------------------------------
-				//                  SALES RETURN  (ADD)
-				// ------------------------------------------------------
-				let salesReturnSmallest = 0;
-				const salesReturnInv = await salesReturnModel.find({
-					"items.itemId": item._id.toString(),
-					isDel: false
-				});
-
-				salesReturnInv.forEach(inv => {
-					(inv.items || []).forEach(sItem => {
-						if (String(sItem.itemId) !== String(item._id)) return;
-
-						const qty = Number(sItem.qun) || 0;
-						const usedUnit = sItem.selectedUnit;
-						const size = unitSizeInSmallest[usedUnit];
-						if (!size) return;
-
-						salesReturnSmallest += qty * size; // FIXED
-					});
-				});
-
-				// ------------------------------------------------------
-				//                     FINAL STOCK
-				// ------------------------------------------------------
-				const totalSmallestUnits =
-					purchaseSmallest
-					- salesSmallest
-					- purchaseReturnSmallest
-					+ salesReturnSmallest;
-
-				// ------------------------------------------------------
-				//              Convert smallest → units
-				// ------------------------------------------------------
-				const sortedUnits = Object.keys(unitSizeInSmallest)
-					.sort((a, b) => unitSizeInSmallest[b] - unitSizeInSmallest[a]);
-
-				let remaining = totalSmallestUnits;
-				const stockObj = {};
-
-				for (const u of sortedUnits) {
-					const size = unitSizeInSmallest[u];
-					const qty = Math.floor(remaining / size);
-					stockObj[u] = qty;
-					remaining -= qty * size;
-				}
-
-				// ------------------------------------------------------
-				//                    PUSH FINAL RESULT
-				// ------------------------------------------------------
-				results.push({
-					itemId: item._id,
-					title: item.title,
-					totalSmallestUnits,
-					stock: stockObj
-				});
-
-			} // end for loop
-		}
-
-
-		return res.status(200).json({ data: getData, totalData: totalData, stock: results });
-
-	} catch (error) {
-		console.log(error)
-		return res.status(500).json({ 'err': 'Something went wrong', get: false });
 	}
+	catch (error) {
+		return res.status(500).json({
+			err: "Something went wrong",
+			get: false
+		});
 
-}
+	}
+};
 
 
 // Delete controller;

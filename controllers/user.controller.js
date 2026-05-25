@@ -34,6 +34,13 @@ const addUser = async (req, res) => {
         return res.status(500).json({ err: "Invalid password" })
       }
 
+
+      // Check email already exist or not
+      const isExistsEmail = await userModel.findOne({ email, _id: { $ne: getInfo._id } });
+      if (isExistsEmail) {
+        return res.json({ 'err': 'user alredy exist'});
+      }
+
       let updateData = { name, email };
 
 
@@ -55,7 +62,7 @@ const addUser = async (req, res) => {
 
       let userUpdate = await userModel.updateOne({ _id: getInfo._id }, { $set: updateData });
 
-      if (!userUpdate) {
+      if (userUpdate.modifiedCount === 0) {
         return res.status(500).json({ err: "Profile not update" })
       }
 
