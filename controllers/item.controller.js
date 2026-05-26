@@ -451,7 +451,6 @@ const get = async (req, res) => {
 			const stockObj = {};
 
 			for (const unitName of sortedUnits) {
-
 				const size = unitSizeInSmallest[unitName];
 
 				const qty = Math.floor(remaining / size);

@@ -64,21 +64,21 @@ router.use("/tds-rate/", tdsRateRoute);
 
 
 router.post("/generate-pdf", async (req, res) => {
-    const { html } = req.body;
+  const { html } = req.body;
 
-    if (!html) {
-        return res.status(400).send('HTML is required');
-    }
+  if (!html) {
+    return res.status(400).send('HTML is required');
+  }
 
-    const browser = await puppeteer.launch({
-        headless: 'new',
-        args: ['--no-sandbox', '--disable-setuid-sandbox'],
-    });
+  const browser = await puppeteer.launch({
+    headless: 'new',
+    args: ['--no-sandbox', '--disable-setuid-sandbox'],
+  });
 
-    const page = await browser.newPage();
+  const page = await browser.newPage();
 
-    await page.setContent(
-        `
+  await page.setContent(
+    `
     <!DOCTYPE html>
     <html>
       <head>
@@ -141,27 +141,30 @@ router.post("/generate-pdf", async (req, res) => {
       </body>
     </html>
     `,
-        { waitUntil: 'networkidle0' }
-    );
+    {
+      waitUntil: ['load', 'domcontentloaded'],
+      timeout: 60000
+    }
+  );
 
-    const pdfBuffer = await page.pdf({
-        format: 'A4',
-        printBackground: true,
-        margin: {
-            top: '10mm',
-            bottom: '10mm',
-            left: '10mm',
-            right: '10mm',
-        },
-    });
+  const pdfBuffer = await page.pdf({
+    format: 'A4',
+    printBackground: true,
+    margin: {
+      top: '10mm',
+      bottom: '10mm',
+      left: '10mm',
+      right: '10mm',
+    },
+  });
 
-    await browser.close();
+  await browser.close();
 
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', 'attachment; filename=invoice.pdf');
-    res.setHeader('Content-Length', pdfBuffer.length);
+  res.setHeader('Content-Type', 'application/pdf');
+  res.setHeader('Content-Disposition', 'attachment; filename=invoice.pdf');
+  res.setHeader('Content-Length', pdfBuffer.length);
 
-    res.end(pdfBuffer);
+  res.end(pdfBuffer);
 });
 
 
