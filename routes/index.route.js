@@ -1,5 +1,4 @@
 const router = require("express").Router();
-const puppeteer = require("puppeteer");
 const { chromium } = require('playwright');
 
 const userRoute = require("./user.route");
