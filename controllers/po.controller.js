@@ -12,7 +12,7 @@ const add = async (req, res) => {
 	const {
 		token, party, poNumber, poDate, validDate, items, discountType, discountAmount,
 		discountPercentage, additionalCharge, note, terms, update, id, finalAmount,
-		autoRoundOff, roundOffAmount, roundOffType
+		autoRoundOff, roundOffAmount, roundOffType, deliveryTime
 	} = req.body;
 
 	if ([token, party, poNumber, poDate, items]
@@ -37,7 +37,7 @@ const add = async (req, res) => {
 			const update = await poModel.updateOne({ _id: id }, {
 				$set: {
 					party, poNumber, poDate, validDate, items, discountType, discountAmount, discountPercentage,
-					additionalCharge, note, terms, autoRoundOff, roundOffAmount, roundOffType
+					additionalCharge, note, terms, autoRoundOff, roundOffAmount, roundOffType, deliveryTime
 				}
 			})
 
@@ -62,7 +62,7 @@ const add = async (req, res) => {
 		const insert = await poModel.create({
 			userId: getUserData._id, companyId: getUserData.activeCompany, party, poNumber, poDate,
 			validDate, items, discountType, discountAmount, discountPercentage, additionalCharge,
-			note, terms, autoRoundOff, roundOffAmount, roundOffType
+			note, terms, autoRoundOff, roundOffAmount, roundOffType, deliveryTime
 		});
 
 		if (!insert) {

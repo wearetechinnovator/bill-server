@@ -64,6 +64,12 @@ const proformaSchema = new mongoose.Schema({
   proformaNumber: String,
   estimateDate: Date,
   validDate: Date,
+  poDate:{
+    type: Date,
+    default: null
+  },
+  poNumber: String,
+  deliveryTime: String,
   items: [itemSchema],
   discountType: String,
   discountAmount: Number,

@@ -53,6 +53,8 @@ const quotationSchema = new mongoose.Schema({
   additionalCharge: [additionalChargeSchema],
   note: String,
   terms: String,
+  enqNumber:String,
+  deliveryTime: String,
   isDel: {
     type: Boolean,
     default: false

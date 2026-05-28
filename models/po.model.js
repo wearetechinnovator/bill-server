@@ -42,6 +42,7 @@ const purchaseOrder = new mongoose.Schema({
   poNumber: String,
   poDate: Date,
   validDate: Date,
+  deliveryTime: String,
   items: {
     type: [itemSchema],
   },

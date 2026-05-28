@@ -48,6 +48,11 @@ const salesInvoiceSchema = new mongoose.Schema({
   salesInvoiceNumber: String,
   invoiceDate: Date,
   DueDate: Date,
+  poDate: {
+    type: Date,
+    default: null
+  },
+  poNumber: String,
   items: [itemSchema],
   discountType: String,
   discountAmount: Number,
