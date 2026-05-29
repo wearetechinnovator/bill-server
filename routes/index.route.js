@@ -29,6 +29,7 @@ const ladgerRoute = require("./ladger.route");
 const transactionCategoryRoute = require("./transactionCategory.route");
 const staffPaymentRoute = require("./staffPayment.route");
 const tdsRateRoute = require("./tdsRate.route");
+const partyContactRoute = require("./partyContact.route");
 
 
 
@@ -60,6 +61,7 @@ router.use("/attendance/", attendanceRoute);
 router.use("/ladger/", ladgerRoute);
 router.use("/staff-payment/", staffPaymentRoute);
 router.use("/tds-rate/", tdsRateRoute);
+router.use("/party-contacts/", partyContactRoute);
 
 
 
@@ -164,7 +166,7 @@ router.post('/generate-pdf', async (req, res) => {
           <style>
           * {
               box-sizing: border-box;
-              font-family: "Poppins", sans-serif;
+              font-family: "Nunito Sans", sans-serif;
               font-style: normal;
             }
             body{
@@ -190,7 +192,18 @@ router.post('/generate-pdf', async (req, res) => {
             }
 
             #invoice thead td {
+              white-space: nowrap;
               font-weight: 500;
+              overflow: visible;
+            }
+
+            /* Fix bill info section — reduce font weight */
+            .invoice__header td {
+              font-weight: 400 !important;
+            }
+
+            .invoice__header table td {
+              font-weight: 400;
             }
 
             .item__table {

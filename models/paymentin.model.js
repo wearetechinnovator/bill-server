@@ -29,7 +29,6 @@ const PaymentInSchema = mongoose.Schema({
     type: Boolean,
     default: false
   }
-
 }, { timestamps: true });
 
 module.exports = mongoose.model('paymentin', PaymentInSchema);

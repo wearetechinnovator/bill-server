@@ -16,11 +16,16 @@ const partyContactSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'party',
         required: true,
+        index: true
     },
     name: String,
     phone: Number,
     email: String,
-    designation: String
+    designation: String,
+    isDel: {
+        type: Boolean,
+        default: false
+    }
 }, { timestamps: true });
 
 module.exports = mongoose.model('party_contact', partyContactSchema);
