@@ -1,3 +1,4 @@
+const { default: mongoose } = require("mongoose");
 const { getId } = require("../helper/getIdFromToken");
 const partyContactsModel = require("../models/partyContacts.model");
 const userModel = require("../models/user.model");
@@ -7,7 +8,7 @@ class PartyContactController {
     static async addPartyContact(req, res) {
         const { token, partyId, name, phone, email, designation } = req.body;
 
-        if ([token, partyId, name, phone, email, designation]
+        if ([token, partyId, name, phone, designation]
             .some((field) => !field || field === "")) {
             return res.json({ err: 'require fields are empty', create: false });
         }
@@ -55,7 +56,7 @@ class PartyContactController {
     static async updatePartyContact(req, res) {
         const { token, id, name, partyId, phone, email, designation } = req.body;
 
-        if ([token, partyId, name, phone, email, designation, id]
+        if ([token, partyId, name, phone, designation, id]
             .some((field) => !field || field === "")) {
             return res.json({ err: 'require fields are empty', create: false });
         }
@@ -71,12 +72,15 @@ class PartyContactController {
 
             // Check existance;
             const isExists = await partyContactsModel.findOne({
-                userId: getUserData._id, companyId: getUserData.activeCompany,
-                partyId, phone: phone, _id: { $ne: id },
+                companyId: getUserData.activeCompany,
+                partyId,
+                phone,
+                _id: { $ne: new mongoose.Types.ObjectId(id) },
                 isDel: false
-            })
+            });
+
             if (isExists) {
-                return res.status(500).json({ err: "This contact already exists" });
+                return res.status(409).json({ err: "This contact already exists" });
             }
 
 
@@ -94,7 +98,7 @@ class PartyContactController {
 
 
         } catch (err) {
-            console.log(error);
+            console.log(err);
             return res.status(500).json({ 'err': 'Something went wrong', create: false });
         }
     }
@@ -186,7 +190,7 @@ class PartyContactController {
                 userId: getUserData._id,
                 companyId: getUserData.activeCompany,
                 isDel: false
-            });
+            }).sort({ _id: -1 });
 
             return res.status(200).json({ data: contacts });
 
