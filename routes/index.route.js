@@ -190,6 +190,11 @@ router.post('/generate-pdf', async (req, res) => {
               page-break-inside: avoid;
               line-height: 10px;
             }
+            .item__table__body .item__row td{
+              border: none !important;
+              background-color: rgba(245, 245, 245, 0.438);
+              border-top: 1px solid rgb(236, 235, 235) !important;
+            }
 
             #invoice thead td {
               white-space: nowrap;
