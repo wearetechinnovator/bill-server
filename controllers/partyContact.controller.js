@@ -8,7 +8,7 @@ class PartyContactController {
     static async addPartyContact(req, res) {
         const { token, partyId, name, phone, email, designation } = req.body;
 
-        if ([token, partyId, name, phone, designation]
+        if ([token, partyId, name, phone, email]
             .some((field) => !field || field === "")) {
             return res.json({ err: 'require fields are empty', create: false });
         }
@@ -56,7 +56,7 @@ class PartyContactController {
     static async updatePartyContact(req, res) {
         const { token, id, name, partyId, phone, email, designation } = req.body;
 
-        if ([token, partyId, name, phone, designation, id]
+        if ([token, partyId, name, phone, id, email]
             .some((field) => !field || field === "")) {
             return res.json({ err: 'require fields are empty', create: false });
         }

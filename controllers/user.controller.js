@@ -13,8 +13,6 @@ const sendEmail = require('../helper/sendEmail');
 
 
 
-
-
 // Register Controller
 const addUser = async (req, res) => {
   const { name, email, password, profile, filename, update, token } = req.body;
@@ -92,7 +90,6 @@ const addUser = async (req, res) => {
 
 }
 
-
 // Get user Controller
 const getUser = async (req, res) => {
   const { token } = req.body;
@@ -118,7 +115,6 @@ const getUser = async (req, res) => {
     return res.status(500).json({ 'err': 'Something went wrong', data: false });
   }
 }
-
 
 // Login Controller;
 const login = async (req, res) => {
@@ -187,8 +183,6 @@ const updatepass = async (req, res) => {
   }
 
 }
-
-
 
 // RESEND-API-KEY = re_L8y4DSVS_GqE1a8ooYY46CAzH8VJJdQ8B
 const forgot = async (req, res) => {
@@ -281,8 +275,6 @@ const forgot = async (req, res) => {
   }
 }
 
-
-
 const verifyOtp = async (req, res) => {
   const { otp, token } = req.body;
 
@@ -313,8 +305,6 @@ const verifyOtp = async (req, res) => {
     return res.status(500).json({ 'err': 'Something went wrong', forgot: false });
   }
 }
-
-
 
 const changePassword = async (req, res) => {
   const { token, password } = req.body;
@@ -356,7 +346,6 @@ const changePassword = async (req, res) => {
 
 }
 
-
 const protectChangePassword = async (req, res) => {
   const { token } = req.body;
 
@@ -383,13 +372,10 @@ const protectChangePassword = async (req, res) => {
   }
 }
 
-
-
 // Send bill via email
 // :::::::::::::::::::
 const sendBill = async (req, res) => {
   const { token, email, data, subject, body } = req.body;
-
 
   if (!token || !email || !data) {
     return res.status(200).json({ 'err': 'require fields are empty', send: false });
