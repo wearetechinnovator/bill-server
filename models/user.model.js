@@ -38,8 +38,16 @@ const userSchema = new mongoose.Schema({
   forgotOtp: {
     type: String,
     default: null
-  }
-
+  },
+  role: {
+    type: String,
+    enum: ['admin', 'manager', 'user', 'accountant'],
+    default: 'admin'
+  },
+  isDisable: {
+    type: Boolean,
+    default: false
+  },
 }, { timestamps: true });
 
 

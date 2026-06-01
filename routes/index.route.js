@@ -31,7 +31,6 @@ const staffPaymentRoute = require("./staffPayment.route");
 const tdsRateRoute = require("./tdsRate.route");
 const partyContactRoute = require("./partyContact.route");
 const enquiryRoute = require("./enquiry.route");
-const roleUserRoute = require("./roleUser.route");
 
 
 
@@ -65,7 +64,6 @@ router.use("/staff-payment/", staffPaymentRoute);
 router.use("/tds-rate/", tdsRateRoute);
 router.use("/party-contacts/", partyContactRoute);
 router.use("/enquiry/", enquiryRoute);
-router.use("/role-user/", roleUserRoute);
 
 
 

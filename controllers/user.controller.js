@@ -15,201 +15,294 @@ const sendEmail = require('../helper/sendEmail');
 
 // Register Controller
 const addUser = async (req, res) => {
-  const { name, email, password, profile, filename, update, token } = req.body;
+	const { name, email, password, profile, filename, update, token } = req.body;
 
-  if ([name, email, password].some((field) => !field || field == "")) {
-    return res.json({ 'err': 'require fields are empty' });
-  }
+	if ([name, email].some((field) => !field || field == "")) {
+		return res.json({ 'err': 'require fields are empty' });
+	}
 
-  try {
-    // profile update
-    if (update && token) {
-      const getInfo = await getId(token);
-      const get = await userModel.findOne({ _id: getInfo._id });
-      const checkPass = await bcrypt.compare(password, get.password);
+	try {
+		// profile update
+		if (update && token) {
+			const getInfo = await getId(token);
+			const get = await userModel.findOne({ _id: getInfo._id });
 
-      if (!checkPass) {
-        return res.status(500).json({ err: "Invalid password" })
-      }
+			// Check email already exist or not
+			const isExistsEmail = await userModel.findOne({ email, _id: { $ne: getInfo._id } });
+			if (isExistsEmail) {
+				return res.json({ 'err': 'user alredy exist' });
+			}
 
-
-      // Check email already exist or not
-      const isExistsEmail = await userModel.findOne({ email, _id: { $ne: getInfo._id } });
-      if (isExistsEmail) {
-        return res.json({ 'err': 'user alredy exist'});
-      }
-
-      let updateData = { name, email };
+			let updateData = { name, email };
 
 
-      if (profile) {
-        const file = saveBase64Image(profile); // if file upload return filename else return null; 
-        if (file !== null) {
-          updateData.filename = file;
-          updateData.profile = profile;
-        }
-      } else {
-        const data = await userModel.findOne({ _id: getInfo._id });
-        if (data.profile) {
-          removeFile(path.join(__dirname, `../uploads/${data.filename}`));
-          updateData.filename = null;
-          updateData.profile = null;
-        }
-      }
+			if (profile) {
+				const file = saveBase64Image(profile); // if file upload return filename else return null; 
+				if (file !== null) {
+					updateData.filename = file;
+					updateData.profile = profile;
+				}
+			} else {
+				const data = await userModel.findOne({ _id: getInfo._id });
+				if (data.profile) {
+					removeFile(path.join(__dirname, `../uploads/${data.filename}`));
+					updateData.filename = null;
+					updateData.profile = null;
+				}
+			}
 
 
-      let userUpdate = await userModel.updateOne({ _id: getInfo._id }, { $set: updateData });
+			let userUpdate = await userModel.updateOne({ _id: getInfo._id }, { $set: updateData });
 
-      if (userUpdate.modifiedCount === 0) {
-        return res.status(500).json({ err: "Profile not update" })
-      }
+			if (userUpdate.modifiedCount === 0) {
+				return res.status(500).json({ err: "Profile not update" })
+			}
 
-      return res.status(200).json({ msg: "Update successfully" })
-    }
+			return res.status(200).json({ msg: "Update successfully" })
+		}
 
-    // user add
-    const isExistsEmail = await userModel.findOne({ email });
-    if (isExistsEmail) {
-      return res.json({ 'err': 'user alredy exist', register: false });
-    }
+		// user add
+		const isExistsEmail = await userModel.findOne({ email });
+		if (isExistsEmail) {
+			return res.json({ 'err': 'user alredy exist', register: false });
+		}
 
-    const insert = await userModel.create({
-      name, email, password, profile
-    })
+		const insert = await userModel.create({
+			name, email, password, profile
+		})
 
-    if (!insert) {
-      return res.status(500).json({ 'err': 'Register failed', register: false });
-    }
+		if (!insert) {
+			return res.status(500).json({ 'err': 'Register failed', register: false });
+		}
 
-    return res.status(200).json({ 'success': 'Register success', register: true });
+		return res.status(200).json({ 'success': 'Register success', register: true });
 
-  } catch (error) {
-    console.log(error)
-    return res.status(500).json({ 'err': 'Something went wrong' });
-  }
+	} catch (error) {
+		console.log(error)
+		return res.status(500).json({ 'err': 'Something went wrong' });
+	}
 
 }
 
+const updateUserById = async (req, res) => {
+	const { name, email, profile, token, id, status } = req.body;
+
+	if (!token || !id) {
+		return res.status(401).json({ err: "Unauthorized" });
+	}
+
+	if (!name && !email && profile === undefined) {
+		return res.status(400).json({ err: "No fields provided to update" });
+	}
+
+	try {
+		const existingUser = await userModel.findById(id);
+		if (!existingUser) {
+			return res.status(404).json({ err: "User not found" });
+		}
+
+		// Check email conflict
+		if (email) {
+			const emailExists = await userModel.findOne({ email, _id: { $ne: id } });
+			if (emailExists) {
+				return res.status(409).json({ err: "Email already in use" });
+			}
+		}
+
+		let updateData = {};
+		if (name) updateData.name = name;
+		if (email) updateData.email = email;
+		if (status) updateData.isDisable = status;
+
+		// Handle profile image
+		if (profile) {
+			const file = saveBase64Image(profile);
+			if (file) {
+				// Remove old image if exists
+				if (existingUser.filename) {
+					removeFile(path.join(__dirname, `../uploads/${existingUser.filename}`));
+				}
+				updateData.filename = file;
+				updateData.profile = profile;
+			}
+		} else if (profile === null) {
+			// Explicitly clearing the profile picture
+			if (existingUser.profile) {
+				removeFile(path.join(__dirname, `../uploads/${existingUser.filename}`));
+			}
+			updateData.filename = null;
+			updateData.profile = null;
+		}
+
+		const result = await userModel.findByIdAndUpdate(
+			id,
+			{ $set: updateData },
+			{ new: true, select: "-password" }  // return updated doc, exclude password
+		);
+
+		return res.status(200).json({ msg: "Profile updated successfully", user: result });
+
+	} catch (error) {
+		console.error(error);
+		return res.status(500).json({ err: "Something went wrong" });
+	}
+};
+
 // Get user Controller
 const getUser = async (req, res) => {
-  const { token } = req.body;
+	const { token } = req.body;
 
-  if (!token) {
-    return res.status(500).json({ err: 'require fields are empty' });
-  }
+	if (!token) {
+		return res.status(500).json({ err: 'require fields are empty' });
+	}
 
-  try {
-    const userEmail = await getId(token);
+	try {
+		const userEmail = await getId(token);
 
-    if (!userEmail.email || userEmail.email === null) {
-      return res.status(500).json({ 'err': 'invalid token', data: false });
-    }
+		if (!userEmail.email || userEmail.email === null) {
+			return res.status(500).json({ 'err': 'invalid token', data: false });
+		}
 
-    const userData = await userModel.findOne({ email: userEmail.email, isDel: false })
-      .select("-password")
-      .populate('companies');
+		const userData = await userModel.findOne({ email: userEmail.email, isDel: false })
+			.select("-password")
+			.populate('companies');
 
-    return res.status(200).json(userData);
+		return res.status(200).json(userData);
 
-  } catch (error) {
-    return res.status(500).json({ 'err': 'Something went wrong', data: false });
-  }
+	} catch (error) {
+		return res.status(500).json({ 'err': 'Something went wrong', data: false });
+	}
+}
+
+// Get user Controller
+const getUserById = async (req, res) => {
+	const { id, token, status } = req.body;
+
+	if (!id || !token) {
+		return res.status(500).json({ err: 'require fields are empty' });
+	}
+
+	try {
+		const userEmail = await getId(token);
+
+		if (!userEmail.email || userEmail.email === null) {
+			return res.status(500).json({ 'err': 'invalid token', data: false });
+		}
+
+		const userData = await userModel.findOne({ _id: id, isDel: false })
+			.select("-password")
+			.populate('companies');
+
+		return res.status(200).json(userData);
+
+	} catch (error) {
+		return res.status(500).json({ 'err': 'Something went wrong', data: false });
+	}
+}
+
+const getAllUser = async (req, res) => {
+	try {
+		const data = await userModel.find({ isDel: false }).select("-password -profile");
+		return res.status(200).json(data);
+	} catch (error) {
+		return res.status(500).json({ 'err': 'Something went wrong', data: false });
+	}
 }
 
 // Login Controller;
 const login = async (req, res) => {
-  const { email, password } = req.body;
+	const { email, password } = req.body;
 
-  if ([email, password].some((field) => !field || field === "")) {
-    return res.status(200).json({ 'err': 'require fields are empty', login: false });
-  }
+	if ([email, password].some((field) => !field || field === "")) {
+		return res.status(200).json({ 'err': 'require fields are empty', login: false });
+	}
 
-  try {
-    const user = await userModel.findOne({ email, isDel: false }).select("-profile");
-    if (!user) {
-      return res.status(500).json({ err: 'Invalid login id or password', login: false })
-    }
+	try {
+		const user = await userModel.findOne({ email, isDel: false, isDisable: false }).select("-profile");
+		if (!user) {
+			return res.status(500).json({ err: 'Invalid login id or password', login: false })
+		}
 
-    const verifyPass = await bcrypt.compare(password, user.password);
-    if (!verifyPass) {
-      return res.status(500).json({ err: 'Invalid login id or password', login: false })
-    }
+		const verifyPass = await bcrypt.compare(password, user.password);
+		if (!verifyPass) {
+			return res.status(500).json({ err: 'Invalid login id or password', login: false })
+		}
 
 
-    // Create token    
-    const token = jwt.sign(JSON.stringify(user), jwt_key)
-    return res.status(200).json({ token: token, login: true });
+		// Create token    
+		const token = jwt.sign(JSON.stringify(user), jwt_key)
+		return res.status(200).json({ token: token, login: true });
 
-  } catch (error) {
-    console.log(error)
-    return res.status(500).json({ 'err': 'Something went wrong', login: false });
-  }
+	} catch (error) {
+		console.log(error)
+		return res.status(500).json({ 'err': 'Something went wrong', login: false });
+	}
 
 }
 
 // Change password controller
 const updatepass = async (req, res) => {
-  const { currentPassword, newPassword, token } = req.body;
-  if ([currentPassword, newPassword, token].some((field) => !field || field == "")) {
-    return res.status(200).json({ 'err': 'require fields are empty', change: false });
-  }
+	const { currentPassword, newPassword, token } = req.body;
+	if ([currentPassword, newPassword, token].some((field) => !field || field == "")) {
+		return res.status(200).json({ 'err': 'require fields are empty', change: false });
+	}
 
-  try {
-    const getInfo = await getId(token);
-    const getUser = await userModel.findOne({ _id: getInfo._id });
+	try {
+		const getInfo = await getId(token);
+		const getUser = await userModel.findOne({ _id: getInfo._id });
 
-    const checkPass = await bcrypt.compare(currentPassword, getUser.password);
-    if (!checkPass) {
-      return res.status(500).json({ err: 'Invalid password' });
-    }
+		const checkPass = await bcrypt.compare(currentPassword, getUser.password);
+		if (!checkPass) {
+			return res.status(500).json({ err: 'Invalid password' });
+		}
 
-    const salt = await bcrypt.genSalt(10);
-    const hashPass = await bcrypt.hash(newPassword, salt);
+		const salt = await bcrypt.genSalt(10);
+		const hashPass = await bcrypt.hash(newPassword, salt);
 
-    const update = await userModel.updateOne({ _id: getInfo._id }, {
-      $set: {
-        password: hashPass
-      }
-    });
-    if (!update) {
-      return res.status(500).json({ err: 'Update failed' });
-    }
+		const update = await userModel.updateOne({ _id: getInfo._id }, {
+			$set: {
+				password: hashPass
+			}
+		});
+		if (!update) {
+			return res.status(500).json({ err: 'Update failed' });
+		}
 
-    return res.status(200).json({ msg: 'Update successfully' });
+		return res.status(200).json({ msg: 'Update successfully' });
 
 
-  } catch (error) {
-    return res.status(500).json({ 'err': 'Something went wrong', change: false });
-  }
+	} catch (error) {
+		return res.status(500).json({ 'err': 'Something went wrong', change: false });
+	}
 
 }
 
 // RESEND-API-KEY = re_L8y4DSVS_GqE1a8ooYY46CAzH8VJJdQ8B
 const forgot = async (req, res) => {
-  const { email } = req.body;
-  if (!email) {
-    return res.status(200).json({ 'err': 'require fields are empty', forgot: false });
-  }
+	const { email } = req.body;
+	if (!email) {
+		return res.status(200).json({ 'err': 'require fields are empty', forgot: false });
+	}
 
-  try {
-    const user = await userModel
-      .findOne({ email, isDel: false })
-      .select('-password');
+	try {
+		const user = await userModel
+			.findOne({ email, isDel: false })
+			.select('-password');
 
-    if (!user) {
-      return res.status(500).json({ err: 'Invalid email', forgot: false });
-    }
+		if (!user) {
+			return res.status(500).json({ err: 'Invalid email', forgot: false });
+		}
 
-    let OTP = "";
-    for (let i = 0; i < 4; i++) {
-      OTP += Math.floor(Math.random() * 10);
-    }
+		let OTP = "";
+		for (let i = 0; i < 4; i++) {
+			OTP += Math.floor(Math.random() * 10);
+		}
 
-    await userModel.updateOne({ email }, { $set: { forgotOtp: OTP } });
-    const token = jwt.sign(JSON.stringify({ email }), "adfa;3kw3254543=-2=34hnas3");
+		await userModel.updateOne({ email }, { $set: { forgotOtp: OTP } });
+		const token = jwt.sign(JSON.stringify({ email }), "adfa;3kw3254543=-2=34hnas3");
 
-    // Professional email template
-    const emailTemplate = `
+		// Professional email template
+		const emailTemplate = `
       <!DOCTYPE html>
       <html lang="en">
       <head>
@@ -261,186 +354,183 @@ const forgot = async (req, res) => {
       </html>
     `;
 
-    const emailSend = await sendEmail({
-      to: email,
-      subject: 'Reset Your EasyBill Password',
-      body: emailTemplate
-    });
+		const emailSend = await sendEmail({
+			to: email,
+			subject: 'Reset Your EasyBill Password',
+			body: emailTemplate
+		});
 
-    return res.status(200).json({ msg: 'Email sent successfully', forgot: true, token });
+		return res.status(200).json({ msg: 'Email sent successfully', forgot: true, token });
 
-  } catch (error) {
-    console.log(error);
-    return res.status(500).json({ 'err': 'Something went wrong', forgot: false });
-  }
+	} catch (error) {
+		return res.status(500).json({ 'err': 'Something went wrong', forgot: false });
+	}
 }
 
 const verifyOtp = async (req, res) => {
-  const { otp, token } = req.body;
+	const { otp, token } = req.body;
 
-  if (!otp || !token) {
-    return res.status(200).json({ 'err': 'require fields are empty', forgot: false });
-  }
+	if (!otp || !token) {
+		return res.status(200).json({ 'err': 'require fields are empty', forgot: false });
+	}
 
-  try {
+	try {
 
-    const chekToken = jwt.verify(token, "adfa;3kw3254543=-2=34hnas3");
-    if (!chekToken) {
-      return res.status(500).json({ err: 'Invalid token', forgot: false });
-    }
+		const chekToken = jwt.verify(token, "adfa;3kw3254543=-2=34hnas3");
+		if (!chekToken) {
+			return res.status(500).json({ err: 'Invalid token', forgot: false });
+		}
 
-    const user = await userModel
-      .findOne({ forgotOtp: otp, email: chekToken.email })
-      .select('-password');
+		const user = await userModel
+			.findOne({ forgotOtp: otp, email: chekToken.email })
+			.select('-password');
 
-    if (!user) {
-      return res.status(500).json({ err: 'Invalid OTP', forgot: false });
-    }
+		if (!user) {
+			return res.status(500).json({ err: 'Invalid OTP', forgot: false });
+		}
 
 
-    return res.status(200).json({ msg: 'OTP verified successfully', forgot: true });
+		return res.status(200).json({ msg: 'OTP verified successfully', forgot: true });
 
-  } catch (error) {
-    console.log(error)
-    return res.status(500).json({ 'err': 'Something went wrong', forgot: false });
-  }
+	} catch (error) {
+		return res.status(500).json({ 'err': 'Something went wrong', forgot: false });
+	}
 }
 
 const changePassword = async (req, res) => {
-  const { token, password } = req.body;
+	const { token, password } = req.body;
 
-  if (!token || !password) {
-    return res.status(200).json({ 'err': 'require fields are empty', change: false });
-  }
+	if (!token || !password) {
+		return res.status(200).json({ 'err': 'require fields are empty', change: false });
+	}
 
-  try {
-    const chekToken = jwt.verify(token, "adfa;3kw3254543=-2=34hnas3");
-    if (!chekToken) {
-      return res.status(500).json({ err: 'Invalid token', change: false });
-    }
+	try {
+		const chekToken = jwt.verify(token, "adfa;3kw3254543=-2=34hnas3");
+		if (!chekToken) {
+			return res.status(500).json({ err: 'Invalid token', change: false });
+		}
 
-    const salt = await bcrypt.genSalt(10);
-    const hashPass = await bcrypt.hash(password, salt);
+		const salt = await bcrypt.genSalt(10);
+		const hashPass = await bcrypt.hash(password, salt);
 
-    const update = await userModel.updateOne({ email: chekToken.email }, {
-      $set: {
-        password: hashPass,
-        forgotOtp: null
-      }
-    });
+		const update = await userModel.updateOne({ email: chekToken.email }, {
+			$set: {
+				password: hashPass,
+				forgotOtp: null
+			}
+		});
 
 
-    if (!update) {
-      return res.status(500).json({ err: 'Update failed', change: false });
-    }
+		if (!update) {
+			return res.status(500).json({ err: 'Update failed', change: false });
+		}
 
-    const data = await userModel.findOne({ email: chekToken.email }).select('-password -profile');
-    const newToken = jwt.sign(JSON.stringify(data), jwt_key)
+		const data = await userModel.findOne({ email: chekToken.email }).select('-password -profile');
+		const newToken = jwt.sign(JSON.stringify(data), jwt_key)
 
-    return res.status(200).json({ msg: 'Update successfully', change: true, newToken });
+		return res.status(200).json({ msg: 'Update successfully', change: true, newToken });
 
-  } catch (error) {
-    console.log(error)
-    return res.status(500).json({ 'err': 'Something went wrong', change: false });
-  }
+	} catch (error) {
+		return res.status(500).json({ 'err': 'Something went wrong', change: false });
+	}
 
 }
 
 const protectChangePassword = async (req, res) => {
-  const { token } = req.body;
+	const { token } = req.body;
 
-  if (!token) {
-    return res.status(200).json({ 'err': 'require fields are empty', change: false });
-  }
+	if (!token) {
+		return res.status(200).json({ 'err': 'require fields are empty', change: false });
+	}
 
-  try {
-    const chekToken = jwt.verify(token, "adfa;3kw3254543=-2=34hnas3");
-    if (!chekToken) {
-      return res.status(500).json({ verify: false });
-    }
+	try {
+		const chekToken = jwt.verify(token, "adfa;3kw3254543=-2=34hnas3");
+		if (!chekToken) {
+			return res.status(500).json({ verify: false });
+		}
 
-    const data = await userModel.findOne({ email: chekToken.email })
-    if (!data.forgotOtp) {
-      return res.status(500).json({ verify: false });
-    }
+		const data = await userModel.findOne({ email: chekToken.email })
+		if (!data.forgotOtp) {
+			return res.status(500).json({ verify: false });
+		}
 
-    return res.status(200).json({ verify: true });
+		return res.status(200).json({ verify: true });
 
-  } catch (error) {
-    console.log(error)
-    return res.status(500).json({ 'err': 'Something went wrong', verify: false });
-  }
+	} catch (error) {
+		return res.status(500).json({ 'err': 'Something went wrong', verify: false });
+	}
 }
 
 // Send bill via email
 // :::::::::::::::::::
 const sendBill = async (req, res) => {
-  const { token, email, data, subject, body } = req.body;
+	const { token, email, data, subject, body } = req.body;
 
-  if (!token || !email || !data) {
-    return res.status(200).json({ 'err': 'require fields are empty', send: false });
-  }
-
-
-  const checkToken = jwt.verify(token, jwt_key);
-  if (!checkToken) {
-    return res.status(500).json({ err: 'Invalid token', send: false });
-  }
-
-  const getInfo = await getId(token);
-  const getUser = await userModel.findOne({ _id: getInfo?._id });
+	if (!token || !email || !data) {
+		return res.status(200).json({ 'err': 'require fields are empty', send: false });
+	}
 
 
-  const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 587, // Use 465 for SSL, 587 for TLS
-    secure: false, // true for 465, false for 587
-    auth: {
-      user: process.env.APP_EMAIL,
-      pass: process.env.APP_PASS
-    }
-  });
+	const checkToken = jwt.verify(token, jwt_key);
+	if (!checkToken) {
+		return res.status(500).json({ err: 'Invalid token', send: false });
+	}
 
-  const mailOptions = {
-    from: `"${checkToken.email}" <easybill@gmail.com>`,
-    to: email,
-    subject: subject,
-    // text: 'This is a plain text email body',
-    html: `<div>${body}</div>`,
-    attachments: [
-      {
-        filename: 'document.pdf',
-        content: data,
-        encoding: 'base64',
-        contentType: 'application/pdf'
-      }
-    ]
-  };
+	const getInfo = await getId(token);
+	const getUser = await userModel.findOne({ _id: getInfo?._id });
 
 
-  transporter.sendMail(mailOptions, async (error, info) => {
-    if (error) {
-      console.log(error);
-      return res.status(500).json({ err: 'Email not send', send: false });
-    } else {
+	const transporter = nodemailer.createTransport({
+		host: 'smtp.gmail.com',
+		port: 587, // Use 465 for SSL, 587 for TLS
+		secure: false, // true for 465, false for 587
+		auth: {
+			user: process.env.APP_EMAIL,
+			pass: process.env.APP_PASS
+		}
+	});
 
-      // store history;
-      await mailModel.create({
-        userId: getUser._id,
-        companyId: getUser.activeCompany,
-        to: email,
-        billNo: '120'
-      })
+	const mailOptions = {
+		from: `"${checkToken.email}" <easybill@gmail.com>`,
+		to: email,
+		subject: subject,
+		// text: 'This is a plain text email body',
+		html: `<div>${body}</div>`,
+		attachments: [
+			{
+				filename: 'document.pdf',
+				content: data,
+				encoding: 'base64',
+				contentType: 'application/pdf'
+			}
+		]
+	};
 
-      return res.status(200).json({ msg: 'Email send successfully', send: true });
-    }
-  });
+
+	transporter.sendMail(mailOptions, async (error, info) => {
+		if (error) {
+			console.log(error);
+			return res.status(500).json({ err: 'Email not send', send: false });
+		} else {
+
+			// store history;
+			await mailModel.create({
+				userId: getUser._id,
+				companyId: getUser.activeCompany,
+				to: email,
+				billNo: '120'
+			})
+
+			return res.status(200).json({ msg: 'Email send successfully', send: true });
+		}
+	});
 
 
 }
 
 
 module.exports = {
-  addUser, login, getUser, updatepass, forgot,
-  verifyOtp, changePassword, protectChangePassword, sendBill
+	addUser, login, getUser, updatepass, forgot,
+	verifyOtp, changePassword, protectChangePassword, sendBill,
+	getAllUser, getUserById, updateUserById
 }
