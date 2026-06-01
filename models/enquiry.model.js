@@ -22,12 +22,12 @@ const enquirySchema = mongoose.Schema({
     ref: 'party_contact',
     required: true,
   },
-  item: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'item',
-    required: true,
-  },
-  qty: Number,
+  items: [{
+    item: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'item',
+    }, qty: Number
+  }],
   deliveryDate: Date,
   enqNo: String,
   message: String,
@@ -35,6 +35,10 @@ const enquirySchema = mongoose.Schema({
     type: Boolean,
     default: false,
   },
+  isConverted: {
+    type: Boolean,
+    default: false,
+  }
 }, { timestamps: true });
 
 module.exports = mongoose.model("enquiry", enquirySchema);

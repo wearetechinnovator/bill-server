@@ -25,19 +25,18 @@ class EnquiryController {
                 isDel: false
             })
 
-            return res.status(200).json({ count: count + 1 });
+            return res.status(200).json({ count: `ENQ-${count + 1}` });
 
         } catch (err) {
-            console.log(error);
             return res.status(500).json({ 'err': 'Something went wrong' });
         }
 
     }
 
     static async addEnquiry(req, res) {
-        const { token, party, item, deliveryDate, contactPerson, enqNo, message, qty } = req.body;
+        const { token, party, items, deliveryDate, contactPerson, enqNo, message } = req.body;
 
-        if ([party, item, deliveryDate, enqNo]
+        if ([party, items, deliveryDate, enqNo]
             .some((field) => !field || field === "")) {
             return res.json({ err: 'require fields are empty', create: false });
         }
@@ -53,7 +52,7 @@ class EnquiryController {
 
             const insert = await enquiryModel.create({
                 userId: getUserData._id, companyId: getUserData.activeCompany,
-                party, item, deliveryDate, contactPerson, enqNo, message, qty
+                party, items, deliveryDate, contactPerson, enqNo, message
             })
 
             if (!insert) {
@@ -73,9 +72,9 @@ class EnquiryController {
     }
 
     static async updateEnquiry(req, res) {
-        const { token, id, party, item, deliveryDate, contactPerson, enqNo, message, qty } = req.body;
+        const { token, id, party, items, deliveryDate, contactPerson, enqNo, message } = req.body;
 
-        if ([token, party, item, deliveryDate, contactPerson, enqNo, message, id]
+        if ([token, party, items, deliveryDate, contactPerson, enqNo, message, id]
             .some((field) => !field || field === "")) {
             return res.json({ err: 'require fields are empty' });
         }
@@ -91,8 +90,8 @@ class EnquiryController {
 
             const update = await enquiryModel.updateOne({ _id: id }, {
                 $set: {
-                    party, item, deliveryDate, contactPerson,
-                    enqNo, message, qty
+                    party, items, deliveryDate, contactPerson,
+                    enqNo, message
                 }
             })
 
@@ -153,10 +152,9 @@ class EnquiryController {
 
             const enquiry = await enquiryModel.findOne({
                 _id: id,
-                userId: getUserData._id,
                 companyId: getUserData.activeCompany,
                 isDel: false
-            });
+            }).populate("party").populate('contactPerson').populate('items.item');
 
             if (!enquiry) {
                 return res.status(404).json({ err: "Eqnuiry not found" });
@@ -200,13 +198,13 @@ class EnquiryController {
                     companyId: getUser.activeCompany,
                     _id: id,
                     isDel: false
-                }).populate("party").populate('contactPerson').populate('item');
+                }).populate("party").populate('contactPerson').populate('items.item');
             }
             else if (all) {
                 getData = await enquiryModel.find({
                     companyId: getUser.activeCompany,
                     isDel: false
-                }).populate("party").populate('contactPerson').populate('item')
+                }).populate("party").populate('contactPerson').populate('items.item')
             }
             else {
                 getData = await enquiryModel.find({
@@ -214,7 +212,7 @@ class EnquiryController {
                     isDel: false,
                     ...filter
                 }).skip(skip).limit(limit).sort({ _id: -1 })
-                    .populate("party").populate('contactPerson').populate('item');
+                    .populate("party").populate('contactPerson').populate('items.item');
             }
 
             if (!getData) {

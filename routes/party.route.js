@@ -1,4 +1,4 @@
-const { add, get, remove, restore, getLog, getPartyBalance } = require("../controllers/party.controller");
+const { add, get, remove, restore, getLog, getPartyBalance, getPartiesForSalesUsers } = require("../controllers/party.controller");
 const PartyController = require("../controllers/extranal/party.controller");
 const { get: ladgerGet } = require("../controllers/ladger.controller");
 const extranalApiCheck = require("../middlewares/extranalApiCheck");
@@ -15,6 +15,11 @@ router
 router
   .route("/get")
   .post(get);
+
+router
+  .route("/get-assign-party")
+  .post(getPartiesForSalesUsers);
+
 
 router
   .route("/delete")

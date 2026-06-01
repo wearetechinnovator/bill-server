@@ -1,5 +1,6 @@
 const { getId } = require('../helper/getIdFromToken');
 const quotationModel = require('../models/quotation.model');
+const enquiryModel = require('../models/enquiry.model');
 const userModel = require('../models/user.model');
 const companyModel = require('../models/company.model');
 const Log = require('../helper/insertLog');
@@ -11,7 +12,7 @@ const add = async (req, res) => {
 	const {
 		token, party, quotationNumber, estimateDate, validDate, items, discountType, discountAmount,
 		discountPercentage, additionalCharge, note, terms, update, id, billStatus, finalAmount, accountId,
-		autoRoundOff, roundOffAmount, roundOffType, enqNumber, deliveryTime
+		autoRoundOff, roundOffAmount, roundOffType, enqNumber, deliveryTime, enquiryId
 	} = req.body;
 
 
@@ -84,10 +85,19 @@ const add = async (req, res) => {
 			accountId, autoRoundOff, roundOffAmount, roundOffType, enqNumber, deliveryTime
 		});
 
+
+
 		if (!insert) {
 			return res.status(500).json({ err: 'Quotation creation failed' });
 		}
 
+		if (enquiryId) {
+			await enquiryModel.updateOne({ _id: enquiryId }, {
+				$set: {
+					isConverted: true
+				}
+			});
+		}
 
 		// insert party log;
 		await Log.insertPartyLog(token, insert._id, party, "Quotation", finalAmount, '', 'quotation');

@@ -85,7 +85,7 @@ const addUser = async (req, res) => {
 }
 
 const updateUserById = async (req, res) => {
-	const { name, email, profile, token, id, status } = req.body;
+	const { name, email, profile, token, id, status, parties } = req.body;
 
 	if (!token || !id) {
 		return res.status(401).json({ err: "Unauthorized" });
@@ -113,7 +113,7 @@ const updateUserById = async (req, res) => {
 		if (name) updateData.name = name;
 		if (email) updateData.email = email;
 		if (status) updateData.isDisable = status;
-
+		if (parties) updateData.parties = parties;
 		// Handle profile image
 		if (profile) {
 			const file = saveBase64Image(profile);

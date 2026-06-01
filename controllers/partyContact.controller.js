@@ -153,7 +153,6 @@ class PartyContactController {
 
             const contact = await partyContactsModel.findOne({
                 _id: id,
-                userId: getUserData._id,
                 companyId: getUserData.activeCompany,
                 isDel: false
             });
@@ -187,7 +186,6 @@ class PartyContactController {
 
             const contacts = await partyContactsModel.find({
                 partyId,
-                userId: getUserData._id,
                 companyId: getUserData.activeCompany,
                 isDel: false
             }).sort({ _id: -1 });

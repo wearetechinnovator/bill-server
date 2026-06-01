@@ -116,7 +116,7 @@ const get = async (req, res) => {
 		token, id, all,
 		search,
 		searchText,
-		partyType
+		partyType,
 	} = req.body;
 	const { page, limit } = req.query;
 	const skip = (parseInt(page) - 1) * parseInt(limit);
@@ -187,6 +187,35 @@ const get = async (req, res) => {
 	}
 
 }
+
+
+const getPartiesForSalesUsers = async (req, res) => {
+	const { token } = req.body;
+
+	if (!token) {
+		return res.status(500).json({ 'err': 'Invalid user', get: false });
+	}
+
+	try {
+		const getInfo = await getId(token);
+		const getUser = await userModel.findOne({ _id: getInfo._id });
+		const partyIds = (getUser.parties || []).filter(
+			id => id && id.trim() !== ""
+		);
+
+		const getData = await partyModel.find({
+			_id: { $in: partyIds },
+			companyId: getUser.activeCompany,
+			isDel: false
+		}).sort({ _id: -1 });
+
+		return res.status(200).json({ data: getData });
+	} catch (error) {
+		console.log(error);
+		return res.status(500).json({ 'err': 'Something went wrong', get: false });
+	}
+}
+
 
 // Delete controller
 const remove = async (req, res) => {
@@ -288,4 +317,5 @@ module.exports = {
 	remove,
 	restore,
 	getLog,
+	getPartiesForSalesUsers
 }
