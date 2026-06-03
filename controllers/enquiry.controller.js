@@ -101,7 +101,6 @@ class EnquiryController {
 
             return res.status(200).json({ msg: "Enquiry update successfully" })
 
-
         } catch (err) {
             console.log(err);
             return res.status(500).json({ 'err': 'Something went wrong', create: false });
@@ -152,6 +151,7 @@ class EnquiryController {
 
             const enquiry = await enquiryModel.findOne({
                 _id: id,
+                userId: getUserData._id,
                 companyId: getUserData.activeCompany,
                 isDel: false
             }).populate("party").populate('contactPerson').populate('items.item');
@@ -182,6 +182,7 @@ class EnquiryController {
             const getUser = await userModel.findOne({ _id: getInfo._id });
 
             const totalData = await enquiryModel.countDocuments({
+                userId: getUser._id,
                 companyId: getUser.activeCompany,
                 isDel: false
             });
@@ -195,6 +196,7 @@ class EnquiryController {
 
             if (id) {
                 getData = await enquiryModel.findOne({
+                    userId: getUser._id,
                     companyId: getUser.activeCompany,
                     _id: id,
                     isDel: false
@@ -202,12 +204,14 @@ class EnquiryController {
             }
             else if (all) {
                 getData = await enquiryModel.find({
+                    userId: getUser._id,
                     companyId: getUser.activeCompany,
                     isDel: false
                 }).populate("party").populate('contactPerson').populate('items.item')
             }
             else {
                 getData = await enquiryModel.find({
+                    userId: getUser._id,
                     companyId: getUser.activeCompany,
                     isDel: false,
                     ...filter
@@ -222,7 +226,6 @@ class EnquiryController {
             return res.status(200).json({ data: getData, totalData: totalData });
 
         } catch (error) {
-            console.log(error)
             return res.status(500).json({ 'err': 'Something went wrong', get: false });
         }
     }

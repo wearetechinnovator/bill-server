@@ -27,8 +27,8 @@ app.get("/ping", (req, res) => res.send({ msg: "PONG" }));
 mongoose.connect(process.env.MONGO_URI).then(() => {
   console.log("[*] Database run");
 
-  attendanceReminder(); //Staff Attendance Reminder Mail;
-  staffAttendancePresent(); // Default Presend Attendance;
+  //attendanceReminder(); //Staff Attendance Reminder Mail;
+  //staffAttendancePresent(); // Default Presend Attendance;
 
   app.listen(PORT || 8080, () => {
     console.log("[*] Server run", PORT)
