@@ -143,6 +143,35 @@ const add = async (req, res) => {
 }
 
 
+const getPaymentNo = async (req, res) => {
+	const { token } = req.body;
+
+	if (!token) {
+		return res.json({ err: 'require fields are empty', create: false });
+	}
+
+	try {
+		const getInfo = await getId(token);
+		const getUserData = await userModel.findOne({ _id: getInfo._id });
+
+		if (!getUserData) {
+			return res.status(404).json({ err: "user not found" })
+		}
+
+		const count = await paymentInModel.findOne({
+			userId: getUserData._id,
+			companyId: getUserData.activeCompany,
+			isDel: false
+		}).sort({ createdAt: -1 });
+
+		return res.status(200).json({ count: Number(count?.paymentInNumber ?? 0) + 1 });
+
+	} catch (err) {
+		return res.status(500).json({ 'err': 'Something went wrong' });
+	}
+
+}
+
 // Get Controller;
 const get = async (req, res) => {
 	const { token, id, all, totalPayment,
@@ -532,5 +561,5 @@ const getCashIn = async (req, res) => {
 module.exports = {
 	add, get, remove, restore, filter,
 	getMonthWisePaymentIn,
-	getCashIn
+	getCashIn, getPaymentNo
 }

@@ -32,6 +32,7 @@ const tdsRateRoute = require("./tdsRate.route");
 const partyContactRoute = require("./partyContact.route");
 const enquiryRoute = require("./enquiry.route");
 const dashboardRoute = require("./dashboard.route");
+const reportRoute = require("./report.route");
 
 
 
@@ -68,6 +69,9 @@ router.use("/tds-rate/", tdsRateRoute);
 router.use("/party-contacts/", partyContactRoute);
 router.use("/enquiry/", enquiryRoute);
 router.use("/dashboard/", dashboardRoute);
+router.use("/report/", reportRoute);
+
+
 
 
 

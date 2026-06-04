@@ -9,7 +9,7 @@ class EnquiryController {
         const { token } = req.body;
 
         if (!token) {
-            return res.json({ err: 'require fields are empty', create: false });
+            return res.json({ err: 'require fields are empty' });
         }
 
         try {
@@ -20,13 +20,14 @@ class EnquiryController {
                 return res.status(404).json({ err: "user not found" })
             }
 
-            const count = await enquiryModel.countDocuments({
-                userId: getUserData._id, companyId: getUserData.activeCompany,
+            const count = await enquiryModel.findOne({
+                userId: getUserData._id,
+                companyId: getUserData.activeCompany,
                 isDel: false
-            })
+            }).sort({ createdAt: -1 });
 
-            return res.status(200).json({ count: `ENQ-${count + 1}` });
-
+            const nextNo = (count?.enqNo || 0) + 1;
+            return res.status(200).json({ count: `ENQ-${nextNo}` });
         } catch (err) {
             return res.status(500).json({ 'err': 'Something went wrong' });
         }
