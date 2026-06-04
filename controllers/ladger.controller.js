@@ -45,7 +45,7 @@ const addLadger = async ({ token, partyId, voucher, voucherId, credit, debit, da
 
 const updateLadger = async ({ partyId, voucher, voucherId, credit, debit, date }) => {
 	try {
-		const update =  await ladgerModel.updateOne(
+		const update = await ladgerModel.updateOne(
 			{
 				voucherId,
 				voucher,
@@ -80,8 +80,8 @@ const updateLadger = async ({ partyId, voucher, voucherId, credit, debit, date }
 
 
 const get = async (req, res) => {
-	const { token, partyId } = req.body;
-	const { page, limit } = req.query;
+	const { token, partyId, all, startDate, endDate } = req.body;
+	const { page = 1, limit = 10 } = req.query;
 	const skip = (parseInt(page) - 1) * parseInt(limit);
 
 	if (!token || !partyId) {
@@ -97,16 +97,29 @@ const get = async (req, res) => {
 			userId: getInfo._id
 		});
 
-
-		const getLadger = await ladgerModel.find({
-			partyId, companyId: getUser.activeCompany,
-			userId: getInfo._id
-		}).skip(skip).limit(limit).populate("voucherId");
-
-
-		if (!getLadger) {
-			return res.status(500).json({ err: "No Ladger Found" })
+		let getLadger;
+		let filter = {
+			partyId,
+			companyId: getUser.activeCompany,
+			userId: getInfo._id,
 		}
+		if (startDate && endDate) {
+			filter.date = {
+				$gte: new Date(startDate),
+				$lte: new Date(endDate)
+			}
+		}
+		
+
+		if (all) {
+			getLadger = await ladgerModel.find(filter).populate("voucherId");
+		}
+		else {
+			getLadger = await ladgerModel.find(filter).skip(skip).limit(limit).populate("voucherId");
+		}
+
+
+
 
 		return res.status(200).json({ data: getLadger, totalData });
 
