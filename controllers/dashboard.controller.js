@@ -190,6 +190,58 @@ class DashboardController {
             return res.status(500).json({ err: "Something went wrong" });
         }
     }
+
+    static async getBillCountBarChartData(req, res) {
+        const { token } = req.body;
+        if (!token) {
+            return res.status(500).json({ 'err': 'Invalid user' });
+        }
+
+        try {
+            const getInfo = await getId(token);
+            if (!getInfo) {
+                return res.status(401).json({ err: 'invalid token' });
+            }
+            const getUser = await userModel.findOne({ _id: getInfo._id });
+
+            const chartData = [];
+            const getSalesPerson = await userModel.find({ role: "sales", isDisable: false }, { profile: 0 });
+            const salesPersonIds = getSalesPerson.map((s) => s._id);
+
+            const allQuotations = await quotationModel.find({
+                companyId: new mongoose.Types.ObjectId(getUser.activeCompany),
+                userId: { $in: salesPersonIds }
+            });
+            const allEnquiry = await enquiryModel.find({
+                companyId: new mongoose.Types.ObjectId(getUser.activeCompany),
+                userId: { $in: salesPersonIds }
+            });
+            const allSales = await salesInvoiceModel.find({
+                companyId: new mongoose.Types.ObjectId(getUser.activeCompany),
+                userId: { $in: salesPersonIds }
+            });
+
+
+            getSalesPerson.forEach((s, _) => {
+                const dataSet = {};
+
+                let eCount = allEnquiry.filter((e) => e.userId.toString() === s._id.toString()).length;
+                let qCount = allQuotations.filter((q) => q.userId.toString() === s._id.toString()).length;
+                let sCount = allSales.filter((sale) => sale.userId.toString() === s._id.toString()).length;
+
+                dataSet.name = s.name;
+                dataSet.Enquiry = eCount;
+                dataSet.Quotation = qCount;
+                dataSet["Sales Invoice"] = sCount;
+
+                chartData.push(dataSet);
+            });
+
+            return res.status(200).json(chartData);
+        } catch (err) {
+            return res.status(500).json({ err: "Something went wrong" });
+        }
+    }
 }
 
 

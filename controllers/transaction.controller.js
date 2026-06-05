@@ -227,7 +227,7 @@ const getTotalIncomeExpense = async (req, res) => {
 		const result = await transactionModel.aggregate([
 			{
 				$match: {
-					userId: new mongoose.Types.ObjectId(String(getInfo._id)),
+					// userId: new mongoose.Types.ObjectId(String(getInfo._id)),
 					companyId: new mongoose.Types.ObjectId(String(getUser.activeCompany)),
 					isDel: false
 				}

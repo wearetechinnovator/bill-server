@@ -19,5 +19,9 @@ router
     .route("/get-no-sales")
     .post(DashboardController.noOfSalesAndTotalSales);
 
+router
+    .route("/get-barchart-data")
+    .post(DashboardController.getBillCountBarChartData);
+
 
 module.exports = router;

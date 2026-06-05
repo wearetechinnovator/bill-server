@@ -537,7 +537,7 @@ const getCashIn = async (req, res) => {
 			{
 				$match: {
 					isDel: false,
-					userId: new mongoose.Types.ObjectId(getInfo._id),
+					// userId: new mongoose.Types.ObjectId(getInfo._id),
 					companyId: new mongoose.Types.ObjectId(getUserData.activeCompany),
 					paymentMode: 'cash'
 				}

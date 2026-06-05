@@ -345,7 +345,7 @@ const getTotalPay = async (req, res) => {
 		const data = await purchaseInvoiceModel.aggregate([
 			{
 				$match: {
-					userId: new mongoose.Types.ObjectId(String(getInfo._id)),
+					// userId: new mongoose.Types.ObjectId(String(getInfo._id)),
 					companyId: new mongoose.Types.ObjectId(getUser.activeCompany),
 					isDel: false,
 				}
@@ -394,7 +394,7 @@ const getTotalPurchaseAmount = async (req, res) => {
 		const data = await purchaseInvoiceModel.aggregate([
 			{
 				$match: {
-					userId: new mongoose.Types.ObjectId(String(getInfo._id)),
+					// userId: new mongoose.Types.ObjectId(String(getInfo._id)),
 					companyId: new mongoose.Types.ObjectId(getUser.activeCompany),
 					isDel: false
 				}

@@ -145,7 +145,7 @@ const getPartyBalance = async (req, res) => {
 				$match: {
 					partyId: new mongoose.Types.ObjectId(String(partyId)),
 					companyId: getUser.activeCompany,
-					userId: new mongoose.Types.ObjectId(String(getInfo._id))
+					// userId: new mongoose.Types.ObjectId(String(getInfo._id))
 				}
 			},
 			{
@@ -191,9 +191,9 @@ const getAllPartyBalance = async (req, res) => {
 			{
 				$match: {
 					companyId: getUser.activeCompany,
-					userId: new mongoose.Types.ObjectId(
-						String(getInfo._id)
-					)
+					// userId: new mongoose.Types.ObjectId(
+					// 	String(getInfo._id)
+					// )
 				}
 			},
 
