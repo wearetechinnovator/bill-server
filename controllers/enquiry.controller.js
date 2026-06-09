@@ -21,7 +21,6 @@ class EnquiryController {
             }
 
             const count = await enquiryModel.findOne({
-                userId: getUserData._id,
                 companyId: getUserData.activeCompany,
                 isDel: false
             }).sort({ createdAt: -1 });
