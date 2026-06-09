@@ -1,0 +1,171 @@
+const { getId } = require("../helper/getIdFromToken");
+const darModel = require("../models/dar.model");
+const darHistoryModel = require("../models/darHistory.model");
+const userModel = require("../models/user.model");
+
+
+
+// Daily report and daily report history method write here
+class DarController {
+    static async createDar(req, res) {
+        const {
+            // Dar Fields
+            token, name, email, phone, designation, companyName,
+            // Dar history fields;
+            activityType, feedback, status, followUp, followUpDate
+        } = req.body;
+
+
+        if ([token, name, email].some((f) => !f || f === "")) {
+            return res.status(500).json({ err: 'required fields are empty' });
+        }
+
+        try {
+            const getInfo = await getId(token);
+            const getUserData = await userModel.findOne({ _id: getInfo._id });
+
+            if (!getUserData) {
+                return res.status(404).json({ err: "user not found" })
+            }
+
+            // Check existance;
+            const isExist = await darModel.findOne({ email });
+            if (isExist) {
+                return res.status(500).json({ err: "This report already exist" });
+            }
+
+            const darInsert = await darModel.create({
+                userId: getUserData._id, companyId: getUserData.activeCompany,
+                name, email, phone, designation, companyName
+            })
+
+            if (!darInsert) {
+                return res.status(500).json({ err: 'Activity report not created' });
+            }
+
+            // Insert history;
+            const historyInsert = await darHistoryModel.create({
+                userId: getUserData._id, companyId: getUserData.activeCompany,
+                darId: darInsert._id, activityType, feedback, status, followUp, followUpDate
+            })
+
+            if (!historyInsert) {
+                await darModel.deleteOne({ _id: darInsert._id });
+                return res.status(500).json({ err: 'Activity report not created' });
+            }
+
+
+            return res.status(201).json({
+                data: darInsert,
+                msg: "Activity report create successfully"
+            });
+        } catch (err) {
+            console.log(err)
+            return res.status(500).json({ 'err': 'Something went wrong' });
+        }
+
+    }
+
+    static async getSingleDarWithHistory(req, res) {
+        const { token, darId } = req.body;
+
+        if ([token, darId].some((f) => !f || f === "")) {
+            return res.status(500).json({ err: 'required fields are empty' });
+        }
+
+        try {
+            const getInfo = await getId(token);
+            const getUserData = await userModel.findOne({ _id: getInfo._id });
+
+            if (!getUserData) {
+                return res.status(404).json({ err: "User not found" })
+            }
+
+            const darData = await darModel.findOne({ _id: darId });
+            const historyData = await darHistoryModel.find({ darId });
+
+            if (!darData) {
+                return res.status(500).json({ err: "No Data found." });
+            }
+
+            return res.status(200).json({
+                dar: darData,
+                history: historyData
+            });
+
+        } catch (err) {
+            console.log(err);
+            return res.status(500).json({ 'err': 'Something went wrong' });
+        }
+    }
+
+    static async getAllDar(req, res) {
+        const { token } = req.body;
+        const { page = 1, limit = 10 } = req.query;
+        const skip = (Number(page) - 1) * Number(limit);
+
+        if (!token) {
+            return res.status(500).json({ err: 'required fields are empty' });
+        }
+
+        try {
+            const getInfo = await getId(token);
+            const getUserData = await userModel.findOne({ _id: getInfo._id });
+
+            if (!getUserData) {
+                return res.status(404).json({ err: "User not found" })
+            }
+
+            const data = await darModel.find({
+                userId: getUserData._id, companyId: getUserData.activeCompany
+            })
+            const totalData = await darModel.countDocuments({
+                userId: getUserData._id, companyId: getUserData.activeCompany
+            });
+
+            return res.status(200).json({ data, totalData });
+
+        } catch (err) {
+            return res.status(500).json({ 'err': 'Something went wrong' });
+        }
+    }
+
+    static async addDarHistory(req, res) {
+        const { token, darId, activityType, feedback, status, followUp, followUpDate } = req.body;
+
+        if (!token || !darId) {
+            return res.status(500).json({ err: 'required fields are empty' });
+        }
+
+        try {
+            const getInfo = await getId(token);
+            const getUserData = await userModel.findOne({ _id: getInfo._id });
+
+            if (!getUserData) {
+                return res.status(404).json({ err: "User not found" })
+            }
+
+            // Insert history;
+            const historyInsert = await darHistoryModel.create({
+                userId: getUserData._id, companyId: getUserData.activeCompany,
+                darId, activityType, feedback, status, followUp, followUpDate
+            })
+
+            if (!historyInsert) {
+                return res.status(500).json({ err: 'Activity report not created' });
+            }
+
+            return res.status(201).json({
+                data: historyInsert,
+                msg: "Activity report create successfully"
+            });
+
+        } catch (err) {
+            console.log(err)
+            return res.status(500).json({ 'err': 'Something went wrong' });
+        }
+    }
+
+}
+
+module.exports = DarController;

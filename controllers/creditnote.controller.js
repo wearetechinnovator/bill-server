@@ -99,7 +99,6 @@ const add = async (req, res) => {
 
 };
 
-
 // Get Controller;
 const get = async (req, res) => {
 	const { token, id, all,
@@ -176,7 +175,6 @@ const get = async (req, res) => {
 	}
 
 }
-
 
 // Delete controller;
 const remove = async (req, res) => {

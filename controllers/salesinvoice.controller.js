@@ -125,7 +125,8 @@ const get = async (req, res) => {
 		const getUser = await userModel.findOne({ _id: getInfo._id });
 		const totalData = await salesInvoiceModel.countDocuments({
 			companyId: getUser.activeCompany,
-			isDel: false
+			isDel: false,
+			userId: getUser._id
 		});
 
 		// paymentin ::::::::::::::::::::::::::::::::::::
@@ -134,6 +135,7 @@ const get = async (req, res) => {
 
 		const paymentIn = await paymentinModel.find({
 			companyId: getUser.activeCompany,
+			userId: getUser._id,
 			isDel: false
 		}).sort({ _id: -1 }).select('amount -_id');
 
@@ -161,22 +163,23 @@ const get = async (req, res) => {
 			}).select("_id");
 
 			const partyIds = parties.map(p => p._id);
-
 			filter.party = { $in: partyIds };
 		}
 
 
-		
+
 		if (id) {
 			getData = await salesInvoiceModel.findOne({
 				companyId: getUser.activeCompany,
+				userId: getUser._id,
 				_id: id,
-				isDel: false
+				isDel: false,
 			}).populate("party").populate('accountId');
 		}
 		else if (all) {
 			getData = await salesInvoiceModel.find({
 				companyId: getUser.activeCompany,
+				userId: getUser._id,
 				isDel: false,
 				...filter
 			}).skip(skip).limit(limit).sort({ _id: -1 }).populate('party');
@@ -184,6 +187,7 @@ const get = async (req, res) => {
 		else if (invoice) {
 			getData = await salesInvoiceModel.find({
 				companyId: getUser.activeCompany,
+				userId: getUser._id,
 				party: party || null,
 				isDel: false,
 				isCancel: false,
@@ -193,6 +197,7 @@ const get = async (req, res) => {
 		else {
 			getData = await salesInvoiceModel.find({
 				companyId: getUser.activeCompany,
+				userId: getUser._id,
 				isDel: false,
 				...filter,
 			}).skip(skip).limit(limit).sort({ _id: -1 }).populate('party');
@@ -212,7 +217,12 @@ const get = async (req, res) => {
 		}
 
 
-		return res.status(200).json({ data: getData, totalData: totalData, totalPaymentAmount, totalDueAmount });
+		return res.status(200).json({
+			data: getData,
+			totalData: totalData,
+			totalPaymentAmount,
+			totalDueAmount
+		});
 
 	} catch (error) {
 		return res.status(500).json({ 'err': 'Something went wrong', get: false });
@@ -488,7 +498,7 @@ const cancelInvoice = async (req, res) => {
 
 	const getInfo = await getId(token);
 	const getUser = await userModel.findOne({ _id: getInfo._id });
-	if(!getUser){
+	if (!getUser) {
 		return res.status(500).json({ err: "Invalid user" });
 	}
 

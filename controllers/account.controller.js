@@ -229,6 +229,7 @@ const getBalance = async (req, res) => {
 				$match: {
 					userId: getUserData._id,
 					companyId: getUserData.activeCompany,
+					isDel:false
 				}
 			},
 			{
@@ -253,6 +254,7 @@ const getBalance = async (req, res) => {
 				$match: {
 					userId: getUserData._id,
 					companyId: getUserData.activeCompany,
+					isDel:false
 				}
 			},
 			{
@@ -320,6 +322,7 @@ const getBalance = async (req, res) => {
 		const allAccount = await accountModel.find({
 			userId: getUserData._id,
 			companyId: getUserData.activeCompany,
+			isDel: false
 		})
 
 		const balance = {};
