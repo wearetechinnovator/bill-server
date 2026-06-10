@@ -29,7 +29,7 @@ const add = async (req, res) => {
 		const getUserData = await userModel.findOne({ _id: getInfo._id });
 
 		const isExist = await paymentInModel.findOne({
-			userId: getInfo._id, companyId: getUserData.activeCompany, paymentInNumber: paymentInNumber,
+			companyId: getUserData.activeCompany, paymentInNumber: paymentInNumber,
 			isDel: false
 		});
 		if (isExist && !update) {
@@ -159,7 +159,6 @@ const getPaymentNo = async (req, res) => {
 		}
 
 		const count = await paymentInModel.findOne({
-			userId: getUserData._id,
 			companyId: getUserData.activeCompany,
 			isDel: false
 		}).sort({ createdAt: -1 });
@@ -187,7 +186,10 @@ const get = async (req, res) => {
 	try {
 		const getInfo = await getId(token);
 		const getUser = await userModel.findOne({ _id: getInfo._id });
+		const role = getUser.role;
+
 		const totalData = await paymentInModel.countDocuments({
+			...(role === 'sales' && { userId: getUser._id }),
 			companyId: getUser.activeCompany,
 			isDel: false
 		});
@@ -222,6 +224,7 @@ const get = async (req, res) => {
 		}
 		else if (all) {
 			getData = await paymentInModel.find({
+				...(role === 'sales' && { userId: getUser._id }),
 				companyId: getUser.activeCompany,
 				isDel: false,
 				...filter
@@ -230,6 +233,7 @@ const get = async (req, res) => {
 		else {
 			if (totalPayment) {
 				data = await paymentInModel.find({
+					...(role === 'sales' && { userId: getUser._id }),
 					companyId: getUser.activeCompany,
 					isDel: false,
 				});
@@ -244,6 +248,7 @@ const get = async (req, res) => {
 			}
 
 			getData = await paymentInModel.find({
+				...(role === 'sales' && { userId: getUser._id }),
 				companyId: getUser.activeCompany,
 				isDel: false,
 				...filter
@@ -258,7 +263,6 @@ const get = async (req, res) => {
 		return res.status(200).json({ data: getData, totalData: totalData });
 
 	} catch (error) {
-		console.log(error)
 		return res.status(500).json({ 'err': 'Something went wrong', get: false });
 	}
 

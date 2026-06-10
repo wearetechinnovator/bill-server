@@ -111,15 +111,18 @@ class DarController {
         try {
             const getInfo = await getId(token);
             const getUserData = await userModel.findOne({ _id: getInfo._id });
+            const role = getUserData.role;
 
             if (!getUserData) {
                 return res.status(404).json({ err: "User not found" })
             }
 
             const data = await darModel.find({
-                userId: getUserData._id, companyId: getUserData.activeCompany
+                ...(role === 'sales' && { userId: getUserData._id }),
+                companyId: getUserData.activeCompany
             })
             const totalData = await darModel.countDocuments({
+                ...(role === 'sales' && { userId: getUserData._id }),
                 userId: getUserData._id, companyId: getUserData.activeCompany
             });
 

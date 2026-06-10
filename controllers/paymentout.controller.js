@@ -151,7 +151,6 @@ const getPaymentNo = async (req, res) => {
         }
 
         const count = await paymentOutModel.findOne({
-            userId: getUserData._id,
             companyId: getUserData.activeCompany,
             isDel: false
         }).sort({ createdAt: -1 });

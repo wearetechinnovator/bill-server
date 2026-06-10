@@ -27,7 +27,7 @@ const add = async (req, res) => {
 		const getUserData = await userModel.findOne({ _id: getInfo._id });
 
 		const isExist = await creditNoteModel.findOne({
-			userId: getInfo._id, companyId: getUserData.activeCompany, creditNoteNumber: creditNoteNumber,
+			companyId: getUserData.activeCompany, creditNoteNumber: creditNoteNumber,
 			isDel: false
 		});
 
@@ -114,7 +114,10 @@ const get = async (req, res) => {
 	try {
 		const getInfo = await getId(token);
 		const getUser = await userModel.findOne({ _id: getInfo._id });
+		const role = getUser.role;
+
 		const totalData = await creditNoteModel.countDocuments({
+			...(role === 'sales' && { userId: getUser._id }),
 			companyId: getUser.activeCompany,
 			isDel: false
 		});
@@ -150,6 +153,7 @@ const get = async (req, res) => {
 		}
 		else if (all) {
 			getData = await creditNoteModel.find({
+				...(role === 'sales' && { userId: getUser._id }),
 				companyId: getUser.activeCompany,
 				isDel: false,
 				...filter
@@ -157,6 +161,7 @@ const get = async (req, res) => {
 		}
 		else {
 			getData = await creditNoteModel.find({
+				...(role === 'sales' && { userId: getUser._id }),
 				companyId: getUser.activeCompany,
 				isDel: false,
 				...filter
@@ -170,7 +175,6 @@ const get = async (req, res) => {
 		return res.status(200).json({ data: getData, totalData: totalData });
 
 	} catch (error) {
-		console.log(error)
 		return res.status(500).json({ 'err': 'Something went wrong', get: false });
 	}
 

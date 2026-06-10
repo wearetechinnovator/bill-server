@@ -25,7 +25,7 @@ const add = async (req, res) => {
 		const getUserData = await userModel.findOne({ _id: getInfo._id });
 
 		const isExist = await proformaModel.findOne({
-			userId: getInfo._id, companyId: getUserData.activeCompany, proformaNumber: proformaNumber,
+			companyId: getUserData.activeCompany, proformaNumber: proformaNumber,
 			isDel: false
 		});
 		if (isExist && !update) {
@@ -99,7 +99,10 @@ const get = async (req, res) => {
 	try {
 		const getInfo = await getId(token);
 		const getUser = await userModel.findOne({ _id: getInfo._id });
+		const role = getUser.role;
+
 		const totalData = await proformaModel.countDocuments({
+			...(role === 'sales' && { userId: getUser._id }),
 			companyId: getUser.activeCompany,
 			isDel: false
 		});
@@ -135,6 +138,7 @@ const get = async (req, res) => {
 		}
 		else if (all) {
 			getData = await proformaModel.find({
+				...(role === 'sales' && { userId: getUser._id }),
 				companyId: getUser.activeCompany,
 				isDel: false,
 				...filter
@@ -142,6 +146,7 @@ const get = async (req, res) => {
 		}
 		else {
 			getData = await proformaModel.find({
+				...(role === 'sales' && { userId: getUser._id }),
 				companyId: getUser.activeCompany,
 				isDel: false,
 				...filter

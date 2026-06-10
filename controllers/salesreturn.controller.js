@@ -26,7 +26,8 @@ const add = async (req, res) => {
 		const getUserData = await userModel.findOne({ _id: getInfo._id });
 
 		const isExist = await salesReturnModel.findOne({
-			userId: getInfo._id, companyId: getUserData.activeCompany, salesReturnNumber: salesReturnNumber,
+			companyId: getUserData.activeCompany,
+			salesReturnNumber: salesReturnNumber,
 			isDel: false
 		});
 
@@ -113,7 +114,10 @@ const get = async (req, res) => {
 	try {
 		const getInfo = await getId(token);
 		const getUser = await userModel.findOne({ _id: getInfo._id });
+		const role = getUser.role;
+
 		const totalData = await salesReturnModel.countDocuments({
+			...(role === 'sales' && { userId: getUser._id }),
 			companyId: getUser.activeCompany,
 			isDel: false
 		});
@@ -148,6 +152,7 @@ const get = async (req, res) => {
 		}
 		else if (all) {
 			getData = await salesReturnModel.find({
+				...(role === 'sales' && { userId: getUser._id }),
 				companyId: getUser.activeCompany,
 				isDel: false,
 				...filter
@@ -155,6 +160,7 @@ const get = async (req, res) => {
 		}
 		else {
 			getData = await salesReturnModel.find({
+				...(role === 'sales' && { userId: getUser._id }),
 				companyId: getUser.activeCompany,
 				isDel: false,
 				...filter

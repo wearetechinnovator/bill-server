@@ -25,7 +25,9 @@ class EnquiryController {
                 isDel: false
             }).sort({ createdAt: -1 });
 
-            const nextNo = (count?.enqNo || 0) + 1;
+
+            const n = count?.enqNo.split("-")[1];
+            const nextNo = (Number(n) || 0) + 1;
             return res.status(200).json({ count: `ENQ-${nextNo}` });
         } catch (err) {
             return res.status(500).json({ 'err': 'Something went wrong' });
@@ -49,6 +51,12 @@ class EnquiryController {
                 return res.status(404).json({ err: "user not found" })
             }
 
+
+            // Check existance
+            const isExist = await enquiryModel.findOne({ enqNo });
+            if (isExist) {
+                return res.status(404).json({ err: "This enquiry already exist" })
+            }
 
             const insert = await enquiryModel.create({
                 userId: getUserData._id, companyId: getUserData.activeCompany,
@@ -151,7 +159,6 @@ class EnquiryController {
 
             const enquiry = await enquiryModel.findOne({
                 _id: id,
-                userId: getUserData._id,
                 companyId: getUserData.activeCompany,
                 isDel: false
             }).populate("party").populate('contactPerson').populate('items.item');
@@ -180,9 +187,10 @@ class EnquiryController {
         try {
             const getInfo = await getId(token);
             const getUser = await userModel.findOne({ _id: getInfo._id });
+            const role = getUser.role;
 
             const totalData = await enquiryModel.countDocuments({
-                userId: getUser._id,
+                ...(role === 'sales' && { userId: getUser._id }),
                 companyId: getUser.activeCompany,
                 isDel: false
             });
@@ -196,7 +204,7 @@ class EnquiryController {
 
             if (id) {
                 getData = await enquiryModel.findOne({
-                    userId: getUser._id,
+                    ...(role === 'sales' && { userId: getUser._id }),
                     companyId: getUser.activeCompany,
                     _id: id,
                     isDel: false
@@ -204,14 +212,14 @@ class EnquiryController {
             }
             else if (all) {
                 getData = await enquiryModel.find({
-                    userId: getUser._id,
+                    ...(role === 'sales' && { userId: getUser._id }),
                     companyId: getUser.activeCompany,
                     isDel: false
                 }).populate("party").populate('contactPerson').populate('items.item')
             }
             else {
                 getData = await enquiryModel.find({
-                    userId: getUser._id,
+                    ...(role === 'sales' && { userId: getUser._id }),
                     companyId: getUser.activeCompany,
                     isDel: false,
                     ...filter

@@ -123,10 +123,12 @@ const get = async (req, res) => {
 	try {
 		const getInfo = await getId(token);
 		const getUser = await userModel.findOne({ _id: getInfo._id });
+		const role = getUser.role;
+
 		const totalData = await salesInvoiceModel.countDocuments({
+			...(role === 'sales' && { userId: getUser._id }),
 			companyId: getUser.activeCompany,
 			isDel: false,
-			userId: getUser._id
 		});
 
 		// paymentin ::::::::::::::::::::::::::::::::::::
@@ -135,7 +137,6 @@ const get = async (req, res) => {
 
 		const paymentIn = await paymentinModel.find({
 			companyId: getUser.activeCompany,
-			userId: getUser._id,
 			isDel: false
 		}).sort({ _id: -1 }).select('amount -_id');
 
@@ -178,16 +179,16 @@ const get = async (req, res) => {
 		}
 		else if (all) {
 			getData = await salesInvoiceModel.find({
+				...(role === 'sales' && { userId: getUser._id }),
 				companyId: getUser.activeCompany,
-				userId: getUser._id,
 				isDel: false,
 				...filter
 			}).skip(skip).limit(limit).sort({ _id: -1 }).populate('party');
 		}
 		else if (invoice) {
 			getData = await salesInvoiceModel.find({
+				...(role === 'sales' && { userId: getUser._id }),
 				companyId: getUser.activeCompany,
-				userId: getUser._id,
 				party: party || null,
 				isDel: false,
 				isCancel: false,
@@ -196,8 +197,8 @@ const get = async (req, res) => {
 		}
 		else {
 			getData = await salesInvoiceModel.find({
+				...(role === 'sales' && { userId: getUser._id }),
 				companyId: getUser.activeCompany,
-				userId: getUser._id,
 				isDel: false,
 				...filter,
 			}).skip(skip).limit(limit).sort({ _id: -1 }).populate('party');

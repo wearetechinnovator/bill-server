@@ -42,7 +42,7 @@ const add = async (req, res) => {
 		const getUserData = await userModel.findOne({ _id: getInfo._id });
 
 		const isExist = await quotationModel.findOne({
-			userId: getInfo._id, companyId: getUserData.activeCompany, quotationNumber: quotationNumber,
+			companyId: getUserData.activeCompany, quotationNumber: quotationNumber,
 			isDel: false
 		});
 		if (isExist && !update) {
@@ -128,9 +128,11 @@ const get = async (req, res) => {
 	try {
 		const getInfo = await getId(token);
 		const getUser = await userModel.findOne({ _id: getInfo._id });
+		const role = getUser.role;
+
 		const totalData = await quotationModel.countDocuments({
+			...(role === 'sales' && { userId: getUser._id }),
 			companyId: getUser.activeCompany,
-			isTrash: trash ? true : false,
 			isDel: false
 		});
 
@@ -164,6 +166,7 @@ const get = async (req, res) => {
 		}
 		else if (all) {
 			getData = await quotationModel.find({
+				...(role === 'sales' && { userId: getUser._id }),
 				companyId: getUser.activeCompany,
 				isDel: false,
 				...filter
@@ -172,6 +175,7 @@ const get = async (req, res) => {
 		else {
 			getData = await quotationModel.find({
 				companyId: getUser.activeCompany,
+				...(role === 'sales' && { userId: getUser._id }),
 				isDel: false,
 				...filter
 			}).skip(skip).limit(limit).sort({ _id: -1 }).populate('party');
@@ -203,29 +207,21 @@ const get = async (req, res) => {
 		console.log(error)
 		return res.status(500).json({ 'err': 'Something went wrong', get: false });
 	}
-
 }
 
 
 // Delete controller;
 const remove = async (req, res) => {
-	const { ids, trash } = req.body;
+	const { ids } = req.body;
 
 	if (!ids || !Array.isArray(ids) || ids.length === 0) {
 		return res.status(400).json({ err: "No valid IDs provided", remove: false });
 	}
 
 	try {
-		let updateQuery;
-		if (trash) {
-			updateQuery = { $set: { isTrash: true } };
-		} else {
-			updateQuery = { $set: { isDel: true } };
-		}
-
 		const removeParty = await quotationModel.updateMany(
 			{ _id: { $in: ids } },
-			updateQuery
+			{ $set: { isDel: true } }
 		);
 
 		if (removeParty.matchedCount === 0) {
@@ -233,9 +229,7 @@ const remove = async (req, res) => {
 		}
 
 		return res.status(200).json({
-			msg: trash
-				? "Quotation added to trash successfully"
-				: "Quotation deleted successfully",
+			msg: "Quotation deleted successfully",
 			modifiedCount: removeParty.modifiedCount,
 		});
 
@@ -271,7 +265,6 @@ const restore = async (req, res) => {
 		return res.status(500).json({ err: "Something went wrong", restore: false });
 	}
 }
-
 
 
 const filter = async (req, res) => {
