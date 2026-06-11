@@ -70,7 +70,7 @@ class PoClientController {
                 return res.status(500).json({ err: 'PO updation failed' });
             }
 
-            return res.status(200).json({msg: 'PO Update successfully'});
+            return res.status(200).json({ msg: 'PO Update successfully' });
 
         } catch (err) {
             console.log(err);
@@ -181,6 +181,47 @@ class PoClientController {
         } catch (error) {
             return res.status(500).json({ err: "Something went wrong", remove: false });
         }
+    }
+
+    // =========[Used when Sales invoice create]=======
+    // ================================================
+    static async updateItemCount(poId, itemsArr) {
+        if ([poId, itemsArr].some((f) => !f || f === "")) {
+            throw new Error('PO id, ItemId, qty required');
+            return;
+        }
+
+        if (itemsArr.length < 1) {
+            throw new Error('There are not items for create.');
+            return;
+        }
+
+        const poData = await poClientModel.findOne({ _id: poId });
+        if (!poData) {
+            throw new Error("Client PO not found");
+            return;
+        }
+
+        itemsArr.forEach((i, _) => {
+            const item = poData.items.find((p) => p.itemId.toString() === i.itemId.toString());
+            if (item) {
+                item.invoice_qun += Number(i.qun);
+                item.qun -= Number(i.qun);
+            }
+        })
+
+
+        const updatePO = await poClientModel.updateOne({ _id: poId }, {
+            $set: {
+                items: poData.items
+            }
+        })
+
+        if (updatePO.modifiedCount === 0) {
+            return false;
+        }
+
+        return true;
     }
 }
 

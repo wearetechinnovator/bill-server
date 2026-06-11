@@ -8,6 +8,7 @@ const { addLadger, updateLadger } = require('./ladger.controller');
 const salesinvoiceModel = require('../models/salesinvoice.model');
 const { default: mongoose } = require('mongoose');
 const partyModel = require('../models/party.model');
+const PoClientController = require('./poClient.controller');
 
 
 
@@ -16,8 +17,8 @@ const add = async (req, res) => {
 	const {
 		token, party, salesInvoiceNumber, invoiceDate, DueDate, items, discountType,
 		discountAmount, discountPercentage, additionalCharge, note, terms, update, id,
-		paymentStatus, paymentAccount, paymentType, paymentAmount, finalAmount,
-		accountId, autoRoundOff, roundOffAmount, roundOffType, poNumber, poDate
+		paymentStatus, paymentAccount, paymentType, paymentAmount, finalAmount, accountId, 
+		autoRoundOff, roundOffAmount, roundOffType, poNumber, poDate, isPoConvert, poId
 	} = req.body;
 
 
@@ -97,6 +98,11 @@ const add = async (req, res) => {
 			date: invoiceDate,
 			debit: (finalAmount - (paymentAmount || 0)).toFixed(2)
 		})
+
+		// if this invoice convert from po-client then decress quantity
+		if(isPoConvert && poId){
+			PoClientController.updateItemCount(poId, items);
+		}
 
 		return res.status(200).json(insert);
 

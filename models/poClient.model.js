@@ -7,6 +7,10 @@ const itemSchema = new mongoose.Schema({
   description: String,
   hsn: String,
   qun: String,
+  invoice_qun: {
+    type: Number,
+    default: 0
+  },
   selectedUnit: String,
   unit: Array,
   price: Number,
@@ -39,6 +43,11 @@ const poClientSchema = new mongoose.Schema({
   driveLink: String,
   items: {
     type: [itemSchema],
+  },
+  status:{
+    enum: ['pending', 'partial', 'complete'],
+    type: String,
+    default: 'pending'
   },
   isDel: {
     type: Boolean,
