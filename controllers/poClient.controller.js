@@ -3,6 +3,7 @@ const companyModel = require("../models/company.model");
 const poClientModel = require("../models/poClient.model");
 const userModel = require("../models/user.model");
 const partyModel = require("../models/party.model");
+const salesInvoiceModel = require("../models/salesinvoice.model");
 
 
 class PoClientController {
@@ -178,7 +179,7 @@ class PoClientController {
                 modifiedCount: removeParty.modifiedCount,
             });
 
-        } catch (error) {
+        } catch (err) {
             return res.status(500).json({ err: "Something went wrong", remove: false });
         }
     }
@@ -222,6 +223,24 @@ class PoClientController {
         }
 
         return true;
+    }
+
+    static async getSalesInvoiceByPoNumber(req, res) {
+        const { token, poNumber } = req.body;
+        if (!token || !poNumber) {
+            return res.status(500).json({ err: "required fields are empty" });
+        }
+
+        try {
+            const sales = await salesInvoiceModel.find({ poNumber: poNumber }, {
+                'items': 1, 'salesInvoiceNumber': 1, 'invoiceDate':1
+            });
+
+            return res.status(200).json(sales);
+
+        } catch (err) {
+            return res.status(500).json({ err: "Something went wrong", remove: false });
+        }
     }
 }
 

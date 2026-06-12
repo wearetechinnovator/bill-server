@@ -18,5 +18,9 @@ router
   .route("/delete")
   .delete(PoClientController.remove);
 
+router
+  .route("/get-sales-invoice")
+  .post(PoClientController.getSalesInvoiceByPoNumber);
+
 
 module.exports = router;
