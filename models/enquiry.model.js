@@ -31,6 +31,20 @@ const enquirySchema = mongoose.Schema({
   deliveryDate: Date,
   enqNo: String,
   message: String,
+
+  enquirySource: String,
+  enquiryStatus: String,
+  compititor: String,
+  followUp: {
+    type: String,
+    enum: ['yes', 'no'],
+    default: 'no'
+  },
+  followUpDate: Date,
+  orderProbality: String,
+  expectedOrderDate: Date,
+  dateReceived: Date,
+  industry: String,
   isDel: {
     type: Boolean,
     default: false,

@@ -24,6 +24,7 @@ const partySchema = new mongoose.Schema({
   country: String,
   state: String,
   postalCode: String,
+  city: String,
   billingAddress: String,
   pan: String,
   gst: String,

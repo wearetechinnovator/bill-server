@@ -16,7 +16,7 @@ const BOTHPARTY = 'both';
 const add = async (req, res) => {
 	const { token, name, type, contactNumber, billingAddress, shippingAddress, email,
 		pan, gst, openingBalance, details, update, id, creditPeriod, creditLimit, dob, partyCategory,
-		openingBalanceType, country, state, postalCode
+		openingBalanceType, country, state, postalCode, city
 	} = req.body;
 
 	if ([token, name, type, contactNumber, billingAddress, country, state]
@@ -42,7 +42,7 @@ const add = async (req, res) => {
 					name, type, contactNumber, billingAddress, email,
 					pan, gst, openingBalance, openingBalanceType,
 					shippingAddress, details, partyCategory: partyCategory || null,
-					creditPeriod, creditLimit, dob, country, state, postalCode
+					creditPeriod, creditLimit, dob, country, state, postalCode, city
 
 				}
 			})
@@ -76,7 +76,7 @@ const add = async (req, res) => {
 			pan, gst, openingBalance, openingBalanceType,
 			details, partyCategory: partyCategory || null,
 			shippingAddress, creditPeriod, creditLimit, dob,
-			country, state, postalCode
+			country, state, postalCode, city
 		});
 
 

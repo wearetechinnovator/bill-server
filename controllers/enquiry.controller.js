@@ -36,9 +36,12 @@ class EnquiryController {
     }
 
     static async addEnquiry(req, res) {
-        const { token, party, items, deliveryDate, contactPerson, enqNo, message } = req.body;
+        const { token, party, items, deliveryDate, contactPerson, enqNo, message,
+            enquirySource, enquiryStatus, compititor, followUp, followUpDate, orderProbality,
+            expectedOrderDate,dateReceived, industry
+        } = req.body;
 
-        if ([party, items, deliveryDate, enqNo]
+        if ([party, items, enqNo]
             .some((field) => !field || field === "")) {
             return res.json({ err: 'require fields are empty', create: false });
         }
@@ -60,7 +63,9 @@ class EnquiryController {
 
             const insert = await enquiryModel.create({
                 userId: getUserData._id, companyId: getUserData.activeCompany,
-                party, items, deliveryDate, contactPerson, enqNo, message
+                party, items, deliveryDate, contactPerson, enqNo, message,
+                enquirySource, enquiryStatus, compititor, followUp, followUpDate, orderProbality,
+                expectedOrderDate, dateReceived, industry
             })
 
             if (!insert) {
@@ -80,9 +85,12 @@ class EnquiryController {
     }
 
     static async updateEnquiry(req, res) {
-        const { token, id, party, items, deliveryDate, contactPerson, enqNo, message } = req.body;
+        const { token, id, party, items, deliveryDate, contactPerson, enqNo, message,
+            enquirySource, enquiryStatus, compititor, followUp, followUpDate, orderProbality,
+            expectedOrderDate, dateReceived, industry
+        } = req.body;
 
-        if ([token, party, items, deliveryDate, contactPerson, enqNo, message, id]
+        if ([token, party, items, contactPerson, enqNo, id]
             .some((field) => !field || field === "")) {
             return res.json({ err: 'require fields are empty' });
         }
@@ -99,7 +107,8 @@ class EnquiryController {
             const update = await enquiryModel.updateOne({ _id: id }, {
                 $set: {
                     party, items, deliveryDate, contactPerson,
-                    enqNo, message
+                    enqNo, message, enquirySource, enquiryStatus, compititor, followUp, followUpDate,
+                    orderProbality, expectedOrderDate, dateReceived, industry
                 }
             })
 
