@@ -27,5 +27,13 @@ router
     .route("/get-all")
     .post(EnquiryController.getAllEnquiry);
 
+router
+    .route("/get-enquiry-by-party")
+    .post(EnquiryController.getPartyEnquiry);
+
+router
+    .route("/get-quotation-po")
+    .post(EnquiryController.getPOandQuotationByEnquiryNo);
+
 
 module.exports = router;

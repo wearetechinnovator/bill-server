@@ -38,6 +38,7 @@ const poClientSchema = new mongoose.Schema({
     ref: 'party',
     requiredd: true
   },
+  enqNumber: String,
   poNumber: String,
   poDate: Date,
   driveLink: String,

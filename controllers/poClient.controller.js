@@ -10,6 +10,7 @@ class PoClientController {
     static async add(req, res) {
         const {
             token, party, poNumber, driveLink, poDate, items,
+            enqNumber
         } = req.body;
 
         if ([token, party, poNumber, poDate, items, driveLink].some(field => !field || field === '')) {
@@ -30,7 +31,7 @@ class PoClientController {
 
             const insert = await poClientModel.create({
                 userId: getUserData._id, companyId: getUserData.activeCompany,
-                party, poNumber, driveLink, poDate, items,
+                party, poNumber, driveLink, poDate, items,enqNumber
             });
 
             if (!insert) {
@@ -40,14 +41,14 @@ class PoClientController {
             return res.status(200).json(insert);
 
         } catch (err) {
-            console.log(err);
             return res.status(500).json({ err: 'Something went wrong' });
         }
     }
 
     static async update(req, res) {
         const {
-            token, party, poNumber, driveLink, poDate, items, id
+            token, party, poNumber, driveLink, poDate, items, id,
+            enqNumber
         } = req.body;
 
         if ([token, party, poNumber, poDate, items, driveLink].some(field => !field || field === '')) {
@@ -63,7 +64,8 @@ class PoClientController {
 
             const updatePO = await poClientModel.updateOne({ _id: id }, {
                 $set: {
-                    party, poNumber, driveLink, poDate, items
+                    party, poNumber, driveLink, poDate, items,
+                    enqNumber
                 }
             })
 

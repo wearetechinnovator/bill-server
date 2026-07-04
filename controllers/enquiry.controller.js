@@ -1,7 +1,9 @@
+const { default: mongoose } = require("mongoose");
+const { getId } = require("../helper/getIdFromToken");
 const enquiryModel = require("../models/enquiry.model");
 const userModel = require("../models/user.model");
-const { getId } = require("../helper/getIdFromToken");
-const { default: mongoose } = require("mongoose");
+const quotationModel = require("../models/quotation.model");
+const poClientModel = require("../models/poClient.model");
 
 
 class EnquiryController {
@@ -38,7 +40,7 @@ class EnquiryController {
     static async addEnquiry(req, res) {
         const { token, party, items, deliveryDate, contactPerson, enqNo, message,
             enquirySource, enquiryStatus, compititor, followUp, followUpDate, orderProbality,
-            expectedOrderDate,dateReceived, industry
+            expectedOrderDate, dateReceived, industry
         } = req.body;
 
         if ([party, items, enqNo]
@@ -190,7 +192,7 @@ class EnquiryController {
         const skip = (parseInt(page) - 1) * parseInt(limit);
 
         if (!token) {
-            return res.status(500).json({ 'err': 'Invalid user', get: false });
+            return res.status(500).json({ 'err': 'Invalid user' });
         }
 
         try {
@@ -217,14 +219,20 @@ class EnquiryController {
                     companyId: getUser.activeCompany,
                     _id: id,
                     isDel: false
-                }).populate("party").populate('contactPerson').populate('items.item');
+                })
+                    .populate("party")
+                    .populate('contactPerson')
+                    .populate('items.item');
             }
             else if (all) {
                 getData = await enquiryModel.find({
                     ...(role === 'sales' && { userId: getUser._id }),
                     companyId: getUser.activeCompany,
                     isDel: false
-                }).populate("party").populate('contactPerson').populate('items.item')
+                })
+                    .populate("party")
+                    .populate('contactPerson')
+                    .populate('items.item')
             }
             else {
                 getData = await enquiryModel.find({
@@ -233,16 +241,106 @@ class EnquiryController {
                     isDel: false,
                     ...filter
                 }).skip(skip).limit(limit).sort({ _id: -1 })
-                    .populate("party").populate('contactPerson').populate('items.item');
+                    .populate("party")
+                    .populate('contactPerson')
+                    .populate('items.item');
             }
 
             if (!getData) {
-                return res.status(500).json({ 'err': 'No Account availble', get: false });
+                return res.status(500).json({ 'err': 'No Enquiry availble', get: false });
             }
 
             return res.status(200).json({ data: getData, totalData: totalData });
 
         } catch (error) {
+            return res.status(500).json({ 'err': 'Something went wrong', get: false });
+        }
+    }
+
+    static async getPartyEnquiry(req, res) {
+        const { token, partyId } = req.body;
+
+        if (!token) {
+            return res.status(500).json({ 'err': 'Invalid user' });
+        }
+
+        try {
+            const getInfo = await getId(token);
+            const getUser = await userModel.findOne({ _id: getInfo._id });
+            const role = getUser.role;
+
+            const totalData = await enquiryModel.countDocuments({
+                ...(role === 'sales' && { userId: getUser._id }),
+                companyId: getUser.activeCompany,
+                isDel: false
+            });
+
+            const getData = await enquiryModel.find({
+                ...(role === 'sales' && { userId: getUser._id }),
+                companyId: getUser.activeCompany,
+                party: new mongoose.Types.ObjectId(String(partyId)),
+                isDel: false
+            })
+                .populate("party")
+                .populate('contactPerson')
+                .populate('items.item')
+
+
+            if (!getData) {
+                return res.status(500).json({ 'err': 'No Enquiry availble', get: false });
+            }
+
+            return res.status(200).json({ data: getData, totalData: totalData });
+
+        } catch (err) {
+            return res.status(500).json({ 'err': 'Something went wrong', get: false });
+        }
+    }
+
+    static async getPOandQuotationByEnquiryNo(req, res) {
+        const { token, enqNo } = req.body;
+
+        if (!token || !enqNo) {
+            return res.status(400).json({ 'err': 'Required fields are empty', get: false });
+        }
+
+        try {
+            const getInfo = await getId(token);
+            const getUser = await userModel.findOne({ _id: getInfo._id });
+
+            const getQuotations = await quotationModel.find({
+                companyId: getUser.activeCompany,
+                enqNumber: enqNo,
+                isDel: false
+            })
+
+            const getPoClient = await poClientModel.find({
+                companyId: getUser.activeCompany,
+                enqNumber: enqNo,
+                isDel: false
+            })
+
+            let extractOnlyIdAndQutNo = [];
+            let extractOnlyIdAndPoNo = [];
+
+            if (getQuotations) {
+                extractOnlyIdAndQutNo = getQuotations.map((q, _) => ({
+                    _id: q._id, quotationNumber: q.quotationNumber
+                }))
+            }
+            
+            if (getPoClient) {
+                extractOnlyIdAndPoNo = getPoClient.map((po, _) => ({
+                    _id: po._id, poNumber: po.poNumber
+                }))
+            }
+
+            return res.status(200).json({
+                quo: extractOnlyIdAndQutNo,
+                po: extractOnlyIdAndPoNo
+            });
+
+        } catch (err) {
             return res.status(500).json({ 'err': 'Something went wrong', get: false });
         }
     }
