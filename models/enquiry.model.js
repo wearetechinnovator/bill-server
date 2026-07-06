@@ -32,6 +32,7 @@ const enquirySchema = mongoose.Schema({
   enqNo: String,
   message: String,
   enquirySource: String,
+  otherSource: String,
   enquiryStatus: {
     type: String,
     enum: ['open','close', 'followup','succeed'],

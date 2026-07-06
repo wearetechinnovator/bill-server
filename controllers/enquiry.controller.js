@@ -4,6 +4,8 @@ const enquiryModel = require("../models/enquiry.model");
 const userModel = require("../models/user.model");
 const quotationModel = require("../models/quotation.model");
 const poClientModel = require("../models/poClient.model");
+const proformaModel = require("../models/proforma.model");
+const salesInvoiceModel = require("../models/salesinvoice.model");
 
 
 class EnquiryController {
@@ -40,7 +42,7 @@ class EnquiryController {
     static async addEnquiry(req, res) {
         const { token, party, items, deliveryDate, contactPerson, enqNo, message,
             enquirySource, enquiryStatus, compititor, followUp, followUpDate, orderProbality,
-            expectedOrderDate, dateReceived, industry
+            expectedOrderDate, dateReceived, industry, otherSource
         } = req.body;
 
         if ([party, items, enqNo]
@@ -67,7 +69,7 @@ class EnquiryController {
                 userId: getUserData._id, companyId: getUserData.activeCompany,
                 party, items, deliveryDate, contactPerson, enqNo, message,
                 enquirySource, enquiryStatus, compititor, followUp, followUpDate, orderProbality,
-                expectedOrderDate, dateReceived, industry
+                expectedOrderDate, dateReceived, industry, otherSource
             })
 
             if (!insert) {
@@ -89,7 +91,7 @@ class EnquiryController {
     static async updateEnquiry(req, res) {
         const { token, id, party, items, deliveryDate, contactPerson, enqNo, message,
             enquirySource, enquiryStatus, compititor, followUp, followUpDate, orderProbality,
-            expectedOrderDate, dateReceived, industry
+            expectedOrderDate, dateReceived, industry, otherSource
         } = req.body;
 
         if ([token, party, items, contactPerson, enqNo, id]
@@ -108,9 +110,9 @@ class EnquiryController {
 
             const update = await enquiryModel.updateOne({ _id: id }, {
                 $set: {
-                    party, items, deliveryDate, contactPerson,
-                    enqNo, message, enquirySource, enquiryStatus, compititor, followUp, followUpDate,
-                    orderProbality, expectedOrderDate, dateReceived, industry
+                    party, items, deliveryDate, contactPerson, enqNo, message, enquirySource,
+                    enquiryStatus, compititor, followUp, followUpDate, orderProbality, expectedOrderDate,
+                    dateReceived, industry, otherSource
                 }
             })
 
@@ -328,7 +330,7 @@ class EnquiryController {
                     _id: q._id, quotationNumber: q.quotationNumber
                 }))
             }
-            
+
             if (getPoClient) {
                 extractOnlyIdAndPoNo = getPoClient.map((po, _) => ({
                     _id: po._id, poNumber: po.poNumber
@@ -343,6 +345,103 @@ class EnquiryController {
         } catch (err) {
             return res.status(500).json({ 'err': 'Something went wrong', get: false });
         }
+    }
+
+    static async getInvoiceLogByEnquiryNo(req, res) {
+        const { token, enqNo } = req.body;
+
+        if (!token || !enqNo) {
+            return res.status(400).json({ 'err': 'Required fields are empty', get: false });
+        }
+
+        try {
+            const getInfo = await getId(token);
+            const getUser = await userModel.findOne({ _id: getInfo._id });
+
+            const getQuotations = await quotationModel.find({
+                companyId: getUser.activeCompany,
+                enqNumber: enqNo,
+                isDel: false
+            })
+
+            const getPoClient = await poClientModel.find({
+                companyId: getUser.activeCompany,
+                enqNumber: enqNo,
+                isDel: false
+            })
+
+            const getProforma = await proformaModel.find({
+                companyId: getUser.activeCompany,
+                isDel: false,
+                poNumber: {
+                    $in: getPoClient?.map(p => p.poNumber) || []
+                }
+            })
+
+            const getSales = await salesInvoiceModel.find({
+                companyId: getUser.activeCompany,
+                isDel: false,
+                poNumber: {
+                    $in: getPoClient?.map(p => p.poNumber) || []
+                }
+            })
+
+            // Store all bills sort by createdAt;
+            const bills = [];
+
+            getQuotations.forEach(q => {
+                bills.push({
+                    id: q._id,
+                    invoiceNumber: q.quotationNumber,
+                    date: q.estimateDate,
+                    createdAt: q.createdAt,
+                    type: 'quotation',
+                    items: q.items
+                })
+            })
+
+            getPoClient.forEach(po => {
+                bills.push({
+                    id: po._id,
+                    invoiceNumber: po.poNumber,
+                    date: po.poDate,
+                    createdAt: po.createdAt,
+                    type: 'po',
+                    items: po.items
+                })
+            })
+
+            getPoClient.forEach(pf => {
+                bills.push({
+                    id: pf._id,
+                    invoiceNumber: pf.proformaNumber,
+                    date: pf.estimateDate,
+                    createdAt: pf.createdAt,
+                    type: 'proforma',
+                    items: pf.items
+                })
+            })
+
+            getSales.forEach(inv => {
+                bills.push({
+                    id: inv._id,
+                    invoiceNumber: inv.salesInvoiceNumber,
+                    date: inv.invoiceDate,
+                    createdAt: inv.createdAt,
+                    type: 'sales',
+                    items: inv.items
+                })
+            })
+
+            bills.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+
+            return res.status(200).json({ msg: 'Invoice log fetched', bills });
+
+        } catch (err) {
+            console.log(err)
+            return res.status(500).json({ 'err': 'Something went wrong' });
+        }
+
     }
 
 }

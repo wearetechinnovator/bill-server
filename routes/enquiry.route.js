@@ -35,5 +35,9 @@ router
     .route("/get-quotation-po")
     .post(EnquiryController.getPOandQuotationByEnquiryNo);
 
+router
+    .route("/get-log")
+    .post(EnquiryController.getInvoiceLogByEnquiryNo);
+
 
 module.exports = router;
