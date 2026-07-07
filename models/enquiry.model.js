@@ -49,6 +49,7 @@ const enquirySchema = mongoose.Schema({
   expectedOrderDate: Date,
   dateReceived: Date,
   industry: String,
+  applicationDetails: String,
   isDel: {
     type: Boolean,
     default: false,

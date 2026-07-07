@@ -1,7 +1,8 @@
 const mongoose = require("mongoose");
 
 
-// Daily Activity Report (DAR);
+// Daily Activity Report (DAR) (in UI name > Cold Calling Tracking);
+// ----------------------------------------------------------------
 const darSchema = new mongoose.Schema({
     userId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -18,7 +19,13 @@ const darSchema = new mongoose.Schema({
   email: String,
   phone: Number,
   designation: String,
-  companyName: String
+  companyName: String,
+  leadSource: String,
+  city: String,
+  industry: String,
+  productInterested: String,
+  priority: String,
+  competitor: String
 }, {timestamps: true});
 
 const darModel = new mongoose.model("dar", darSchema);

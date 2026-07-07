@@ -42,7 +42,7 @@ class EnquiryController {
     static async addEnquiry(req, res) {
         const { token, party, items, deliveryDate, contactPerson, enqNo, message,
             enquirySource, enquiryStatus, compititor, followUp, followUpDate, orderProbality,
-            expectedOrderDate, dateReceived, industry, otherSource
+            expectedOrderDate, dateReceived, industry, otherSource, applicationDetails
         } = req.body;
 
         if ([party, items, enqNo]
@@ -69,7 +69,7 @@ class EnquiryController {
                 userId: getUserData._id, companyId: getUserData.activeCompany,
                 party, items, deliveryDate, contactPerson, enqNo, message,
                 enquirySource, enquiryStatus, compititor, followUp, followUpDate, orderProbality,
-                expectedOrderDate, dateReceived, industry, otherSource
+                expectedOrderDate, dateReceived, industry, otherSource, applicationDetails
             })
 
             if (!insert) {
@@ -83,7 +83,6 @@ class EnquiryController {
 
 
         } catch (err) {
-            console.log(err);
             return res.status(500).json({ 'err': 'Something went wrong' });
         }
     }
@@ -91,7 +90,7 @@ class EnquiryController {
     static async updateEnquiry(req, res) {
         const { token, id, party, items, deliveryDate, contactPerson, enqNo, message,
             enquirySource, enquiryStatus, compititor, followUp, followUpDate, orderProbality,
-            expectedOrderDate, dateReceived, industry, otherSource
+            expectedOrderDate, dateReceived, industry, otherSource, applicationDetails
         } = req.body;
 
         if ([token, party, items, contactPerson, enqNo, id]
@@ -112,7 +111,7 @@ class EnquiryController {
                 $set: {
                     party, items, deliveryDate, contactPerson, enqNo, message, enquirySource,
                     enquiryStatus, compititor, followUp, followUpDate, orderProbality, expectedOrderDate,
-                    dateReceived, industry, otherSource
+                    dateReceived, industry, otherSource, applicationDetails
                 }
             })
 
@@ -123,7 +122,6 @@ class EnquiryController {
             return res.status(200).json({ msg: "Enquiry update successfully" })
 
         } catch (err) {
-            console.log(err);
             return res.status(500).json({ 'err': 'Something went wrong', create: false });
         }
     }
@@ -201,9 +199,15 @@ class EnquiryController {
             const getInfo = await getId(token);
             const getUser = await userModel.findOne({ _id: getInfo._id });
             const role = getUser.role;
+            const partyIds = getUser.parties?.filter(id => mongoose.Types.ObjectId.isValid(id))
+                .map(id => new mongoose.Types.ObjectId(id));
 
             const totalData = await enquiryModel.countDocuments({
-                ...(role === 'sales' && { userId: getUser._id }),
+                ...(role === 'sales' && {
+                    party: {
+                        $in: partyIds
+                    }
+                }),
                 companyId: getUser.activeCompany,
                 isDel: false
             });
@@ -217,7 +221,11 @@ class EnquiryController {
 
             if (id) {
                 getData = await enquiryModel.findOne({
-                    ...(role === 'sales' && { userId: getUser._id }),
+                    ...(role === 'sales' && {
+                        party: {
+                            $in: partyIds
+                        }
+                    }),
                     companyId: getUser.activeCompany,
                     _id: id,
                     isDel: false
@@ -228,7 +236,11 @@ class EnquiryController {
             }
             else if (all) {
                 getData = await enquiryModel.find({
-                    ...(role === 'sales' && { userId: getUser._id }),
+                    ...(role === 'sales' && {
+                        party: {
+                            $in: partyIds
+                        }
+                    }),
                     companyId: getUser.activeCompany,
                     isDel: false
                 })
@@ -238,7 +250,11 @@ class EnquiryController {
             }
             else {
                 getData = await enquiryModel.find({
-                    ...(role === 'sales' && { userId: getUser._id }),
+                    ...(role === 'sales' && {
+                        party: {
+                            $in: partyIds
+                        }
+                    }),
                     companyId: getUser.activeCompany,
                     isDel: false,
                     ...filter
@@ -254,7 +270,7 @@ class EnquiryController {
 
             return res.status(200).json({ data: getData, totalData: totalData });
 
-        } catch (error) {
+        } catch (err) {
             return res.status(500).json({ 'err': 'Something went wrong', get: false });
         }
     }

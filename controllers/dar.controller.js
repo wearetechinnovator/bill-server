@@ -11,6 +11,7 @@ class DarController {
         const {
             // Dar Fields
             token, name, email, phone, designation, companyName,
+            leadSource, city, industry, productInterested, priority, competitor,
             // Dar history fields;
             activityType, feedback, status, followUp, followUpDate
         } = req.body;
@@ -36,7 +37,8 @@ class DarController {
 
             const darInsert = await darModel.create({
                 userId: getUserData._id, companyId: getUserData.activeCompany,
-                name, email, phone, designation, companyName
+                name, email, phone, designation, companyName,
+                leadSource, city, industry, productInterested, priority, competitor
             })
 
             if (!darInsert) {
