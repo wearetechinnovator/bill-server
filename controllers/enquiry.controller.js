@@ -411,7 +411,7 @@ class EnquiryController {
                 })
             })
 
-            getPoClient.forEach(pf => {
+            getProforma.forEach(pf => {
                 bills.push({
                     id: pf._id,
                     invoiceNumber: pf.proformaNumber,
@@ -442,6 +442,125 @@ class EnquiryController {
             return res.status(500).json({ 'err': 'Something went wrong' });
         }
 
+    }
+
+    static async getEnquiryWiseLastAction(req, res) {
+        const { token } = req.body;
+        if (!token) {
+            return res.status(400).json({ 'err': 'Required fields are empty', get: false });
+        }
+        try {
+            const getInfo = await getId(token);
+            const getUser = await userModel.findOne({ _id: getInfo._id }).lean();
+            const companyId = getUser.activeCompany;
+
+            const result = await quotationModel.aggregate([
+                { $match: { companyId, isDel: false } },
+                {
+                    $project: {
+                        _id: 0,
+                        enqNumber: 1,
+                        invoiceNumber: '$quotationNumber',
+                        createdAt: 1,
+                        type: { $literal: 'quotation' }
+                    }
+                },
+                {
+                    $unionWith: {
+                        coll: poClientModel.collection.name,
+                        pipeline: [
+                            { $match: { companyId, isDel: false } },
+                            {
+                                $project: {
+                                    _id: 0,
+                                    enqNumber: 1,
+                                    invoiceNumber: '$poNumber',
+                                    createdAt: 1,
+                                    type: { $literal: 'po' }
+                                }
+                            }
+                        ]
+                    }
+                },
+                {
+                    $unionWith: {
+                        coll: proformaModel.collection.name,
+                        pipeline: [
+                            { $match: { companyId, isDel: false } },
+                            {
+                                $lookup: {
+                                    from: poClientModel.collection.name,
+                                    localField: 'poNumber',
+                                    foreignField: 'poNumber',
+                                    as: 'poInfo'
+                                }
+                            },
+                            { $unwind: '$poInfo' },
+                            {
+                                $project: {
+                                    _id: 0,
+                                    enqNumber: '$poInfo.enqNumber',
+                                    invoiceNumber: '$proformaNumber',
+                                    createdAt: 1,
+                                    type: { $literal: 'proforma' }
+                                }
+                            }
+                        ]
+                    }
+                },
+                {
+                    $unionWith: {
+                        coll: salesInvoiceModel.collection.name,
+                        pipeline: [
+                            { $match: { companyId, isDel: false } },
+                            {
+                                $lookup: {
+                                    from: poClientModel.collection.name,
+                                    localField: 'poNumber',
+                                    foreignField: 'poNumber',
+                                    as: 'poInfo'
+                                }
+                            },
+                            { $unwind: '$poInfo' },
+                            {
+                                $project: {
+                                    _id: 0,
+                                    enqNumber: '$poInfo.enqNumber',
+                                    invoiceNumber: '$salesInvoiceNumber',
+                                    createdAt: 1,
+                                    type: { $literal: 'sales' }
+                                }
+                            }
+                        ]
+                    }
+                },
+                { $match: { enqNumber: { $ne: null } } },
+                { $sort: { createdAt: -1 } },
+                {
+                    $group: {
+                        _id: '$enqNumber',
+                        lastAction: { $first: '$type' },
+                        lastActionInvoiceNumber: { $first: '$invoiceNumber' },
+                        lastActionDate: { $first: '$createdAt' }
+                    }
+                },
+                {
+                    $project: {
+                        _id: 0,
+                        enqNo: '$_id',
+                        lastAction: 1,
+                        lastActionInvoiceNumber: 1,
+                        lastActionDate: 1
+                    }
+                }
+            ]);
+
+            return res.status(200).json({ msg: 'Enquiry wise last action fetched', result });
+
+        } catch (err) {
+            console.log(err);
+            return res.status(500).json({ 'err': 'Something went wrong' });
+        }
     }
 
 }

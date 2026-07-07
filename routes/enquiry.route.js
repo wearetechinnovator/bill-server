@@ -39,5 +39,9 @@ router
     .route("/get-log")
     .post(EnquiryController.getInvoiceLogByEnquiryNo);
 
+router
+    .route("/get-last-action")
+    .post(EnquiryController.getEnquiryWiseLastAction);
+
 
 module.exports = router;

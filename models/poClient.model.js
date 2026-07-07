@@ -39,7 +39,10 @@ const poClientSchema = new mongoose.Schema({
     requiredd: true
   },
   enqNumber: String,
-  poNumber: String,
+  poNumber: {
+    type: String,
+    index: true
+  },
   poDate: Date,
   driveLink: String,
   items: {
