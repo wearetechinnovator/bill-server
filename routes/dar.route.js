@@ -19,5 +19,8 @@ router
     .route("/add-history")
     .post(DarController.addDarHistory);
 
+router
+    .route("/get-followup-notification")
+    .post(DarController.getFollowUpNotification);
 
 module.exports = router;

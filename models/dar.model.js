@@ -4,7 +4,7 @@ const mongoose = require("mongoose");
 // Daily Activity Report (DAR) (in UI name > Cold Calling Tracking);
 // ----------------------------------------------------------------
 const darSchema = new mongoose.Schema({
-    userId: {
+  userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
     required: true,
@@ -25,8 +25,26 @@ const darSchema = new mongoose.Schema({
   industry: String,
   productInterested: String,
   priority: String,
-  competitor: String
-}, {timestamps: true});
+  competitor: String,
+
+  activityType: {
+    type: String,
+    enum: ['call', 'message', 'email', 'whatsapp'],
+    default: 'call'
+  },
+  feedback: String,
+  status: {
+    type: String,
+    enum: ['warm', 'hot', 'cold', 'dead'],
+    default: 'cold'
+  },
+  followUp: {
+    type: String,
+    enum: ['yes', 'no'],
+    default: 'no'
+  },
+  followUpDate: Date
+}, { timestamps: true });
 
 const darModel = new mongoose.model("dar", darSchema);
 module.exports = darModel;
