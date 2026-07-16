@@ -128,6 +128,8 @@ const get = async (req, res) => {
 	try {
 		const getInfo = await getId(token);
 		const getUser = await userModel.findOne({ _id: getInfo._id });
+		const role = getUser.role;
+
 		const totalData = await partyModel.countDocuments({
 			companyId: getUser.activeCompany,
 			isDel: false
@@ -164,7 +166,13 @@ const get = async (req, res) => {
 					name: { $regex: searchText.trim(), $options: "i" },
 					companyId: getUser.activeCompany,
 					isDel: false,
+					...(role === 'sales' && {
+						_id: {
+							$in: getUser.parties.filter(p => p !== "").map(p => p && new mongoose.Types.ObjectId(p))
+						}
+					}),
 				}).sort({ _id: -1 }).select("_id name");
+
 
 			}
 		}

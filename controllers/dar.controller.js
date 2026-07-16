@@ -83,7 +83,7 @@ class DarController {
                 return res.status(404).json({ err: "User not found" })
             }
 
-            const darData = await darModel.findOne({ _id: darId });
+            const darData = await darModel.findOne({ _id: darId }).populate("userId");
             const historyData = await darHistoryModel.find({ darId }).sort({ _id: -1 });
 
             if (!darData) {
@@ -122,7 +122,8 @@ class DarController {
             const data = await darModel.find({
                 ...(role === 'sales' && { userId: getUserData._id }),
                 companyId: getUserData.activeCompany
-            })
+            }).sort({_id: -1}).populate('userId');
+
             const totalData = await darModel.countDocuments({
                 ...(role === 'sales' && { userId: getUserData._id }),
                 userId: getUserData._id, companyId: getUserData.activeCompany
