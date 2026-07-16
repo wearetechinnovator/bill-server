@@ -17,7 +17,7 @@ class DarController {
         } = req.body;
 
 
-        if ([token, name, email].some((f) => !f || f === "")) {
+        if ([token, name, phone].some((f) => !f || f === "")) {
             return res.status(500).json({ err: 'required fields are empty' });
         }
 
