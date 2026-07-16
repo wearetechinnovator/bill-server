@@ -210,8 +210,6 @@ const get = async (req, res) => {
 				companyId: getUser.activeCompany,
 				isDel: false
 			})
-				.skip(skip)
-				.limit(limit)
 				.populate("category")
 				.sort({ _id: -1 });
 
