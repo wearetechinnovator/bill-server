@@ -30,10 +30,10 @@ class DarController {
             }
 
             // Check existance;
-            const isExist = await darModel.findOne({ email });
-            if (isExist) {
-                return res.status(500).json({ err: "This report already exist" });
-            }
+            // const isExist = await darModel.findOne({ phone });
+            // if (isExist) {
+            //     return res.status(500).json({ err: "This report already exist" });
+            // }
 
             const darInsert = await darModel.create({
                 userId: getUserData._id, companyId: getUserData.activeCompany,
