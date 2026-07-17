@@ -71,7 +71,8 @@ const add = async (req, res) => {
 		}
 
 
-		// ===========[Generate Barcode]=========;
+		// ===========[Generate Barcode]=========
+		// ======================================
 		if (itemCode) {
 			const baseFolder = path.join(__dirname, '..', 'barcodes');
 			const barcodePath = path.join(__dirname, '..', 'barcodes', `${itemCode}.png`);
@@ -98,13 +99,19 @@ const add = async (req, res) => {
 		}
 
 
+		// Product Code means a unique code for each product identityfication only for YANTRA;
+		// Get Last Product Code;
+		const getLastItem = await itemModel.findOne({}).sort({ _id: -1 });
+		const itemUniqueCode = getLastItem.itemUniqCode ? (getLastItem.itemUniqCode + 1) : 100;
+
 
 		const insert = await itemModel.create({
 			userId: getUserData._id, companyId: getUserData.activeCompany, hsn,
 			purchasePrice, purchaseTaxType, saleTaxType,
 			title, type, salePrice, category: category || null, details, unit,
 			stock: openingStock, alert: stockAlert, tax, itemCode,
-			barcodeImage: `/barcodes/${itemCode}.png`
+			barcodeImage: `/barcodes/${itemCode}.png`,
+			itemUniqCode: itemUniqueCode
 		});
 
 		if (!insert) {
@@ -119,7 +126,6 @@ const add = async (req, res) => {
 		return res.status(500).json({ 'err': 'Something went wrong', create: false });
 	}
 }
-
 
 
 // get Controller
@@ -173,9 +179,12 @@ const get = async (req, res) => {
 					}
 				},
 				{
-					hsn: {
-						$regex: searchText.trim(),
-						$options: "i"
+					$expr: {
+						$regexMatch: {
+							input: { $toString: "$itemUniqCode" },
+							regex: searchText.trim(),
+							options: "i"
+						}
 					}
 				}
 			];
@@ -186,26 +195,21 @@ const get = async (req, res) => {
 		// =========================================================
 
 		if (id) {
-
 			getData = await itemModel.findOne({
 				companyId: getUser.activeCompany,
 				_id: id,
 				isDel: false
 			}).populate("category");
-
 		}
 		else if (barCode) {
-
 			getData = await itemModel.findOne({
 				companyId: getUser.activeCompany,
 				itemCode: barCode,
 				isTrash: false,
 				isDel: false
 			}).populate("category");
-
 		}
 		else if (all) {
-
 			getData = await itemModel.find({
 				companyId: getUser.activeCompany,
 				isDel: false
@@ -215,16 +219,27 @@ const get = async (req, res) => {
 
 		}
 		else if (search) {
-
 			if (searchText.trim() !== "") {
-
 				getData = await itemModel.find({
-					title: {
-						$regex: searchText.trim(),
-						$options: "i"
-					},
 					companyId: getUser.activeCompany,
-					isDel: false
+					isDel: false,
+					$or: [
+						{
+							title: {
+								$regex: searchText.trim(),
+								$options: "i"
+							},
+						},
+						{
+							$expr: {
+								$regexMatch: {
+									input: { $toString: "$itemUniqCode" },
+									regex: searchText.trim(),
+									options: "i"
+								}
+							}
+						}
+					]
 				})
 					.sort({ _id: -1 })
 					.select("_id title");

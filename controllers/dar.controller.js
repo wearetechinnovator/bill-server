@@ -1,3 +1,4 @@
+const { default: mongoose } = require("mongoose");
 const { getId } = require("../helper/getIdFromToken");
 const darModel = require("../models/dar.model");
 const darHistoryModel = require("../models/darHistory.model");
@@ -12,8 +13,9 @@ class DarController {
             // Dar Fields
             token, name, email, phone, designation, companyName,
             leadSource, city, industry, productInterested, priority, competitor,
+
             // Dar history fields;
-            activityType, feedback, status, followUp, followUpDate
+            activityType, feedback, status, followUp, followDate
         } = req.body;
 
 
@@ -29,16 +31,13 @@ class DarController {
                 return res.status(404).json({ err: "user not found" })
             }
 
-            // Check existance;
-            // const isExist = await darModel.findOne({ phone });
-            // if (isExist) {
-            //     return res.status(500).json({ err: "This report already exist" });
-            // }
 
             const darInsert = await darModel.create({
                 userId: getUserData._id, companyId: getUserData.activeCompany,
                 name, email, phone, designation, companyName,
-                leadSource, city, industry, productInterested, priority, competitor
+                leadSource, city, industry, productInterested, priority, competitor,
+
+                activityType, feedback, status, followUp, followUpDate: followDate
             })
 
             if (!darInsert) {
@@ -48,7 +47,8 @@ class DarController {
             // Insert history;
             const historyInsert = await darHistoryModel.create({
                 userId: getUserData._id, companyId: getUserData.activeCompany,
-                darId: darInsert._id, activityType, feedback, status, followUp, followUpDate
+                darId: darInsert._id, activityType, feedback, status, followUp,
+                followUpDate: followDate
             })
 
             if (!historyInsert) {
@@ -61,6 +61,7 @@ class DarController {
                 data: darInsert,
                 msg: "Activity report create successfully"
             });
+
         } catch (err) {
             console.log(err)
             return res.status(500).json({ 'err': 'Something went wrong' });
@@ -102,9 +103,14 @@ class DarController {
     }
 
     static async getAllDar(req, res) {
-        const { token } = req.body;
+        const {
+            token, phone, status, doneBy,
+            startDate, endDate, companyName,
+            registerStartDate, registerEndDate
+        } = req.body;
         const { page = 1, limit = 10 } = req.query;
         const skip = (Number(page) - 1) * Number(limit);
+
 
         if (!token) {
             return res.status(500).json({ err: 'required fields are empty' });
@@ -119,15 +125,43 @@ class DarController {
                 return res.status(404).json({ err: "User not found" })
             }
 
-            const data = await darModel.find({
-                ...(role === 'sales' && { userId: getUserData._id }),
-                companyId: getUserData.activeCompany
-            }).sort({_id: -1}).populate('userId');
 
-            const totalData = await darModel.countDocuments({
+            const query = {
                 ...(role === 'sales' && { userId: getUserData._id }),
-                userId: getUserData._id, companyId: getUserData.activeCompany
-            });
+                companyId: getUserData.activeCompany,
+            };
+
+
+            
+            if (status)
+                query.status = status;
+
+            if (doneBy)
+                query.userId = new mongoose.Types.ObjectId(doneBy);
+
+            if (phone)
+                query.phone = phone;
+
+            if (startDate && endDate) {
+                query.followUpDate = {
+                    $gte: new Date(new Date(startDate).setHours(0, 0, 0, 0)),
+                    $lte: new Date(new Date(endDate).setHours(23, 59, 59, 999))
+                };
+            }
+
+            if (registerStartDate && registerEndDate) {
+                query.createdAt = {
+                    $gte: new Date(new Date(registerStartDate).setHours(0, 0, 0, 0)),
+                    $lte: new Date(new Date(registerEndDate).setHours(23, 59, 59, 999))
+                };
+            }
+
+
+            const data = await darModel.find(query)
+                .sort({ _id: -1 })
+                .populate('userId');
+
+            const totalData = await darModel.countDocuments(query);
 
             return res.status(200).json({ data, totalData });
 

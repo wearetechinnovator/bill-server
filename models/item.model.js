@@ -30,6 +30,7 @@ const itemSchema = new mongoose.Schema({
     enum: ["0", "1"] //0=`Without Tax` | 1=`With Tax`
   },
   itemCode: String, // Item Barcode Number;
+  itemUniqCode: Number, // Unique Product Code;
   barcodeImage: String, // Path to the barcode image
   category: {
     type: mongoose.Schema.Types.ObjectId,
