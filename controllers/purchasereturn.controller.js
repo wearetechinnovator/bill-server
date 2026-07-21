@@ -53,7 +53,7 @@ const add = async (req, res) => {
 				partyId: party,
 				voucher: 'purchase_return',
 				voucherId: id,
-				date: invoiceDate,
+				date: returnDate,
 				debit: (finalAmount - (paymentAmount || 0)).toFixed(2)
 			})
 
@@ -84,6 +84,7 @@ const add = async (req, res) => {
 		return res.status(200).json(insert);
 
 	} catch (err) {
+		console.log(err)
 		return res.status(500).json({ err: 'Something went wrong' });
 	}
 
