@@ -177,8 +177,8 @@ const get = async (req, res) => {
 
 		if (id) {
 			getData = await salesInvoiceModel.findOne({
+				...(role === 'sales' && { userId: getUser._id }),
 				companyId: getUser.activeCompany,
-				userId: getUser._id,
 				_id: id,
 				isDel: false,
 			}).populate("party").populate('accountId');
