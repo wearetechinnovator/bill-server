@@ -12,11 +12,11 @@ const add = async (req, res) => {
 	const {
 		token, party, quotationNumber, estimateDate, validDate, items, discountType, discountAmount,
 		discountPercentage, additionalCharge, note, terms, update, id, billStatus, finalAmount, accountId,
-		autoRoundOff, roundOffAmount, roundOffType, enqNumber, deliveryTime, enquiryId
+		autoRoundOff, roundOffAmount, roundOffType, enqNumber, deliveryTime, enquiryId, isManualBillNumber
 	} = req.body;
 
 
-	// Update only bill status :::::::::::::::;
+	// ======================[Update only bill status]====================
 	if (update && id && billStatus && Object.keys(req.body).length === 4) {
 		const updateResult = await quotationModel.updateOne(
 			{ _id: id },
@@ -31,7 +31,6 @@ const add = async (req, res) => {
 	}
 
 
-
 	if ([token, party, quotationNumber, estimateDate, items]
 		.some(field => !field || field === '')) {
 		return res.status(400).json({ err: 'fill the blank server' });
@@ -39,18 +38,23 @@ const add = async (req, res) => {
 
 	try {
 		const getInfo = await getId(token);
+
 		const getUserData = await userModel.findOne({ _id: getInfo._id });
 
 		const isExist = await quotationModel.findOne({
-			companyId: getUserData.activeCompany, quotationNumber: quotationNumber,
+			companyId: getUserData.activeCompany,
+			quotationNumber: quotationNumber,
 			isDel: false
-		});
+		}).populate("userId");
+
 		if (isExist && !update) {
-			return res.status(500).json({ err: 'Quotation already exist' })
+			return res.status(409).json({
+				err: 'Quotation already exist', data: isExist,
+				role: getUserData.role
+			})
 		}
 
-
-		// update code.....
+		// ====================================[Update Code]=====================================
 		if (update && id) {
 			const update = await quotationModel.updateOne({ _id: id }, {
 				$set: {
@@ -69,13 +73,24 @@ const add = async (req, res) => {
 		} // Update close here;
 
 
-		let company = await companyModel.findOne({ _id: getUserData.activeCompany });
-		const getInvPrefix = parseInt(company.quotationCount) + 1;
-		await companyModel.updateOne({ _id: getUserData.activeCompany }, {
-			$set: {
-				quotationCount: getInvPrefix
-			}
-		})
+		await companyModel.findOneAndUpdate(
+			{ _id: getUserData.activeCompany },
+			[
+				{
+					$set: {
+						quotationCount: {
+							$toString: {
+								$add: [
+									{ $toInt: "$quotationCount" },
+									1
+								]
+							}
+						}
+					}
+				}
+			],
+			{ new: true }
+		)
 
 
 		const insert = await quotationModel.create({
@@ -84,8 +99,6 @@ const add = async (req, res) => {
 			discountType, discountAmount, discountPercentage, additionalCharge, note, terms,
 			accountId, autoRoundOff, roundOffAmount, roundOffType, enqNumber, deliveryTime
 		});
-
-
 
 		if (!insert) {
 			return res.status(500).json({ err: 'Quotation creation failed' });
@@ -101,7 +114,6 @@ const add = async (req, res) => {
 
 		// insert party log;
 		await Log.insertPartyLog(token, insert._id, party, "Quotation", finalAmount, '', 'quotation');
-
 
 		return res.status(200).json(insert);
 

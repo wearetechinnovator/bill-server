@@ -30,7 +30,7 @@ mongoose.connect(process.env.MONGO_URI).then(() => {
   //attendanceReminder(); //Staff Attendance Reminder Mail;
   //staffAttendancePresent(); // Default Presend Attendance;
 
-  app.listen(PORT || 8080, () => {
+  app.listen(PORT, () => {
     console.log("[*] Server run", PORT)
   })
 

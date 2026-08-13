@@ -25,14 +25,20 @@ const add = async (req, res) => {
 		const getUserData = await userModel.findOne({ _id: getInfo._id });
 
 		const isExist = await deliverChalanModel.findOne({
-			companyId: getUserData.activeCompany, chalanNumber: chalanNumber,
+			companyId: getUserData.activeCompany,
+			chalanNumber: chalanNumber,
 			isDel: false
-		});
+		}).populate("userId");
+
+
 		if (isExist && !update) {
-			return res.status(500).json({ err: 'Quotation already exist' })
+			return res.status(409).json({
+				err: 'Challan already exist', data: isExist,
+				role: getUserData.role
+			})
 		}
 
-		// update code.....
+		// ====================================[Update Code]=====================================
 		if (update && id) {
 			const update = await deliverChalanModel.updateOne({ _id: id }, {
 				$set: {
@@ -43,7 +49,7 @@ const add = async (req, res) => {
 			})
 
 			if (!update) {
-				return res.status(500).json({ err: 'Quotation update failed', update: false })
+				return res.status(500).json({ err: 'Challan update failed', update: false })
 			}
 
 			return res.status(200).json(update)
@@ -51,13 +57,24 @@ const add = async (req, res) => {
 		} // Update close here;
 
 
-		let company = await companyModel.findOne({ _id: getUserData.activeCompany });
-		const getInvPrefix = parseInt(company.deliveryChalanCount) + 1;
-		await companyModel.updateOne({ _id: getUserData.activeCompany }, {
-			$set: {
-				deliveryChalanCount: getInvPrefix
-			}
-		})
+		await companyModel.findOneAndUpdate(
+			{ _id: getUserData.activeCompany },
+			[
+				{
+					$set: {
+						deliveryChalanCount: {
+							$toString: {
+								$add: [
+									{ $toInt: "$deliveryChalanCount" },
+									1
+								]
+							}
+						}
+					}
+				}
+			],
+			{ new: true }
+		)
 
 		const insert = await deliverChalanModel.create({
 			userId: getUserData._id, companyId: getUserData.activeCompany, party, chalanNumber, chalanDate,

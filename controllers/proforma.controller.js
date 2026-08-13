@@ -27,12 +27,16 @@ const add = async (req, res) => {
 		const isExist = await proformaModel.findOne({
 			companyId: getUserData.activeCompany, proformaNumber: proformaNumber,
 			isDel: false
-		});
+		}).populate("userId");
+
 		if (isExist && !update) {
-			return res.status(500).json({ err: 'Proforma already exist' })
+			return res.status(409).json({
+				err: 'Proforma already exist', data: isExist,
+				role: getUserData.role
+			})
 		}
 
-		// update code.....
+		// ====================================[Update Code]=====================================
 		if (update && id) {
 			const update = await proformaModel.updateOne({ _id: id }, {
 				$set: {
@@ -50,14 +54,24 @@ const add = async (req, res) => {
 
 		} // Update close here;
 
-
-		let company = await companyModel.findOne({ _id: getUserData.activeCompany });
-		const getInvPrefix = parseInt(company.proformaNextCount) + 1;
-		await companyModel.updateOne({ _id: getUserData.activeCompany }, {
-			$set: {
-				proformaNextCount: getInvPrefix
-			}
-		})
+		await companyModel.findOneAndUpdate(
+			{ _id: getUserData.activeCompany },
+			[
+				{
+					$set: {
+						proformaNextCount: {
+							$toString: {
+								$add: [
+									{ $toInt: "$proformaNextCount" },
+									1
+								]
+							}
+						}
+					}
+				}
+			],
+			{ new: true }
+		)
 
 		const insert = await proformaModel.create({
 			userId: getUserData._id, companyId: getUserData.activeCompany,

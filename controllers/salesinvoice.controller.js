@@ -17,7 +17,7 @@ const add = async (req, res) => {
 	const {
 		token, party, salesInvoiceNumber, invoiceDate, DueDate, items, discountType,
 		discountAmount, discountPercentage, additionalCharge, note, terms, update, id,
-		paymentStatus, paymentAccount, paymentType, paymentAmount, finalAmount, accountId, 
+		paymentStatus, paymentAccount, paymentType, paymentAmount, finalAmount, accountId,
 		autoRoundOff, roundOffAmount, roundOffType, poNumber, poDate, isPoConvert, poId
 	} = req.body;
 
@@ -33,14 +33,19 @@ const add = async (req, res) => {
 		const getUserData = await userModel.findOne({ _id: getInfo._id });
 
 		const isExist = await salesInvoiceModel.findOne({
-			userId: getInfo._id, companyId: getUserData.activeCompany, salesInvoiceNumber: salesInvoiceNumber,
+			companyId: getUserData.activeCompany,
+			salesInvoiceNumber: salesInvoiceNumber,
 			isDel: false
-		});
+		}).populate("userId");
+
 		if (isExist && !update) {
-			return res.status(500).json({ err: 'Invoice already exist' })
+			return res.status(409).json({
+				err: 'Invoice already exist', data: isExist,
+				role: getUserData.role
+			})
 		}
 
-		// update code.....
+		// ====================================[Update Code]=====================================
 		if (update && id) {
 			const update = await salesInvoiceModel.updateOne({ _id: id }, {
 				$set: {
@@ -55,7 +60,6 @@ const add = async (req, res) => {
 				return res.status(500).json({ err: 'Invoice update failed', update: false })
 			}
 
-
 			await updateLadger({
 				partyId: party,
 				voucher: 'sales',
@@ -68,13 +72,24 @@ const add = async (req, res) => {
 		} // Update close here;
 
 
-		let company = await companyModel.findOne({ _id: getUserData.activeCompany });
-		const getInvPrefix = parseInt(company.invoiceNextCount) + 1;
-		await companyModel.updateOne({ _id: getUserData.activeCompany }, {
-			$set: {
-				invoiceNextCount: getInvPrefix
-			}
-		})
+		await companyModel.findOneAndUpdate(
+			{ _id: getUserData.activeCompany },
+			[
+				{
+					$set: {
+						invoiceNextCount: {
+							$toString: {
+								$add: [
+									{ $toInt: "$invoiceNextCount" },
+									1
+								]
+							}
+						}
+					}
+				}
+			],
+			{ new: true }
+		)
 
 
 		const insert = await salesInvoiceModel.create({
@@ -100,7 +115,7 @@ const add = async (req, res) => {
 		})
 
 		// if this invoice convert from po-client then decress quantity
-		if(isPoConvert && poId){
+		if (isPoConvert && poId) {
 			PoClientController.updateItemCount(poId, items);
 		}
 
