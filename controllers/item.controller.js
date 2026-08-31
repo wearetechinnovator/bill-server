@@ -102,7 +102,7 @@ const add = async (req, res) => {
 		// Product Code means a unique code for each product identityfication only for YANTRA;
 		// Get Last Product Code;
 		const getLastItem = await itemModel.findOne({}).sort({ _id: -1 });
-		const itemUniqueCode = getLastItem.itemUniqCode ? (getLastItem.itemUniqCode + 1) : 100;
+		const itemUniqueCode = getLastItem?.itemUniqCode ? (getLastItem.itemUniqCode + 1) : 100;
 
 
 		const insert = await itemModel.create({

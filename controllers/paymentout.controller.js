@@ -65,7 +65,7 @@ const add = async (req, res) => {
             }
 
             // Apply in invoice amount;
-            for (inv of checkedInv) {
+            for (let inv of checkedInv) {
                 await purchaseInvoiceModel.updateOne({ _id: inv._id }, {
                     $set: {
                         paymentAmount: Number(inv?.receiveAmount || 0) + Number(inv.paymentAmount || 0)
@@ -90,7 +90,7 @@ const add = async (req, res) => {
         } // Update close here;
 
 
-        for (inv of checkedInv) {
+        for (let inv of checkedInv) {
             await purchaseInvoiceModel.updateOne({ _id: inv._id }, {
                 $set: {
                     paymentAmount: Number(inv?.receiveAmount || 0) + Number(inv.paymentAmount || 0)
