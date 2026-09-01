@@ -9,6 +9,11 @@ const jwt_key = process.env.JWT_SECRET;
 const nodemailer = require('nodemailer');
 const mailModel = require('../models/mail.model');
 const sendEmail = require('../helper/sendEmail');
+const { execFile } = require("child_process");
+const fs = require("fs");
+const AdmZip = require("adm-zip");
+const backupFileModel = require("../models/backupFile.model");
+const unzipper = require("unzipper");
 
 
 
@@ -277,7 +282,6 @@ const updatepass = async (req, res) => {
 
 }
 
-// RESEND-API-KEY = re_L8y4DSVS_GqE1a8ooYY46CAzH8VJJdQ8B
 const forgot = async (req, res) => {
 	const { email } = req.body;
 	if (!email) {
@@ -462,7 +466,6 @@ const protectChangePassword = async (req, res) => {
 }
 
 // Send bill via email
-// :::::::::::::::::::
 const sendBill = async (req, res) => {
 	const { token, email, data, subject, body } = req.body;
 
@@ -528,9 +531,250 @@ const sendBill = async (req, res) => {
 
 }
 
+const backupData = async (req, res) => {
+	const MONGO_URI = process.env.MONGO_URL_ONLY;
+	const DB_NAME = process.env.DB_NAME;
+	const backupsDir = path.join(__dirname, "..", "backups");
+
+	try {
+		fs.mkdirSync(backupsDir, { recursive: true });
+
+		const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+		const dumpDir = path.join(backupsDir, `dump-${timestamp}`);
+
+		const fileName = `data-backup-${timestamp}.zip`
+		const zipFile = path.join(backupsDir, fileName);
+
+		fs.mkdirSync(dumpDir, { recursive: true });
+
+		// Run mongodump and WAIT for it
+		await new Promise((resolve, reject) => {
+			execFile(
+				"mongodump",
+				[
+					`--uri=${MONGO_URI}`,
+					`--db=${DB_NAME}`,
+					`--out=${dumpDir}`,
+				],
+				{ maxBuffer: 1024 * 1024 * 1024 },
+				(error, stdout, stderr) => {
+					if (error) {
+						console.error("MongoDB backup failed:");
+						console.error(stderr);
+
+						return reject(error);
+					}
+
+					resolve();
+				}
+			);
+		});
+
+		// Create ZIP and WAIT for it
+		await new Promise((resolve, reject) => {
+			try {
+				const zip = new AdmZip();
+				zip.addLocalFolder(dumpDir);
+				zip.writeZip(zipFile);
+				resolve();
+			} catch (err) {
+				reject(err);
+			}
+		});
+
+		// Remove temporary dump
+		fs.rmSync(dumpDir, {
+			recursive: true,
+			force: true,
+		});
+
+		// Delete Last File
+		const listOfZipFiles = fs.readdirSync(backupsDir);
+
+		if (listOfZipFiles.length > 7) {
+			const firstFile = listOfZipFiles[0];
+			const fileFilePath = path.join(backupsDir, firstFile);
+
+			await backupFileModel.deleteOne({ fileName: firstFile });
+			fs.unlinkSync(fileFilePath);
+		}
+
+		// Insert New File in DB;
+		await backupFileModel.create({
+			fileName: fileName
+		})
+
+		return res.status(200).json({
+			msg: "Backup successfully saved.",
+			file: path.basename(zipFile),
+		});
+
+	} catch (err) {
+		return res.status(500).json({
+			err: "Something went wrong",
+			message: err.message,
+		});
+	}
+};
+
+
+const getBackupFiles = async (req, res) => {
+	const { token } = req.body;
+
+	if (!token) {
+		return res.status(200).json({ 'err': 'require fields are empty' });
+	}
+
+	try {
+		const checkToken = jwt.verify(token, jwt_key);
+		if (!checkToken) {
+			return res.status(500).json({ err: 'Invalid token' });
+		}
+
+		const getInfo = await getId(token);
+		const getUser = await userModel.findOne({ _id: getInfo?._id });
+
+		if (!getUser) {
+			return res.status(404).json({ err: 'User not found' });
+		}
+
+		const getFileName = await backupFileModel.find();
+
+		return res.status(200).json({ data: getFileName });
+
+	} catch (err) {
+		return res.status(500).json({
+			err: "Something went wrong",
+			message: err.message,
+		});
+	}
+
+}
+
+
+const downloadBackupFile = async (req, res) => {
+	const { token, fileId } = req.body;
+
+	if (!token || !fileId) {
+		return res.status(200).json({ 'err': 'require fields are empty' });
+	}
+
+	try {
+		const checkToken = jwt.verify(token, jwt_key);
+		if (!checkToken) {
+			return res.status(500).json({ err: 'Invalid token' });
+		}
+
+		const getInfo = await getId(token);
+		const getUser = await userModel.findOne({ _id: getInfo?._id });
+
+		if (!getUser) {
+			return res.status(404).json({ err: 'User not found' });
+		}
+
+		const getFileName = await backupFileModel.findOne({ _id: fileId });
+
+		if (!getFileName) {
+			return res.status(404).json({ err: 'Backup record not found' });
+		}
+
+		const downloadPath = path.join(__dirname, "..", "backups", getFileName.fileName);
+		if (!fs.existsSync(downloadPath)) {
+			return res.status(404).json({ err: 'Backup file not found' });
+		}
+
+		return res.download(downloadPath, getFileName.fileName, (err) => {
+			if (err) {
+				console.error("Download error:", err);
+			}
+		});
+
+	} catch (err) {
+		return res.status(500).json({
+			err: "Something went wrong",
+			message: err.message,
+		});
+	}
+}
+
+const restoreBackupFile = async (req, res) => {
+	const { token, fileId } = req.body;
+
+	if (!token || !fileId) {
+		return res.status(200).json({ 'err': 'require fields are empty' });
+	}
+
+	const MONGO_URI = process.env.MONGO_URL_ONLY;
+	const DB_NAME = process.env.DB_NAME;
+
+	try {
+		const getInfo = await getId(token);
+		const getUser = await userModel.findOne({ _id: getInfo?._id });
+
+		if (!getUser) {
+			return res.status(404).json({ err: 'User not found' });
+		}
+
+		const extractDir = path.join(__dirname, "..", "restore-temp");
+		const getFile = await backupFileModel.findOne({ _id: fileId });
+
+		const zipFile = path.join(__dirname, "..", "backups", getFile.fileName);
+
+		fs.mkdirSync(extractDir, { recursive: true, })
+
+		// 2. Extract ZIP
+		console.log("Extracting backup...");
+
+		await fs.createReadStream(zipFile).pipe(
+			unzipper.Extract({
+				path: extractDir,
+			})
+		).promise();
+
+		console.log("Backup extracted.");
+
+		// 3. Find database dump
+		const dumpDir = path.join(extractDir, "yantra");
+
+		// 4. Restore MongoDB
+		console.log("Restoring MongoDB...");
+		await new Promise((resolve, reject) => {
+			execFile("mongorestore", [`--uri=${MONGO_URI}`, "--drop", dumpDir], (error, stdout, stderr) => {
+				if (error) {
+					console.error(stderr);
+					return reject(error);
+				}
+
+				console.log(stdout);
+				resolve();
+			});
+		});
+
+		// 5. Delete temporary files
+		await fs.promises.rm(extractDir, {
+			recursive: true,
+			force: true,
+		});
+
+		return res.status(200).json({
+			msg: "MongoDB restored successfully",
+		});
+
+	} catch (error) {
+		console.error("Restore failed:", error);
+		return res.status(500).json({
+			msg: "Restore failed",
+			error: error.message,
+		});
+	}
+};
 
 module.exports = {
 	addUser, login, getUser, updatepass, forgot,
 	verifyOtp, changePassword, protectChangePassword, sendBill,
-	getAllUser, getUserById, updateUserById
+	getAllUser, getUserById, updateUserById,
+	backupData,
+	getBackupFiles,
+	downloadBackupFile,
+	restoreBackupFile
 }
