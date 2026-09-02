@@ -227,7 +227,7 @@ const getBalance = async (req, res) => {
 		const allPaymentIn = await paymentInModel.aggregate([
 			{
 				$match: {
-					userId: getUserData._id,
+					// userId: getUserData._id,
 					companyId: getUserData.activeCompany,
 					isDel:false
 				}
@@ -252,7 +252,7 @@ const getBalance = async (req, res) => {
 		const allPaymentOut = await paymentOutModel.aggregate([
 			{
 				$match: {
-					userId: getUserData._id,
+					// userId: getUserData._id,
 					companyId: getUserData.activeCompany,
 					isDel:false
 				}
@@ -277,7 +277,7 @@ const getBalance = async (req, res) => {
 		const otherTransaction = await transactionModel.aggregate([
 			{
 				$match: {
-					userId: new mongoose.Types.ObjectId(String(getUserData._id)),
+					// userId: new mongoose.Types.ObjectId(String(getUserData._id)),
 					companyId: new mongoose.Types.ObjectId(String(getUserData.activeCompany)),
 					isDel: false
 				}
@@ -320,7 +320,7 @@ const getBalance = async (req, res) => {
 		]);
 
 		const allAccount = await accountModel.find({
-			userId: getUserData._id,
+			// userId: getUserData._id,
 			companyId: getUserData.activeCompany,
 			isDel: false
 		})
@@ -339,7 +339,7 @@ const getBalance = async (req, res) => {
 		const cashOut = allPaymentOut.find(pIn => pIn.account === "");
 		balance['cash'] = Number(cashIn?.totalPaymentIn || 0) - Number(cashOut?.totalPaymentOut || 0) + Number(otherTransaction.find(t => t.account === "Cash")?.balance || 0);
 
-		res.status(200).json(balance);
+		return res.status(200).json(balance);
 
 	} catch (error) {
 		return res.status(500).json({ err: "Something went wrong" });

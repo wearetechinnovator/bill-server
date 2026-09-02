@@ -434,7 +434,7 @@ const getMonthWisePaymentIn = async (req, res) => {
 			{
 				$match: {
 					isDel: false,
-					userId: new mongoose.Types.ObjectId(getInfo._id),
+					// userId: new mongoose.Types.ObjectId(getInfo._id),
 					companyId: new mongoose.Types.ObjectId(getUserData.activeCompany),
 					paymentInDate: {
 						$gte: new Date(`${currentYear}-01-01T00:00:00.000Z`),

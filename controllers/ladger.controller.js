@@ -101,7 +101,7 @@ const get = async (req, res) => {
 		let filter = {
 			partyId,
 			companyId: getUser.activeCompany,
-			userId: getInfo._id,
+			// userId: getInfo._id,
 		}
 		if (startDate && endDate) {
 			filter.date = {
@@ -117,9 +117,6 @@ const get = async (req, res) => {
 		else {
 			getLadger = await ladgerModel.find(filter).skip(skip).limit(limit).populate("voucherId");
 		}
-
-
-
 
 		return res.status(200).json({ data: getLadger, totalData });
 

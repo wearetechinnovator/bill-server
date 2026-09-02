@@ -22,6 +22,8 @@ const unzipper = require("unzipper");
 const addUser = async (req, res) => {
 	const { name, email, password, profile, filename, update, token } = req.body;
 
+	return res.status(500).json({ 'err': 'Please contact with admin.' });
+
 	if ([name, email].some((field) => !field || field == "")) {
 		return res.json({ 'err': 'require fields are empty' });
 	}
@@ -604,19 +606,12 @@ const backupData = async (req, res) => {
 			fileName: fileName
 		})
 
-		return res.status(200).json({
-			msg: "Backup successfully saved.",
-			file: path.basename(zipFile),
-		});
+		return res.status(200).json({ msg: "Backup successfully saved.", file: path.basename(zipFile), });
 
 	} catch (err) {
-		return res.status(500).json({
-			err: "Something went wrong",
-			message: err.message,
-		});
+		return res.status(500).json({ err: "Something went wrong", message: err.message, });
 	}
 };
-
 
 const getBackupFiles = async (req, res) => {
 	const { token } = req.body;
@@ -638,7 +633,9 @@ const getBackupFiles = async (req, res) => {
 			return res.status(404).json({ err: 'User not found' });
 		}
 
-		const getFileName = await backupFileModel.find();
+		// const getFileName = await backupFileModel.find();
+		const backupsDir = path.join(__dirname, "..", "backups");
+		const getFileName = fs.readdirSync(backupsDir);
 
 		return res.status(200).json({ data: getFileName });
 
@@ -653,9 +650,9 @@ const getBackupFiles = async (req, res) => {
 
 
 const downloadBackupFile = async (req, res) => {
-	const { token, fileId } = req.body;
+	const { token, fileName } = req.body;
 
-	if (!token || !fileId) {
+	if (!token || !fileName) {
 		return res.status(200).json({ 'err': 'require fields are empty' });
 	}
 
@@ -672,18 +669,18 @@ const downloadBackupFile = async (req, res) => {
 			return res.status(404).json({ err: 'User not found' });
 		}
 
-		const getFileName = await backupFileModel.findOne({ _id: fileId });
+		const isFile = path.join(__dirname, "..", "backups", fileName);
 
-		if (!getFileName) {
+		if (!isFile) {
 			return res.status(404).json({ err: 'Backup record not found' });
 		}
 
-		const downloadPath = path.join(__dirname, "..", "backups", getFileName.fileName);
+		const downloadPath = path.join(__dirname, "..", "backups", fileName);
 		if (!fs.existsSync(downloadPath)) {
 			return res.status(404).json({ err: 'Backup file not found' });
 		}
 
-		return res.download(downloadPath, getFileName.fileName, (err) => {
+		return res.download(downloadPath, fileName, (err) => {
 			if (err) {
 				console.error("Download error:", err);
 			}
@@ -697,77 +694,130 @@ const downloadBackupFile = async (req, res) => {
 	}
 }
 
-const restoreBackupFile = async (req, res) => {
-	const { token, fileId } = req.body;
 
-	if (!token || !fileId) {
-		return res.status(200).json({ 'err': 'require fields are empty' });
+const restoreBackupFile = async (req, res) => {
+	const { token, fileName } = req.body;
+
+	if (!token || !fileName) {
+		return res.status(400).json({ err: "Token and fileName are required" });
 	}
 
 	const MONGO_URI = process.env.MONGO_URL_ONLY;
 	const DB_NAME = process.env.DB_NAME;
+
+	const extractDir = path.join(__dirname, "..", "restore-temp");
 
 	try {
 		const getInfo = await getId(token);
 		const getUser = await userModel.findOne({ _id: getInfo?._id });
 
 		if (!getUser) {
-			return res.status(404).json({ err: 'User not found' });
+			return res.status(404).json({
+				err: "User not found"
+			});
 		}
 
-		const extractDir = path.join(__dirname, "..", "restore-temp");
-		const getFile = await backupFileModel.findOne({ _id: fileId });
+		const zipFile = path.join(__dirname, "..", "backups", fileName);
+		if (!fs.existsSync(zipFile)) {
+			return res.status(404).json({ err: "Backup ZIP file does not exist" });
+		}
 
-		const zipFile = path.join(__dirname, "..", "backups", getFile.fileName);
+		// Delete Previous;
+		await fs.promises.rm(extractDir, { recursive: true, force: true });
 
-		fs.mkdirSync(extractDir, { recursive: true, })
+		// Create new;
+		await fs.promises.mkdir(extractDir, { recursive: true });
 
-		// 2. Extract ZIP
-		console.log("Extracting backup...");
-
-		await fs.createReadStream(zipFile).pipe(
-			unzipper.Extract({
-				path: extractDir,
-			})
-		).promise();
-
-		console.log("Backup extracted.");
-
-		// 3. Find database dump
-		const dumpDir = path.join(extractDir, "yantra");
-
-		// 4. Restore MongoDB
-		console.log("Restoring MongoDB...");
 		await new Promise((resolve, reject) => {
-			execFile("mongorestore", [`--uri=${MONGO_URI}`, "--drop", dumpDir], (error, stdout, stderr) => {
-				if (error) {
-					console.error(stderr);
-					return reject(error);
+			const readStream = fs.createReadStream(zipFile);
+			const extractStream = unzipper.Extract({ path: extractDir });
+
+			readStream.on("error", reject);
+			extractStream.on("error", reject);
+			extractStream.on("close", resolve);
+
+			readStream.pipe(extractStream);
+		});
+
+		const dumpDir = path.join(extractDir);
+
+		if (!fs.existsSync(dumpDir)) {
+			const extractedFiles = await fs.promises.readdir(extractDir, { recursive: true });
+
+			return res.status(500).json({ err: "Restore data not found" });
+		}
+
+
+		const dbDir = path.join(dumpDir, "yantra");
+
+		const files = await fs.promises.readdir(dbDir);
+
+		for (const file of files) {
+			const filePath = path.join(dbDir, file);
+			const stat = await fs.promises.stat(filePath);
+
+			console.log(file, stat.size);
+		}
+
+
+		return res.status(200).json({ msg: "Restore successfully" });
+
+
+		// Restoring Data
+		console.log("Dump dir-->", dumpDir);
+		await new Promise((resolve, reject) => {
+			execFile("mongorestore", [`--uri=${MONGO_URI}`, "--drop", "--dir", dumpDir],
+				{
+					maxBuffer: 1024 * 1024 * 1024
+				},
+				(error, stdout, stderr) => {
+					console.log("mongorestore stdout:", stdout);
+
+					console.log("mongorestore stderr:", stderr);
+
+					if (error) {
+						console.log(error)
+						return reject(error);
+					}
+
+					resolve();
 				}
-
-				console.log(stdout);
-				resolve();
-			});
+			);
 		});
 
-		// 5. Delete temporary files
-		await fs.promises.rm(extractDir, {
-			recursive: true,
-			force: true,
-		});
+		await fs.promises.rm(
+			extractDir,
+			{
+				recursive: true,
+				force: true
+			}
+		);
 
-		return res.status(200).json({
-			msg: "MongoDB restored successfully",
-		});
+		return res.status(200).json({ msg: "Restore successfully" });
 
 	} catch (error) {
-		console.error("Restore failed:", error);
+		console.error(
+			"Restore failed:",
+			error
+		);
+
+		// Cleanup even if restore fails
+		await fs.promises.rm(
+			extractDir,
+			{
+				recursive: true,
+				force: true
+			}
+		).catch(() => { });
+
 		return res.status(500).json({
-			msg: "Restore failed",
-			error: error.message,
+			err: "Restore failed",
+			error: error.message
 		});
 	}
 };
+
+
 
 module.exports = {
 	addUser, login, getUser, updatepass, forgot,
