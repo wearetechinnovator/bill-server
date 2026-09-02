@@ -13,7 +13,7 @@ const add = async (req, res) => {
 	const {
 		token, party, debitNoteNumber, debitNoteDate, items, discountType, purchaseInvoice,
 		discountAmount, discountPercentage, additionalCharge, note, terms, update, id, finalAmount,
-		accountId, autoRoundOff, roundOffAmount, roundOffType
+		accountId, autoRoundOff, roundOffAmount, roundOffType, placeOfSupply
 	} = req.body;
 
 	if ([token, party, debitNoteNumber, debitNoteDate, items]
@@ -41,7 +41,7 @@ const add = async (req, res) => {
 				$set: {
 					party, debitNoteNumber, debitNoteDate, items, purchaseInvoice, accountId: accountId || null,
 					discountType, discountAmount, discountPercentage, additionalCharge, note, terms,
-					autoRoundOff, roundOffAmount, roundOffType, finalAmount
+					autoRoundOff, roundOffAmount, roundOffType, finalAmount, placeOfSupply
 				}
 			})
 
@@ -65,7 +65,7 @@ const add = async (req, res) => {
 			userId: getUserData._id, companyId: getUserData.activeCompany,
 			party, debitNoteNumber, debitNoteDate, purchaseInvoice, items, accountId,
 			discountType, discountAmount, discountPercentage, additionalCharge, note, terms,
-			autoRoundOff, roundOffAmount, roundOffType, finalAmount
+			autoRoundOff, roundOffAmount, roundOffType, finalAmount, placeOfSupply
 		});
 
 		if (!insert) {

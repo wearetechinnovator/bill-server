@@ -43,6 +43,7 @@ const quotationSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'account',
   },
+  placeOfSupply:String,
   quotationNumber: String,
   estimateDate: Date,
   validDate: Date,

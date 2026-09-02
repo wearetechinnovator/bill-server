@@ -12,7 +12,7 @@ const add = async (req, res) => {
 	const {
 		token, party, chalanNumber, chalanDate, validDate, items, discountType, discountAmount,
 		discountPercentage, additionalCharge, note, terms, update, id, finalAmount, accountId, autoRoundOff,
-		roundOffAmount, roundOffType
+		roundOffAmount, roundOffType, placeOfSupply
 	} = req.body;
 
 	if ([token, party, chalanNumber, chalanDate, items]
@@ -44,7 +44,7 @@ const add = async (req, res) => {
 				$set: {
 					party, chalanNumber, chalanDate, validDate, items, accountId: accountId || null,
 					discountType, discountAmount, discountPercentage, additionalCharge, note, terms,
-					autoRoundOff, roundOffAmount, roundOffType
+					autoRoundOff, roundOffAmount, roundOffType, placeOfSupply
 				}
 			})
 
@@ -79,7 +79,7 @@ const add = async (req, res) => {
 		const insert = await deliverChalanModel.create({
 			userId: getUserData._id, companyId: getUserData.activeCompany, party, chalanNumber, chalanDate,
 			validDate, items, accountId, discountType, discountAmount, discountPercentage, additionalCharge,
-			note, terms, autoRoundOff, roundOffAmount, roundOffType
+			note, terms, autoRoundOff, roundOffAmount, roundOffType, placeOfSupply
 		});
 
 		if (!insert) {

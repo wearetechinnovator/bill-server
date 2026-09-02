@@ -43,6 +43,7 @@ const purchaseReturnSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'account',
   },
+  placeOfSupply:String,
   purchaseReturnNumber: String,
   returnDate: Date,
   items: [itemSchema],

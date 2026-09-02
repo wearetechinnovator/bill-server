@@ -12,7 +12,8 @@ const add = async (req, res) => {
 	const {
 		token, party, quotationNumber, estimateDate, validDate, items, discountType, discountAmount,
 		discountPercentage, additionalCharge, note, terms, update, id, billStatus, finalAmount, accountId,
-		autoRoundOff, roundOffAmount, roundOffType, enqNumber, deliveryTime, enquiryId, isManualBillNumber
+		autoRoundOff, roundOffAmount, roundOffType, enqNumber, deliveryTime, enquiryId, isManualBillNumber,
+		placeOfSupply
 	} = req.body;
 
 
@@ -60,7 +61,8 @@ const add = async (req, res) => {
 				$set: {
 					party, quotationNumber, estimateDate, validDate, items, billStatus,
 					discountType, discountAmount, discountPercentage, additionalCharge, note, terms,
-					accountId: accountId || null, autoRoundOff, roundOffAmount, roundOffType, enqNumber, deliveryTime
+					accountId: accountId || null, autoRoundOff, roundOffAmount, roundOffType, enqNumber, 
+					deliveryTime, placeOfSupply
 				}
 			})
 
@@ -97,7 +99,8 @@ const add = async (req, res) => {
 			userId: getUserData._id, companyId: getUserData.activeCompany,
 			party, quotationNumber, estimateDate, validDate, items, billStatus,
 			discountType, discountAmount, discountPercentage, additionalCharge, note, terms,
-			accountId, autoRoundOff, roundOffAmount, roundOffType, enqNumber, deliveryTime
+			accountId, autoRoundOff, roundOffAmount, roundOffType, enqNumber, deliveryTime,
+			placeOfSupply
 		});
 
 		if (!insert) {

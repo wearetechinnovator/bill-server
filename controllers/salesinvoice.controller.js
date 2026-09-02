@@ -18,7 +18,8 @@ const add = async (req, res) => {
 		token, party, salesInvoiceNumber, invoiceDate, DueDate, items, discountType,
 		discountAmount, discountPercentage, additionalCharge, note, terms, update, id,
 		paymentStatus, paymentAccount, paymentType, paymentAmount, finalAmount, accountId,
-		autoRoundOff, roundOffAmount, roundOffType, poNumber, poDate, isPoConvert, poId
+		autoRoundOff, roundOffAmount, roundOffType, poNumber, poDate, isPoConvert, poId,
+		placeOfSupply
 	} = req.body;
 
 
@@ -52,7 +53,7 @@ const add = async (req, res) => {
 					party, salesInvoiceNumber, invoiceDate, DueDate, items, accountId: accountId || null,
 					discountType, discountAmount, discountPercentage, additionalCharge, note, terms,
 					paymentStatus, paymentAccount, paymentType, paymentAmount, finalAmount,
-					autoRoundOff, roundOffAmount, roundOffType, poNumber, poDate
+					autoRoundOff, roundOffAmount, roundOffType, poNumber, poDate, placeOfSupply
 				}
 			})
 
@@ -97,7 +98,7 @@ const add = async (req, res) => {
 			party, salesInvoiceNumber, invoiceDate, DueDate, items, accountId,
 			discountType, discountAmount, discountPercentage, additionalCharge, note, terms,
 			paymentStatus, paymentAccount, paymentType, paymentAmount, finalAmount,
-			autoRoundOff, roundOffAmount, roundOffType, poNumber, poDate
+			autoRoundOff, roundOffAmount, roundOffType, poNumber, poDate, placeOfSupply
 		});
 
 

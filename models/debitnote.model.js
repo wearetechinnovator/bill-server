@@ -45,6 +45,7 @@ const debitNoteSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'account',
   },
+  placeOfSupply: String,
   debitNoteNumber: String,
   debitNoteDate: Date,
   purchaseInvoice: String,

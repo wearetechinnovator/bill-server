@@ -13,7 +13,7 @@ const add = async (req, res) => {
 	const {
 		token, party, salesReturnNumber, returnDate, items, discountType, discountAmount, discountPercentage,
 		additionalCharge, note, terms, update, id, paymentStatus, paymentAccount, paymentType, paymentAmount, finalAmount,
-		autoRoundOff, roundOffAmount, roundOffType
+		autoRoundOff, roundOffAmount, roundOffType, placeOfSupply
 	} = req.body;
 
 	if ([token, party, salesReturnNumber, returnDate, items]
@@ -40,9 +40,10 @@ const add = async (req, res) => {
 		if (update && id) {
 			const update = await salesReturnModel.updateOne({ _id: id }, {
 				$set: {
-					party, salesReturnNumber, returnDate, items, discountType, discountAmount, discountPercentage,
-					paymentStatus, paymentAccount, paymentType, paymentAmount, finalAmount,
-					additionalCharge, note, terms, autoRoundOff, roundOffAmount, roundOffType
+					party, salesReturnNumber, returnDate, items, discountType, discountAmount,
+					discountPercentage, paymentStatus, paymentAccount, paymentType, paymentAmount,
+					finalAmount, additionalCharge, note, terms, autoRoundOff, roundOffAmount,
+					roundOffType, placeOfSupply
 				}
 			})
 
@@ -75,7 +76,7 @@ const add = async (req, res) => {
 			userId: getUserData._id, companyId: getUserData.activeCompany, party, salesReturnNumber,
 			returnDate, items, discountType, discountAmount, discountPercentage, additionalCharge,
 			paymentStatus, paymentAccount, paymentType, paymentAmount, finalAmount,
-			note, terms, autoRoundOff, roundOffAmount, roundOffType
+			note, terms, autoRoundOff, roundOffAmount, roundOffType, placeOfSupply
 		});
 
 		if (!insert) {

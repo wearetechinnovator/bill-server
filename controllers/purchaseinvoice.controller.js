@@ -14,7 +14,8 @@ const add = async (req, res) => {
 	const {
 		token, party, purchaseInvoiceNumber, originalInvoiceNumber, invoiceDate, validDate, items, discountType,
 		discountAmount, discountPercentage, additionalCharge, note, terms, update, id, finalAmount,
-		paymentStatus, paymentType, paymentAccount, paymentAmount, autoRoundOff, roundOffAmount, roundOffType
+		paymentStatus, paymentType, paymentAccount, paymentAmount, autoRoundOff, roundOffAmount, roundOffType,
+		placeOfSupply
 	} = req.body;
 
 
@@ -48,7 +49,7 @@ const add = async (req, res) => {
 					party, purchaseInvoiceNumber, invoiceDate, validDate, items, originalInvoiceNumber,
 					discountType, discountAmount, discountPercentage, additionalCharge, note, terms,
 					paymentStatus, paymentAccount, paymentType, paymentAmount, finalAmount, autoRoundOff,
-					roundOffAmount, roundOffType
+					roundOffAmount, roundOffType, placeOfSupply
 				}
 			})
 
@@ -80,7 +81,7 @@ const add = async (req, res) => {
 			userId: getUserData._id, companyId: getUserData.activeCompany, party, purchaseInvoiceNumber,
 			originalInvoiceNumber, invoiceDate, validDate, items, discountType, discountAmount, discountPercentage,
 			additionalCharge, note, terms, paymentStatus, paymentAccount, paymentType, paymentAmount,
-			finalAmount, autoRoundOff, roundOffAmount, roundOffType
+			finalAmount, autoRoundOff, roundOffAmount, roundOffType, placeOfSupply
 		});
 
 		if (!insert) {

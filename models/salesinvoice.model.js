@@ -45,6 +45,7 @@ const salesInvoiceSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'account',
   },
+  placeOfSupply: String,
   salesInvoiceNumber: String,
   invoiceDate: Date,
   DueDate: Date,

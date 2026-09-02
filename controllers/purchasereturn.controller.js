@@ -12,7 +12,7 @@ const add = async (req, res) => {
 		token, party, purchaseReturnNumber, returnDate, items, discountType, accountId,
 		discountAmount, discountPercentage, additionalCharge, note, terms, update, id,
 		finalAmount, paymentStatus, paymentType, paymentAccount, paymentAmount,
-		autoRoundOff, roundOffAmount, roundOffType
+		autoRoundOff, roundOffAmount, roundOffType, placeOfSupply
 	} = req.body;
 
 	if ([token, party, purchaseReturnNumber, returnDate, items]
@@ -41,7 +41,7 @@ const add = async (req, res) => {
 					party, purchaseReturnNumber, returnDate, items, accountId: accountId || null,
 					discountType, discountAmount, discountPercentage, additionalCharge,
 					paymentStatus, paymentAccount, paymentType, paymentAmount, finalAmount, note, terms,
-					autoRoundOff, roundOffAmount, roundOffType
+					autoRoundOff, roundOffAmount, roundOffType, placeOfSupply
 				}
 			})
 
@@ -65,7 +65,7 @@ const add = async (req, res) => {
 			userId: getUserData._id, companyId: getUserData.activeCompany, party, purchaseReturnNumber,
 			returnDate, items, accountId, discountType, discountAmount, discountPercentage, additionalCharge,
 			note, terms, paymentStatus, paymentAccount, paymentType, paymentAmount, finalAmount,
-			autoRoundOff, roundOffAmount, roundOffType
+			autoRoundOff, roundOffAmount, roundOffType, placeOfSupply
 		});
 
 		if (!insert) {

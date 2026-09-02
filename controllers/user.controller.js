@@ -22,7 +22,7 @@ const unzipper = require("unzipper");
 const addUser = async (req, res) => {
 	const { name, email, password, profile, filename, update, token } = req.body;
 
-	// return res.status(500).json({ 'err': 'Please contact with admin.' });
+	return res.status(500).json({ 'err': 'Please contact with admin.' });
 
 	if ([name, email].some((field) => !field || field == "")) {
 		return res.json({ 'err': 'require fields are empty' });

@@ -43,6 +43,7 @@ const deliveryChalanSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'account',
   },
+  placeOfSupply: String,
   chalanNumber: String,
   chalanDate: Date,
   validDate: Date,

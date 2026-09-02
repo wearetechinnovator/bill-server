@@ -39,6 +39,7 @@ const purchaseOrder = new mongoose.Schema({
     ref: 'party',
     requiredd: true
   },
+  placeOfSupply:String,
   poNumber: String,
   poDate: Date,
   validDate: Date,

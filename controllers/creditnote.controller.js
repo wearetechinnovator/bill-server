@@ -14,7 +14,7 @@ const add = async (req, res) => {
 	const {
 		token, party, creditNoteNumber, creditNoteDate, items, discountType, salesInvoice,
 		discountAmount, discountPercentage, additionalCharge, note, terms, update, id, finalAmount,
-		autoRoundOff, roundOffAmount, roundOffType
+		autoRoundOff, roundOffAmount, roundOffType, placeOfSupply
 	} = req.body;
 
 	if ([token, party, creditNoteNumber, creditNoteDate, items]
@@ -43,7 +43,7 @@ const add = async (req, res) => {
 				$set: {
 					party, creditNoteNumber, creditNoteDate, items, salesInvoice, discountType, discountAmount,
 					discountPercentage, additionalCharge, note, terms, autoRoundOff, roundOffAmount, roundOffType,
-					finalAmount
+					finalAmount, placeOfSupply
 				}
 			})
 
@@ -75,7 +75,8 @@ const add = async (req, res) => {
 		const insert = await creditNoteModel.create({
 			userId: getUserData._id, companyId: getUserData.activeCompany, party, creditNoteNumber,
 			creditNoteDate, salesInvoice, items, discountType, discountAmount, discountPercentage,
-			additionalCharge, note, terms, autoRoundOff, roundOffAmount, roundOffType, finalAmount
+			additionalCharge, note, terms, autoRoundOff, roundOffAmount, roundOffType, finalAmount,
+			placeOfSupply
 		});
 
 		if (!insert) {

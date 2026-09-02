@@ -40,6 +40,7 @@ const purchaseInvoiceSchema = new mongoose.Schema({
     ref: 'party',
     required: true
   },
+  placeOfSupply:String,
   purchaseInvoiceNumber: String,
   originalInvoiceNumber: String,
   invoiceDate: Date,

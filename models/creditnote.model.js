@@ -41,6 +41,7 @@ const creditNoteSchema = new mongoose.Schema({
     ref: 'party',
     required: true
   },
+  placeOfSupply: String,
   creditNoteNumber: String,
   creditNoteDate: Date,
   salesInvoice: String,

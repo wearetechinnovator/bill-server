@@ -39,6 +39,7 @@ const salesReturnSchema = new mongoose.Schema({
     ref: 'party',
     required: true
   },
+  placeOfSupply: String,
   salesReturnNumber: String,
   returnDate: Date,
   items: [itemSchema],

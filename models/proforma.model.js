@@ -37,7 +37,7 @@ const additionalChargeSchema = new mongoose.Schema({
   particular: {
     type: String,
   },
-  amount:Number
+  amount: Number
 }, { _id: false });
 
 const proformaSchema = new mongoose.Schema({
@@ -61,10 +61,11 @@ const proformaSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'account',
   },
+  placeOfSupply: String,
   proformaNumber: String,
   estimateDate: Date,
   validDate: Date,
-  poDate:{
+  poDate: {
     type: Date,
     default: null
   },
