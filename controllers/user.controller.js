@@ -12,8 +12,8 @@ const sendEmail = require('../helper/sendEmail');
 const { execFile } = require("child_process");
 const fs = require("fs");
 const AdmZip = require("adm-zip");
-const backupFileModel = require("../models/backupFile.model");
 const unzipper = require("unzipper");
+const restoreBackupLog = require("../models/restoreBackupLog.model");
 
 
 
@@ -597,14 +597,8 @@ const backupData = async (req, res) => {
 			const firstFile = listOfZipFiles[0];
 			const fileFilePath = path.join(backupsDir, firstFile);
 
-			await backupFileModel.deleteOne({ fileName: firstFile });
 			fs.unlinkSync(fileFilePath);
 		}
-
-		// Insert New File in DB;
-		await backupFileModel.create({
-			fileName: fileName
-		})
 
 		return res.status(200).json({ msg: "Backup successfully saved.", file: path.basename(zipFile), });
 
@@ -633,7 +627,6 @@ const getBackupFiles = async (req, res) => {
 			return res.status(404).json({ err: 'User not found' });
 		}
 
-		// const getFileName = await backupFileModel.find();
 		const backupsDir = path.join(__dirname, "..", "backups");
 		const getFileName = fs.readdirSync(backupsDir);
 
@@ -664,13 +657,11 @@ const downloadBackupFile = async (req, res) => {
 
 		const getInfo = await getId(token);
 		const getUser = await userModel.findOne({ _id: getInfo?._id });
-
 		if (!getUser) {
 			return res.status(404).json({ err: 'User not found' });
 		}
 
 		const isFile = path.join(__dirname, "..", "backups", fileName);
-
 		if (!isFile) {
 			return res.status(404).json({ err: 'Backup record not found' });
 		}
@@ -712,9 +703,11 @@ const restoreBackupFile = async (req, res) => {
 		const getUser = await userModel.findOne({ _id: getInfo?._id });
 
 		if (!getUser) {
-			return res.status(404).json({
-				err: "User not found"
-			});
+			return res.status(404).json({ err: "User not found" });
+		}
+
+		if (getUser.role !== "admin") {
+			return res.status(404).json({ err: "Only admin can restore backup" });
 		}
 
 		const zipFile = path.join(__dirname, "..", "backups", fileName);
@@ -747,24 +740,9 @@ const restoreBackupFile = async (req, res) => {
 			return res.status(500).json({ err: "Restore data not found" });
 		}
 
-
 		const dbDir = path.join(dumpDir, "yantra");
 
-		const files = await fs.promises.readdir(dbDir);
-
-		for (const file of files) {
-			const filePath = path.join(dbDir, file);
-			const stat = await fs.promises.stat(filePath);
-
-			console.log(file, stat.size);
-		}
-
-
-		return res.status(200).json({ msg: "Restore successfully" });
-
-
 		// Restoring Data
-		console.log("Dump dir-->", dumpDir);
 		await new Promise((resolve, reject) => {
 			execFile("mongorestore", [`--uri=${MONGO_URI}`, "--drop", "--dir", dumpDir],
 				{
@@ -793,14 +771,14 @@ const restoreBackupFile = async (req, res) => {
 			}
 		);
 
+		await restoreBackupLog.create({
+			restoreBy: getUser.email,
+			fileName: fileName
+		})
+
 		return res.status(200).json({ msg: "Restore successfully" });
 
 	} catch (error) {
-		console.error(
-			"Restore failed:",
-			error
-		);
-
 		// Cleanup even if restore fails
 		await fs.promises.rm(
 			extractDir,
@@ -810,10 +788,7 @@ const restoreBackupFile = async (req, res) => {
 			}
 		).catch(() => { });
 
-		return res.status(500).json({
-			err: "Restore failed",
-			error: error.message
-		});
+		return res.status(500).json({ err: "Restore failed", error: error.message });
 	}
 };
 
