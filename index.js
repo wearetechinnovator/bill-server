@@ -6,6 +6,7 @@ const morgan = require('morgan');
 const router = require("./routes/index.route");
 const attendanceReminder = require("./jobs/staffAttendanceReminder");
 const staffAttendancePresent = require("./jobs/staffAttandancePresent");
+const backupJob = require("./jobs/dataBackup");
 const path = require('path');
 
 const app = express();
@@ -22,11 +23,11 @@ app.use("/api/v1", router);
 app.get("/ping", (req, res) => res.send({ msg: "PONG" }));
 
 
-
 // create database connection mongoose
 mongoose.connect(process.env.MONGO_URI).then(() => {
   console.log("[*] Database run");
 
+  backupJob();
   //attendanceReminder(); //Staff Attendance Reminder Mail;
   //staffAttendancePresent(); // Default Presend Attendance;
 
