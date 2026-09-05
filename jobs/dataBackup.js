@@ -6,7 +6,7 @@ const AdmZip = require("adm-zip");
 
 
 module.exports = async function () {
-    cron.schedule("0 2 * * *", async () => {
+    cron.schedule("0 3 * * *", async () => {
         const MONGO_URI = process.env.MONGO_URL_ONLY;
         const DB_NAME = process.env.DB_NAME;
         const backupsDir = path.join(__dirname, "..", "backups");
