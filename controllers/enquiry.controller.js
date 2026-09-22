@@ -60,7 +60,7 @@ class EnquiryController {
 
 
             // Check existance
-            const isExist = await enquiryModel.findOne({ enqNo });
+            const isExist = await enquiryModel.findOne({ enqNo, isDel:false });
             if (isExist) {
                 return res.status(404).json({ err: "This enquiry already exist" })
             }
